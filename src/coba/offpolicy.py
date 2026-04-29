@@ -34,7 +34,7 @@ Usage:
 
   # Update a ClusterRouter from historical logs using DR
   dr = DoublyRobustUpdater(router)
-  dr.fit_from_logs(contexts, decisions, rewards, propensities)
+  dr.fit_offline(contexts, decisions, rewards, propensities)
 """
 
 from dataclasses import dataclass
@@ -147,7 +147,7 @@ class DoublyRobustUpdater:
     """Updates a ClusterRouter from historical off-policy logs using DR/IPS correction.
 
     This is the primary tool for bootstrapping the bandit from existing historical logs.
-    After calling `fit_from_logs`, the ClusterRouter's arm models will have absorbed
+    After calling `fit_offline`, the ClusterRouter's arm models will have absorbed
     the historical signal with appropriate propensity correction.
 
     Args:
@@ -159,7 +159,7 @@ class DoublyRobustUpdater:
         self.router = router
         self.config = config or IPSConfig()
 
-    def fit_from_logs(
+    def fit_offline(
         self,
         contexts: np.ndarray,
         decisions: np.ndarray,

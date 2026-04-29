@@ -19,7 +19,7 @@ Pure IPS can suffer from high variance when propensities are very small (produci
 
 ### Runtime Contract
 
-- `fit_from_logs(..., use_dr=True)` requires `reward_estimates`.
+- `fit_offline(..., use_dr=True)` requires `reward_estimates`.
 - `update_from_logs(..., use_dr=True)` also requires `reward_estimates` by default.
 - To allow fallback to IPS when estimates are missing in incremental updates:
   `IPSConfig(use_dr=True, allow_ips_fallback_when_dr_missing=True)`.
@@ -53,7 +53,7 @@ config  = IPSConfig(clip_min=1e-4, clip_max=10.0, use_dr=False)
 updater = DoublyRobustUpdater(router, config)
 
 # 4. Bootstrap from logs (de-biases and fits the router)
-updater.fit_from_logs(
+updater.fit_offline(
     contexts=contexts,
     decisions=decisions,
     rewards=rewards,

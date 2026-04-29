@@ -74,7 +74,7 @@ class TestIPSEstimator:
 
 
 class TestDoublyRobustUpdater:
-    def test_fit_from_logs(self):
+    def test_fit_offline(self):
         rng = np.random.default_rng(0)
         n = 200
         contexts = rng.standard_normal((n, 7))
@@ -84,7 +84,7 @@ class TestDoublyRobustUpdater:
 
         router = ClusterRouter(arms=ARMS, n_clusters=3, n_features=7, seed=0)
         updater = DoublyRobustUpdater(router)
-        updater.fit_from_logs(contexts, decisions, rewards, propensities)
+        updater.fit_offline(contexts, decisions, rewards, propensities)
         assert router.is_fitted
 
     def test_update_from_logs(self):
@@ -97,7 +97,7 @@ class TestDoublyRobustUpdater:
 
         router = ClusterRouter(arms=ARMS, n_clusters=3, n_features=7, seed=1)
         updater = DoublyRobustUpdater(router)
-        updater.fit_from_logs(contexts, decisions, rewards, propensities)
+        updater.fit_offline(contexts, decisions, rewards, propensities)
         before = router._total_pulls
 
         # incremental update
@@ -117,7 +117,7 @@ class TestDoublyRobustUpdater:
         updater = DoublyRobustUpdater(router, config=config)
 
         with pytest.raises(ValueError, match="reward_estimates"):
-            updater.fit_from_logs(contexts, decisions, rewards, propensities)
+            updater.fit_offline(contexts, decisions, rewards, propensities)
 
 
 class TestRejectionSamplingEval:
@@ -272,7 +272,7 @@ class TestDoublyRobustUpdaterDRMode:
 
         # Initial fit (non-DR) to warm up the router
         updater_plain = DoublyRobustUpdater(router)
-        updater_plain.fit_from_logs(contexts, decisions, rewards, propensities)
+        updater_plain.fit_offline(contexts, decisions, rewards, propensities)
         before_pulls = router._total_pulls
 
         # Now incremental update with DR correction

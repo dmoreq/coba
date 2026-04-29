@@ -32,7 +32,7 @@ bandit = ClusterBandit(
 )
 
 # 2. Bootstrap from Historical Logs
-bandit.fit_from_logs(
+bandit.fit_offline(
     contexts=np.random.randn(1000, 5),
     decisions=np.random.choice(["A", "B", "C", "D"], 1000),
     rewards=np.random.rand(1000),

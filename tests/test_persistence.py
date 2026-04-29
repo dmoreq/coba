@@ -20,7 +20,7 @@ def _make_fitted_bandit() -> ClusterBandit:
     """Create a fully fitted ClusterBandit for persistence tests."""
     bandit = ClusterBandit(arms=ARMS, n_features=4, n_clusters=2, seed=0)
     rng = np.random.default_rng(0)
-    bandit.fit_from_logs(
+    bandit.fit_offline(
         contexts=rng.standard_normal((100, 4)),
         decisions=rng.choice(ARMS, 100),
         rewards=rng.uniform(0, 1, 100),

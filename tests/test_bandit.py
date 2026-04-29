@@ -21,7 +21,7 @@ def make_bandit(fitted: bool = False, policy: PolicyType = PolicyType.LIN_UCB) -
         contexts = rng.standard_normal((n, 7))
         decisions = rng.choice(ARMS, size=n)
         rewards = rng.uniform(0, 1, n)
-        bandit.fit_from_logs(contexts, decisions, rewards)
+        bandit.fit_offline(contexts, decisions, rewards)
     return bandit
 
 
@@ -91,7 +91,7 @@ class TestClusterBanditFitFromLogs:
         contexts = rng.standard_normal((100, 7))
         decisions = rng.choice(ARMS, 100)
         rewards = rng.uniform(0, 1, 100)
-        bandit.fit_from_logs(contexts, decisions, rewards)
+        bandit.fit_offline(contexts, decisions, rewards)
         assert bandit.is_fitted
 
     def test_fit_with_propensities(self):
@@ -102,14 +102,14 @@ class TestClusterBanditFitFromLogs:
         decisions = rng.choice(ARMS, n)
         rewards = rng.uniform(0, 1, n)
         propensities = np.full(n, 0.25)
-        bandit.fit_from_logs(contexts, decisions, rewards, propensities=propensities)
+        bandit.fit_offline(contexts, decisions, rewards, propensities=propensities)
         assert bandit.is_fitted
 
     def test_fit_returns_self(self):
         bandit = make_bandit(fitted=False)
         rng = np.random.default_rng(3)
         n = 100
-        result = bandit.fit_from_logs(
+        result = bandit.fit_offline(
             rng.standard_normal((n, 7)),
             rng.choice(ARMS, n),
             rng.uniform(0, 1, n),
@@ -232,7 +232,7 @@ class TestClusterBanditMonitoring:
         with pytest.raises(ValueError, match="same length"):
             bandit.update_batch(contexts, arms, rewards)
 
-    def test_fit_from_logs_dr_requires_reward_estimates(self):
+    def test_fit_offline_dr_requires_reward_estimates(self):
         bandit = make_bandit(fitted=False)
         rng = np.random.default_rng(4)
         n = 50
@@ -241,7 +241,7 @@ class TestClusterBanditMonitoring:
         rewards = rng.uniform(0, 1, n)
         propensities = np.full(n, 0.25)
         with pytest.raises(ValueError, match="reward_estimates"):
-            bandit.fit_from_logs(
+            bandit.fit_offline(
                 contexts=contexts,
                 decisions=decisions,
                 rewards=rewards,

@@ -15,7 +15,7 @@ Typical flow:
   )
 
   # 2. (Optional) Bootstrap from historical logs
-  bandit.fit_from_logs(contexts_matrix, decisions, rewards, propensities)
+  bandit.fit_offline(contexts_matrix, decisions, rewards, propensities)
 
   # 3. Online serving
   context = np.array([50.0, 10.0, 100.0, 5.0, 8.0, 1.0, 5.0])
@@ -273,7 +273,7 @@ class ClusterBandit:
     # Off-policy Bootstrap
     # ------------------------------------------------------------------
 
-    def fit_from_logs(
+    def fit_offline(
         self,
         contexts: np.ndarray,
         decisions: np.ndarray,
@@ -318,7 +318,7 @@ class ClusterBandit:
 
         ips_config = IPSConfig(clip_min=1e-4, clip_max=10.0, use_dr=use_dr)
         updater = DoublyRobustUpdater(self._router, config=ips_config)
-        updater.fit_from_logs(
+        updater.fit_offline(
             contexts=contexts_arr,
             decisions=decisions_arr,
             rewards=rewards_arr,

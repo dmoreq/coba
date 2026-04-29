@@ -49,7 +49,7 @@ bandit = ClusterBandit(
 )
 
 # 2. Bootstrap from historical logs (with IPS correction)
-bandit.fit_from_logs(
+bandit.fit_offline(
     contexts=np.random.randn(1000, 5),
     decisions=np.random.choice(["A", "B", "C", "D"], 1000),
     rewards=np.random.rand(1000),
@@ -85,11 +85,13 @@ See the [`examples/`](examples/) directory for runnable demonstrations of all fe
 | File | What it shows |
 |---|---|
 | `examples/01_quickstart.py` | Basic decide → update loop |
-| `examples/02_all_policies.py` | Every `PolicyType` in action |
-| `examples/03_offline_bootstrap.py` | `fit_from_logs` with IPS & DR |
-| `examples/04_evaluation.py` | Rejection sampling, DR, NCIS metrics |
-| `examples/05_arm_management.py` | Add/remove arms with warm start |
+| `examples/02_policy_types.py` | Every `PolicyType` in action |
+| `examples/03_offline_bootstrap.py` | `fit_offline` with IPS & DR correction |
+| `examples/04_arm_management.py` | Add/remove arms with warm start |
+| `examples/05_evaluation.py` | Rejection sampling, DR, NCIS metrics |
 | `examples/06_persistence.py` | Save and load a bandit |
+| `examples/07_batch_update.py` | Batch and streaming log-replay |
+| `examples/08_monitoring.py` | Per-arm stats, scores, cluster assignments |
 
 ## 🧪 Testing & Development
 

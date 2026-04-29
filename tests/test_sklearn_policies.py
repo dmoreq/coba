@@ -100,7 +100,7 @@ def test_cluster_bandit_with_epsilon_greedy(base_estimator):
     )
 
     # Fit offline
-    bandit.fit_from_logs(
+    bandit.fit_offline(
         contexts=np.array([[1.0, 2.0], [3.0, 4.0]]),
         decisions=np.array([1.0, 1.1]),
         rewards=np.array([0.5, 0.8]),
@@ -124,7 +124,7 @@ def test_cluster_bandit_with_bootstrapped_ts(base_estimator):
         n_bootstraps=5,
     )
 
-    bandit.fit_from_logs(
+    bandit.fit_offline(
         contexts=np.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0], [7.0, 8.0]]),
         decisions=np.array([1.0, 1.1, 1.0, 1.1]),
         rewards=np.array([0.5, 0.8, 0.1, 0.9]),
@@ -145,7 +145,7 @@ def test_cluster_bandit_with_bootstrapped_ucb(base_estimator):
         n_bootstraps=5,
     )
 
-    bandit.fit_from_logs(
+    bandit.fit_offline(
         contexts=np.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0], [7.0, 8.0]]),
         decisions=np.array([1.0, 1.1, 1.0, 1.1]),
         rewards=np.array([0.5, 0.8, 0.1, 0.9]),

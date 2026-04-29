@@ -110,7 +110,7 @@ config = IPSConfig(clip_min=1e-4, clip_max=15.0, use_dr=False)
 
 # 4. Gắn updater vào router và train offline
 updater = DoublyRobustUpdater(router, config)
-updater.fit_from_logs(
+updater.fit_offline(
     contexts=contexts,
     decisions=decisions,
     rewards=rewards,
