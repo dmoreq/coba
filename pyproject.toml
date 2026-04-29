@@ -8,7 +8,7 @@ where = ["src"]
 [project]
 name = "coba"
 version = "0.1.0"
-description = "High-performance contextual bandit engine for dynamic pricing"
+description = "High-performance, domain-agnostic contextual bandit engine"
 requires-python = ">=3.10"
 dependencies = [
     "numpy>=1.24",
@@ -24,6 +24,7 @@ dev = [
     "pytest-cov>=5.0",
     "black>=24.0",
     "ruff>=0.4",
+    "pre-commit>=3.0",
 ]
 
 [tool.pytest.ini_options]
