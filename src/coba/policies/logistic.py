@@ -31,17 +31,13 @@ class OnlineLogisticRegression:
     (which acts as the covariance matrix of the Gaussian posterior).
     """
 
-    def __init__(
-        self, n_features: int, l2_lambda: float = 1.0, gamma: float = 1.0
-    ) -> None:
+    def __init__(self, n_features: int, l2_lambda: float = 1.0, gamma: float = 1.0) -> None:
         self.n_features = n_features
         self.l2_lambda = l2_lambda
         self.gamma = gamma
 
         # Inverse Hessian (covariance matrix) initialized with L2 prior
-        self.H_inv: np.ndarray = (1.0 / l2_lambda) * np.eye(
-            n_features, dtype=np.float64
-        )
+        self.H_inv: np.ndarray = (1.0 / l2_lambda) * np.eye(n_features, dtype=np.float64)
 
         # Weight vector
         self.w: np.ndarray = np.zeros(n_features, dtype=np.float64)

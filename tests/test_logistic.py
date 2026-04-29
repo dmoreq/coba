@@ -1,6 +1,5 @@
 """Tests for Logistic Bandits (Laplace Approximation)."""
 
-
 import numpy as np
 
 from coba.policies.logistic import LogisticTSArmModel, LogisticUCBArmModel, sigmoid

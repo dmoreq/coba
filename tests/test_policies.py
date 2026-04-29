@@ -55,9 +55,7 @@ class TestRidgeRegression:
         xty_direct = x_mat.T @ y_vec
         beta_direct = np.linalg.inv(a_direct) @ xty_direct
 
-        np.testing.assert_array_almost_equal(
-            ridge_sm.beta, beta_direct, decimal=6
-        )
+        np.testing.assert_array_almost_equal(ridge_sm.beta, beta_direct, decimal=6)
 
     def test_batch_update(self):
         ridge = RidgeRegression(n_features=2)
@@ -103,9 +101,7 @@ class TestLinUCBArmModel:
 
     def setup_method(self):
         self.rng = np.random.default_rng(42)
-        self.model = LinUCBArmModel(
-            arm=1.2, n_features=3, alpha=1.0, l2_lambda=1.0, rng=self.rng
-        )
+        self.model = LinUCBArmModel(arm=1.2, n_features=3, alpha=1.0, l2_lambda=1.0, rng=self.rng)
 
     def test_initial_state(self):
         assert not self.model.is_fitted
@@ -128,12 +124,8 @@ class TestLinUCBArmModel:
     def test_score_increases_with_alpha(self):
         """Higher alpha should give higher exploration bonus."""
         x = np.array([1.0, 0.5, 0.3])
-        model_low = LinUCBArmModel(
-            arm=1.0, n_features=3, alpha=0.1, rng=self.rng
-        )
-        model_high = LinUCBArmModel(
-            arm=1.0, n_features=3, alpha=5.0, rng=self.rng
-        )
+        model_low = LinUCBArmModel(arm=1.0, n_features=3, alpha=0.1, rng=self.rng)
+        model_high = LinUCBArmModel(arm=1.0, n_features=3, alpha=5.0, rng=self.rng)
         assert model_high.score(x) > model_low.score(x)
 
     def test_reset(self):
@@ -159,9 +151,7 @@ class TestLinTSArmModel:
 
     def setup_method(self):
         self.rng = np.random.default_rng(0)
-        self.model = LinTSArmModel(
-            arm=1.0, n_features=3, v_sq=1.0, rng=self.rng
-        )
+        self.model = LinTSArmModel(arm=1.0, n_features=3, v_sq=1.0, rng=self.rng)
 
     def test_score_is_stochastic(self):
         """LinTS scores should differ between calls (sampling-based)."""
@@ -183,12 +173,8 @@ class TestLinTSArmModel:
             (np.array([0.3, 0.2, 0.8]), 0.7),
         ]
 
-        model_low = LinTSArmModel(
-            arm=1.0, n_features=3, v_sq=0.01, rng=np.random.default_rng(2)
-        )
-        model_high = LinTSArmModel(
-            arm=1.0, n_features=3, v_sq=10.0, rng=np.random.default_rng(3)
-        )
+        model_low = LinTSArmModel(arm=1.0, n_features=3, v_sq=0.01, rng=np.random.default_rng(2))
+        model_high = LinTSArmModel(arm=1.0, n_features=3, v_sq=10.0, rng=np.random.default_rng(3))
 
         for xi, yi in data:
             model_low.update(xi, yi)
@@ -205,9 +191,7 @@ class TestThompsonArmModel:
 
     def setup_method(self):
         self.rng = np.random.default_rng(42)
-        self.model = ThompsonArmModel(
-            arm=1.0, alpha_prior=1.0, beta_prior=1.0, rng=self.rng
-        )
+        self.model = ThompsonArmModel(arm=1.0, alpha_prior=1.0, beta_prior=1.0, rng=self.rng)
 
     def test_initial_mean_reward(self):
         """With equal priors, initial mean should be 0.5."""

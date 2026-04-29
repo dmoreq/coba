@@ -1,6 +1,5 @@
 """Tests for off-policy IPS/DR estimators and evaluation metrics."""
 
-
 import numpy as np
 import pytest
 
@@ -16,9 +15,7 @@ from coba.router import ClusterRouter
 ARMS = [1.0, 1.1, 1.2, 1.5]
 
 
-def make_fitted_router(
-    n: int = 300, n_features: int = 7, seed: int = 0
-) -> ClusterRouter:
+def make_fitted_router(n: int = 300, n_features: int = 7, seed: int = 0) -> ClusterRouter:
     rng = np.random.default_rng(seed)
     contexts = rng.standard_normal((n, n_features))
     decisions = rng.choice(ARMS, size=n)
@@ -29,7 +26,6 @@ def make_fitted_router(
 
 
 class TestIPSEstimator:
-
     def test_unit_propensity_gives_unit_weights(self):
         rewards = np.array([0.5, 0.7, 0.3])
         propensities = np.ones(3)
@@ -78,7 +74,6 @@ class TestIPSEstimator:
 
 
 class TestDoublyRobustUpdater:
-
     def test_fit_from_logs(self):
         rng = np.random.default_rng(0)
         n = 200
@@ -106,9 +101,7 @@ class TestDoublyRobustUpdater:
         before = router._total_pulls
 
         # incremental update
-        updater.update_from_logs(
-            contexts[:50], decisions[:50], rewards[:50], propensities[:50]
-        )
+        updater.update_from_logs(contexts[:50], decisions[:50], rewards[:50], propensities[:50])
         assert router._total_pulls > before
 
     def test_dr_requires_reward_estimates(self):
@@ -128,7 +121,6 @@ class TestDoublyRobustUpdater:
 
 
 class TestRejectionSamplingEval:
-
     def test_result_type(self):
         router = make_fitted_router()
         rng = np.random.default_rng(5)
@@ -161,7 +153,6 @@ class TestRejectionSamplingEval:
 
 
 class TestDoublyRobustEval:
-
     def test_result_type(self):
         router = make_fitted_router()
         rng = np.random.default_rng(7)
@@ -220,7 +211,6 @@ class TestDoublyRobustEval:
 
 
 class TestNCISEval:
-
     def test_result_type(self):
         rng = np.random.default_rng(8)
         n = 100
@@ -252,7 +242,6 @@ class TestNCISEval:
 
 
 class TestEvalResult:
-
     def test_utilization_rate_zero_division(self):
         result = EvalResult("test", 0.0, 0, 0)
         assert result.utilization_rate == 0.0

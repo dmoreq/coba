@@ -46,9 +46,7 @@ class EpsilonGreedyArmModel(BaseArmModel):
 
         # We need a fresh copy of the base estimator so it is uninitialized
         if base_estimator is None:
-            raise ValueError(
-                "base_estimator must be provided for EpsilonGreedyArmModel"
-            )
+            raise ValueError("base_estimator must be provided for EpsilonGreedyArmModel")
 
         self.model = copy.deepcopy(base_estimator)
         self.is_fitted = False
@@ -160,9 +158,7 @@ class _BootstrappedArmModelBase(BaseArmModel):
         """Return predictions from all models in the ensemble."""
         if not self.is_fitted:
             # Optimistic initialization — encourages equal exploration of all arms
-            return self.rng.uniform(
-                _EXPLORE_SCORE_LOW, _EXPLORE_SCORE_HIGH, size=self.n_bootstraps
-            )
+            return self.rng.uniform(_EXPLORE_SCORE_LOW, _EXPLORE_SCORE_HIGH, size=self.n_bootstraps)
 
         x_2d = x.reshape(1, -1)
         preds = [model.predict(x_2d)[0] for model in self.models]

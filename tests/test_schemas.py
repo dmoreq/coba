@@ -1,7 +1,5 @@
 """Tests for Pydantic v2 data models."""
 
-
-
 from coba.schemas import BanditDecision
 
 

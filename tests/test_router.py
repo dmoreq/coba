@@ -1,6 +1,5 @@
 """Tests for ClusterRouter."""
 
-
 import numpy as np
 import pytest
 
@@ -55,9 +54,7 @@ class TestClusterRouter:
         router = ClusterRouter(arms=self.arms, n_clusters=3, n_features=7)
         router.fit(self.contexts[:100], self.decisions[:100], self.rewards[:100])
         total_before = router._total_pulls
-        router.partial_fit(
-            self.contexts[100:], self.decisions[100:], self.rewards[100:]
-        )
+        router.partial_fit(self.contexts[100:], self.decisions[100:], self.rewards[100:])
         assert router._total_pulls > total_before
 
     def test_update_single(self):
@@ -133,9 +130,7 @@ class TestClusterRouter:
         ],
     )
     def test_all_policies_work(self, policy):
-        router = ClusterRouter(
-            arms=self.arms, n_clusters=3, n_features=7, policy=policy, seed=42
-        )
+        router = ClusterRouter(arms=self.arms, n_clusters=3, n_features=7, policy=policy, seed=42)
         router.fit(self.contexts, self.decisions, self.rewards)
         ctx = self.contexts[0]
         arm = router.predict(ctx)

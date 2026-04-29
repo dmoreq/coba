@@ -90,9 +90,7 @@ def rejection_sampling_eval(
 
     n_accepted = len(accepted_rewards)
     if n_accepted == 0:
-        logger.warning(
-            "Rejection sampling: no samples accepted — policy may not overlap with logs"
-        )
+        logger.warning("Rejection sampling: no samples accepted — policy may not overlap with logs")
         return EvalResult("rejection_sampling", 0.0, 0, n_total)
 
     estimated_reward = float(np.mean(accepted_rewards))
@@ -102,9 +100,7 @@ def rejection_sampling_eval(
         total=n_total,
         r=estimated_reward,
     )
-    return EvalResult(
-        "rejection_sampling", estimated_reward, n_accepted, n_total
-    )
+    return EvalResult("rejection_sampling", estimated_reward, n_accepted, n_total)
 
 
 def doubly_robust_eval(
@@ -150,9 +146,7 @@ def doubly_robust_eval(
     contexts = np.asarray(contexts, dtype=np.float64)
     decisions = np.asarray(decisions)
     rewards = np.asarray(rewards, dtype=np.float64)
-    propensities = np.clip(
-        np.asarray(propensities, dtype=np.float64), clip_min, 1.0
-    )
+    propensities = np.clip(np.asarray(propensities, dtype=np.float64), clip_min, 1.0)
     reward_estimates = np.asarray(reward_estimates, dtype=np.float64)
     if target_reward_estimates is None:
         logger.warning(
@@ -160,9 +154,7 @@ def doubly_robust_eval(
             "reward_estimates for both logged and target actions"
         )
         target_reward_estimates = reward_estimates
-    target_reward_estimates = np.asarray(
-        target_reward_estimates, dtype=np.float64
-    )
+    target_reward_estimates = np.asarray(target_reward_estimates, dtype=np.float64)
 
     n_total = len(rewards)
     if (
@@ -180,9 +172,7 @@ def doubly_robust_eval(
     if clip_max is not None:
         ips_correction = np.clip(ips_correction, -clip_max, clip_max)
 
-    dr_values = target_reward_estimates + np.where(
-        action_match, ips_correction, 0.0
-    )
+    dr_values = target_reward_estimates + np.where(action_match, ips_correction, 0.0)
 
     estimated_reward = float(np.mean(dr_values))
     logger.info(
@@ -233,9 +223,7 @@ def ncis_eval(
     n_kept = int(np.sum(keep_mask))
 
     if n_kept == 0:
-        raise ValueError(
-            "NCIS: no samples below clip_max — adjust clip_max parameter."
-        )
+        raise ValueError("NCIS: no samples below clip_max — adjust clip_max parameter.")
 
     w_kept = w[keep_mask]
     r_kept = rewards[keep_mask]

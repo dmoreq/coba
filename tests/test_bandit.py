@@ -13,12 +13,8 @@ def make_context() -> np.ndarray:
     return np.array([50.0, 10.0, 100.0, 5.0, 8.0, 1.0, 5.0])
 
 
-def make_bandit(
-    fitted: bool = False, policy: PolicyType = PolicyType.LIN_UCB
-) -> ClusterBandit:
-    bandit = ClusterBandit(
-        arms=ARMS, n_features=7, policy=policy, n_clusters=3, seed=0
-    )
+def make_bandit(fitted: bool = False, policy: PolicyType = PolicyType.LIN_UCB) -> ClusterBandit:
+    bandit = ClusterBandit(arms=ARMS, n_features=7, policy=policy, n_clusters=3, seed=0)
     if fitted:
         rng = np.random.default_rng(0)
         n = 200
@@ -30,7 +26,6 @@ def make_bandit(
 
 
 class TestClusterBanditDecide:
-
     def test_decide_before_fit_returns_base_arm(self):
         bandit = make_bandit(fitted=False)
         ctx = make_context()
@@ -60,7 +55,6 @@ class TestClusterBanditDecide:
 
 
 class TestClusterBanditUpdate:
-
     def test_update_single(self):
         bandit = make_bandit(fitted=True)
         ctx = make_context()
@@ -87,13 +81,10 @@ class TestClusterBanditUpdate:
 
     def test_update_batch_empty_list(self):
         bandit = make_bandit(fitted=True)
-        bandit.update_batch(
-            np.array([]), np.array([]), np.array([])
-        )  # Should not raise
+        bandit.update_batch(np.array([]), np.array([]), np.array([]))  # Should not raise
 
 
 class TestClusterBanditFitFromLogs:
-
     def test_fit_marks_fitted(self):
         bandit = make_bandit(fitted=False)
         rng = np.random.default_rng(1)
@@ -111,9 +102,7 @@ class TestClusterBanditFitFromLogs:
         decisions = rng.choice(ARMS, n)
         rewards = rng.uniform(0, 1, n)
         propensities = np.full(n, 0.25)
-        bandit.fit_from_logs(
-            contexts, decisions, rewards, propensities=propensities
-        )
+        bandit.fit_from_logs(contexts, decisions, rewards, propensities=propensities)
         assert bandit.is_fitted
 
     def test_fit_returns_self(self):
@@ -129,7 +118,6 @@ class TestClusterBanditFitFromLogs:
 
 
 class TestClusterBanditArmManagement:
-
     def test_add_arm(self):
         bandit = make_bandit(fitted=True)
         bandit.add_arm(2.0)
@@ -163,7 +151,6 @@ class TestClusterBanditArmManagement:
 
 
 class TestClusterBanditMonitoring:
-
     def test_get_stats_returns_all_arms(self):
         bandit = make_bandit(fitted=True)
         stats = bandit.get_stats()
@@ -230,9 +217,7 @@ class TestClusterBanditMonitoring:
     def test_update_invalid_propensity_raises(self):
         bandit = make_bandit(fitted=True)
         with pytest.raises(ValueError, match="propensity"):
-            bandit.update(
-                context=make_context(), arm=1.0, reward=0.5, propensity=0.0
-            )
+            bandit.update(context=make_context(), arm=1.0, reward=0.5, propensity=0.0)
 
     def test_decide_invalid_context_shape_raises(self):
         bandit = make_bandit(fitted=True)

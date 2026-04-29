@@ -177,7 +177,9 @@ def test_bootstrapped_ts_gamma_method(rng: np.random.Generator, base_estimator: 
     assert model.is_fitted
 
 
-def test_bootstrapped_ts_optimistic_before_fit(rng: np.random.Generator, base_estimator: object) -> None:
+def test_bootstrapped_ts_optimistic_before_fit(
+    rng: np.random.Generator, base_estimator: object
+) -> None:
     """Before any update, _predict_all should return high optimistic values."""
     model = BootstrappedTSArmModel(
         arm="opt_arm",
@@ -194,7 +196,9 @@ def test_bootstrapped_ts_optimistic_before_fit(rng: np.random.Generator, base_es
     assert (preds <= 1e4).all()
 
 
-def test_epsilon_greedy_explores_when_forced(rng: np.random.Generator, base_estimator: object) -> None:
+def test_epsilon_greedy_explores_when_forced(
+    rng: np.random.Generator, base_estimator: object
+) -> None:
     """With epsilon=1.0, EpsilonGreedy should always return an exploration score."""
     model = EpsilonGreedyArmModel(
         arm="explore_arm",

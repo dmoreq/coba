@@ -105,9 +105,7 @@ class ClusterBandit:
         )
 
         # Per-arm statistics for monitoring (pull counts, mean reward)
-        self._arm_stats: dict[Arm, BanditStats] = {
-            arm: BanditStats(arm=arm) for arm in self.arms
-        }
+        self._arm_stats: dict[Arm, BanditStats] = {arm: BanditStats(arm=arm) for arm in self.arms}
 
     # ------------------------------------------------------------------
     # Core Online API
@@ -115,13 +113,10 @@ class ClusterBandit:
     def _validate_context_vector(self, context: np.ndarray) -> np.ndarray:
         x = np.asarray(context, dtype=np.float64)
         if x.ndim != 1:
-            raise ValueError(
-                f"context must be a 1D feature vector, got shape={x.shape!r}"
-            )
+            raise ValueError(f"context must be a 1D feature vector, got shape={x.shape!r}")
         if x.shape[0] != self.n_features:
             raise ValueError(
-                f"context feature length mismatch: expected {self.n_features}, "
-                f"got {x.shape[0]}"
+                f"context feature length mismatch: expected {self.n_features}, " f"got {x.shape[0]}"
             )
         if not np.all(np.isfinite(x)):
             raise ValueError("context contains non-finite values")
@@ -142,13 +137,10 @@ class ClusterBandit:
             raise ValueError(f"contexts must be 2D, got shape={ctx.shape!r}")
         if ctx.shape[1] != self.n_features:
             raise ValueError(
-                f"contexts feature mismatch: expected {self.n_features}, "
-                f"got {ctx.shape[1]}"
+                f"contexts feature mismatch: expected {self.n_features}, " f"got {ctx.shape[1]}"
             )
         if not (len(ctx) == len(arm_arr) == len(rew)):
-            raise ValueError(
-                "contexts, arms, and rewards must have the same length"
-            )
+            raise ValueError("contexts, arms, and rewards must have the same length")
         if not np.all(np.isfinite(ctx)) or not np.all(np.isfinite(rew)):
             raise ValueError("contexts/rewards contain non-finite values")
 
@@ -179,9 +171,7 @@ class ClusterBandit:
         x = self._validate_context_vector(context)
 
         if not self._router.is_fitted:
-            logger.debug(
-                "Bandit not fitted yet — returning base arm for cold start"
-            )
+            logger.debug("Bandit not fitted yet — returning base arm for cold start")
             base_arm = self.arms[0]
             return BanditDecision(
                 chosen_arm=base_arm,
@@ -313,18 +303,14 @@ class ClusterBandit:
                 n=n_arms,
             )
 
-        contexts_arr, decisions_arr, rewards_arr, prop_arr = (
-            self._validate_batch_inputs(
-                contexts=contexts,
-                arms=decisions,
-                rewards=rewards,
-                propensities=propensities,
-            )
+        contexts_arr, decisions_arr, rewards_arr, prop_arr = self._validate_batch_inputs(
+            contexts=contexts,
+            arms=decisions,
+            rewards=rewards,
+            propensities=propensities,
         )
         if use_dr and reward_estimates is None:
-            raise ValueError(
-                "reward_estimates must be provided when use_dr=True"
-            )
+            raise ValueError("reward_estimates must be provided when use_dr=True")
         if reward_estimates is not None:
             reward_estimates = np.asarray(reward_estimates, dtype=np.float64)
             if len(reward_estimates) != len(rewards_arr):
