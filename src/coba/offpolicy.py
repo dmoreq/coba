@@ -2,9 +2,9 @@
 Inverse Propensity Scoring (IPS) and Doubly-Robust (DR) off-policy learning.
 
 Background:
-  When bootstrapping from historical pricing logs collected by a different policy
-  (e.g., rule-based surge pricing), the data is biased: certain price arms were
-  chosen more often than others, and rewards are only observed for the chosen arm.
+  When bootstrapping from historical logs collected by a different policy
+  (e.g., a rule-based or random logging policy), the data is biased: certain arms
+  were chosen more often than others, and rewards are only observed for the chosen arm.
 
   IPS corrects for this bias by reweighting each observation by the inverse of
   the probability that the logging policy chose that arm:
@@ -129,9 +129,7 @@ class IPSEstimator:
             DR-corrected rewards, shape (n_samples,).
         """
         cfg = config or IPSConfig()
-        p_clipped = np.clip(
-            np.asarray(propensities, dtype=np.float64), cfg.clip_min, 1.0
-        )
+        p_clipped = np.clip(np.asarray(propensities, dtype=np.float64), cfg.clip_min, 1.0)
         r = np.asarray(rewards, dtype=np.float64)
         rhat = np.asarray(reward_estimates, dtype=np.float64)
 
@@ -148,7 +146,7 @@ class IPSEstimator:
 class DoublyRobustUpdater:
     """Updates a ClusterRouter from historical off-policy logs using DR/IPS correction.
 
-    This is the primary tool for bootstrapping the bandit from existing pricing logs.
+    This is the primary tool for bootstrapping the bandit from existing historical logs.
     After calling `fit_from_logs`, the ClusterRouter's arm models will have absorbed
     the historical signal with appropriate propensity correction.
 
@@ -157,9 +155,7 @@ class DoublyRobustUpdater:
         config: IPS/DR configuration.
     """
 
-    def __init__(
-        self, router: ClusterRouter, config: IPSConfig | None = None
-    ) -> None:
+    def __init__(self, router: ClusterRouter, config: IPSConfig | None = None) -> None:
         self.router = router
         self.config = config or IPSConfig()
 
@@ -193,9 +189,7 @@ class DoublyRobustUpdater:
             weights = np.ones(len(rewards), dtype=np.float64)
         else:
             corrected_rewards = np.asarray(rewards, dtype=np.float64)
-            weights = IPSEstimator.compute_weights(
-                rewards, propensities, self.config
-            )
+            weights = IPSEstimator.compute_weights(rewards, propensities, self.config)
 
         logger.info(
             "Off-policy fit: {n} samples, mean_weight={mw:.3f}, mean_reward={mr:.3f}",
@@ -231,10 +225,7 @@ class DoublyRobustUpdater:
             reward_estimates: DR reward model estimates (optional).
         """
         if self.config.use_dr:
-            if (
-                reward_estimates is None
-                and not self.config.allow_ips_fallback_when_dr_missing
-            ):
+            if reward_estimates is None and not self.config.allow_ips_fallback_when_dr_missing:
                 raise ValueError(
                     "reward_estimates must be provided when use_dr=True. "
                     "Set allow_ips_fallback_when_dr_missing=True to explicitly "
@@ -247,14 +238,10 @@ class DoublyRobustUpdater:
                 weights = np.ones(len(rewards), dtype=np.float64)
             else:
                 corrected_rewards = np.asarray(rewards, dtype=np.float64)
-                weights = IPSEstimator.compute_weights(
-                    rewards, propensities, self.config
-                )
+                weights = IPSEstimator.compute_weights(rewards, propensities, self.config)
         else:
             corrected_rewards = np.asarray(rewards, dtype=np.float64)
-            weights = IPSEstimator.compute_weights(
-                rewards, propensities, self.config
-            )
+            weights = IPSEstimator.compute_weights(rewards, propensities, self.config)
 
         self.router.partial_fit(
             contexts=contexts,

@@ -28,7 +28,7 @@ class LinUCBArmModel(BaseArmModel):
     """Per-arm LinUCB model backed by online ridge regression.
 
     Args:
-        arm: Identifier for this price level arm.
+        arm: Identifier for this arm.
         n_features: Context vector dimensionality.
         alpha: Exploration parameter (UCB width multiplier).
         l2_lambda: L2 regularization strength.
@@ -50,9 +50,7 @@ class LinUCBArmModel(BaseArmModel):
         self.alpha = alpha
         self.l2_lambda = l2_lambda
         self.gamma = gamma
-        self._ridge = RidgeRegression(
-            n_features=n_features, l2_lambda=l2_lambda, gamma=gamma
-        )
+        self._ridge = RidgeRegression(n_features=n_features, l2_lambda=l2_lambda, gamma=gamma)
 
     def score(self, x: np.ndarray) -> float:
         """Compute LinUCB score: E[y|x] + alpha * confidence_width(x).

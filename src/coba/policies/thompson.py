@@ -12,8 +12,7 @@ The Beta(alpha, beta) posterior is maintained per arm:
 Scores are sampled each call, producing natural exploration calibrated to
 the uncertainty in the Beta posterior.
 
-Note: rewards must be in [0, 1]. For the dynamic pricing problem, the
-trips/eyeballs ratio naturally falls in this range.
+Note: rewards must be in [0, 1] (e.g. conversion rate, normalized engagement score).
 """
 
 import numpy as np
@@ -26,7 +25,7 @@ class ThompsonArmModel(BaseArmModel):
     """Per-arm context-free Thompson Sampling model with Beta posterior.
 
     Args:
-        arm: Identifier for this price level arm.
+        arm: Identifier for this arm.
         alpha_prior: Beta distribution alpha prior (pseudo-successes). Default 1.0.
         beta_prior: Beta distribution beta prior (pseudo-failures). Default 1.0.
         rng: NumPy random generator.

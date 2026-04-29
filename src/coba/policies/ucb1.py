@@ -14,8 +14,8 @@ Where:
   - n_i   is the number of pulls for arm i
   - alpha controls exploration strength
 
-UCB1 is context-free and serves as a strong baseline for dynamic pricing
-when the context model is not yet reliable (cold start phase).
+UCB1 is context-free and serves as a strong baseline when the context model
+is not yet reliable (cold start phase).
 """
 
 import math
@@ -37,7 +37,7 @@ class UCB1ArmModel(BaseArmModel):
     parent bandit (passed via `set_total_pulls` or through the `score` call).
 
     Args:
-        arm: Identifier for this price level arm.
+        arm: Identifier for this arm.
         alpha: Exploration multiplier. Default 1.0 (standard UCB1).
         rng: NumPy random generator.
     """
@@ -71,14 +71,11 @@ class UCB1ArmModel(BaseArmModel):
         mu = self._reward_sum / max(self._effective_pulls, 1e-12)
         # Standard UCB1 confidence width
         exploration_bonus = self.alpha * math.sqrt(
-            (2.0 * math.log(max(total_pulls, 1)))
-            / max(self._effective_pulls, 1e-12)
+            (2.0 * math.log(max(total_pulls, 1))) / max(self._effective_pulls, 1e-12)
         )
         return mu + exploration_bonus
 
-    def update(
-        self, x: np.ndarray | None, reward: float, weight: float = 1.0
-    ) -> None:
+    def update(self, x: np.ndarray | None, reward: float, weight: float = 1.0) -> None:
         """Update running statistics.
 
         Args:

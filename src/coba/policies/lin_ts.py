@@ -12,7 +12,7 @@ Sampling strategy:
 
 Where v_sq controls the variance of the prior — higher v_sq → more exploration.
 This naturally produces calibrated exploration without a fixed UCB parameter,
-making it preferable in non-stationary pricing environments.
+making it preferable in non-stationary environments.
 
 Implementation note:
   We use np.random.Generator.multivariate_normal which is faster than
@@ -32,7 +32,7 @@ class LinTSArmModel(BaseArmModel):
     """Per-arm LinTS model — Thompson Sampling via multivariate normal sampling.
 
     Args:
-        arm: Identifier for this price level arm.
+        arm: Identifier for this arm.
         n_features: Context vector dimensionality.
         v_sq: Variance multiplier for the posterior covariance. Higher → more exploration.
         l2_lambda: L2 regularization strength.
@@ -54,9 +54,7 @@ class LinTSArmModel(BaseArmModel):
         self.v_sq = v_sq
         self.l2_lambda = l2_lambda
         self.gamma = gamma
-        self._ridge = RidgeRegression(
-            n_features=n_features, l2_lambda=l2_lambda, gamma=gamma
-        )
+        self._ridge = RidgeRegression(n_features=n_features, l2_lambda=l2_lambda, gamma=gamma)
 
     def score(self, x: np.ndarray) -> float:
         """Sample coefficients from posterior and return dot product with context.

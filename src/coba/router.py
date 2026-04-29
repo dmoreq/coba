@@ -1,26 +1,25 @@
 """
-
 KMeans-based Cluster Router for contextual bandits.
 
-Design rationale (from mabwiser analysis):
-  H3 cells do not have uniform market behavior — a cell in a dense CBD at rush hour
-  behaves very differently from a suburban cell at midday. Rather than training one
-  global bandit, we:
-    1. Cluster the context space (demand, supply, ratio, hour, day) into K clusters.
+Design rationale:
+  Context spaces are rarely uniform — different regions of the feature space
+  may exhibit very different reward patterns. Rather than training one global
+  bandit that must approximate all behaviors simultaneously, we:
+    1. Cluster the context space into K behaviorally distinct groups.
     2. Train one independent bandit per cluster.
     3. At prediction time, assign the context to its nearest cluster and query
        that cluster's bandit.
 
-  This allows the model to specialize per regime (e.g., "rush-hour CBD",
-  "quiet suburban", "late-night airport") without hard-coding these regimes.
+  This allows each cluster's model to specialize on its local context region
+  without hand-coding those regions explicitly.
 
-  Key improvement over mabwiser's _Clusters:
+  Key improvements over a naive single-bandit approach:
     - Supports incremental (partial_fit) cluster reassignment via MiniBatchKMeans.
     - Arms are managed (add/remove) across ALL cluster bandits atomically.
     - Warm-start copies the nearest trained arm's model to cold arms.
 
 Usage:
-  router = ClusterRouter(arms=[1.0, 1.1, 1.2, 1.5], n_clusters=5, policy="linucb")
+  router = ClusterRouter(arms=["a", "b", "c"], n_clusters=5, policy="linucb")
   router.fit(contexts_matrix, decisions_array, rewards_array)
   arm = router.predict(context_vector)
   router.update(context_vector, chosen_arm, reward, weight)
@@ -117,8 +116,8 @@ class ClusterRouter:
     bandit makes the arm selection.
 
     Args:
-        arms: List of price multiplier arms, e.g. [1.0, 1.1, 1.2, 1.5].
-        n_clusters: Number of market-regime clusters. Start with 3–8.
+        arms: List of arms, e.g. ["a", "b", "c"] or [0, 1, 2].
+        n_clusters: Number of context clusters. Start with 3–8.
         policy: Which learning algorithm to use per arm per cluster.
         n_features: Dimensionality of context vectors.
         alpha: Exploration parameter for LinUCB / UCB1.
@@ -179,9 +178,7 @@ class ClusterRouter:
             self._kmeans = KMeans(n_clusters=n_clusters, random_state=seed, n_init=10)
 
         # StandardScaler for context normalization
-        self._scaler: StandardScaler | None = (
-            StandardScaler() if scale_contexts else None
-        )
+        self._scaler: StandardScaler | None = StandardScaler() if scale_contexts else None
 
         # One dict of {arm: ArmModel} per cluster
         self._cluster_bandits: list[dict[Arm, BaseArmModel]] = [
@@ -248,9 +245,7 @@ class ClusterRouter:
         decisions = np.asarray(decisions)
         rewards = np.asarray(rewards, dtype=np.float64)
         weights = (
-            np.ones(len(rewards))
-            if weights is None
-            else np.asarray(weights, dtype=np.float64)
+            np.ones(len(rewards)) if weights is None else np.asarray(weights, dtype=np.float64)
         )
 
         # Scale contexts
@@ -302,8 +297,8 @@ class ClusterRouter:
         """Online update: assign new samples to existing clusters and update models.
 
         Does NOT refit the KMeans — the cluster assignment is frozen from the
-        initial `fit()` call. This is intentional: in a production pricing system,
-        the cluster structure (market regimes) should be stable.
+        initial `fit()` call. This is intentional: in production, the cluster
+        structure should remain stable across incremental updates.
 
         Args:
             contexts: Feature matrix, shape (n_samples, n_features).
@@ -318,9 +313,7 @@ class ClusterRouter:
         decisions = np.asarray(decisions)
         rewards = np.asarray(rewards, dtype=np.float64)
         weights = (
-            np.ones(len(rewards))
-            if weights is None
-            else np.asarray(weights, dtype=np.float64)
+            np.ones(len(rewards)) if weights is None else np.asarray(weights, dtype=np.float64)
         )
 
         if self._scaler is not None:
@@ -396,12 +389,12 @@ class ClusterRouter:
     ) -> None:
         """Update the model for the chosen arm in the appropriate cluster.
 
-        This is the core online learning step, called after each pricing decision.
+        This is the core online learning step, called after each decision.
 
         Args:
             context: Feature vector, shape (n_features,).
             arm: The arm that was chosen and applied.
-            reward: Observed reward (trips/eyeballs ratio, normalized to [0,1]).
+            reward: Observed scalar reward, normalized to [0, 1].
             weight: IPS importance weight (1/propensity). Default 1.0.
         """
         cluster_idx, scaled_ctx = self._route(context)
@@ -414,11 +407,11 @@ class ClusterRouter:
         self._total_pulls += 1
 
     def add_arm(self, arm: Arm, warm_start_from: Arm | None = None) -> None:
-        """Dynamically add a new price arm to all cluster bandits.
+        """Dynamically add a new arm to all cluster bandits.
 
         If warm_start_from is provided and that arm is trained, the new arm's
         model is initialized by copying the source arm's model (warm start).
-        This avoids a cold start for the new price tier.
+        This avoids a cold start for the new arm.
 
         Args:
             arm: Identifier for the new arm.
@@ -459,7 +452,7 @@ class ClusterRouter:
                 cluster_bandit[arm] = new_models[arm]
 
     def remove_arm(self, arm: Arm) -> None:
-        """Remove a price arm from all cluster bandits.
+        """Remove an arm from all cluster bandits.
 
         Args:
             arm: Identifier of the arm to remove.
@@ -467,9 +460,7 @@ class ClusterRouter:
         if arm not in self.arms:
             raise ValueError(f"Arm '{arm}' not found.")
         if len(self.arms) <= 1:
-            raise ValueError(
-                "Cannot remove the last arm — bandit must have at least 1 arm."
-            )
+            raise ValueError("Cannot remove the last arm — bandit must have at least 1 arm.")
 
         self.arms.remove(arm)
         for cluster_bandit in self._cluster_bandits:

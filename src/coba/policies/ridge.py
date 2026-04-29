@@ -30,17 +30,13 @@ class RidgeRegression:
         l2_lambda: L2 regularization strength (λ). Higher → more shrinkage.
     """
 
-    def __init__(
-        self, n_features: int, l2_lambda: float = 1.0, gamma: float = 1.0
-    ) -> None:
+    def __init__(self, n_features: int, l2_lambda: float = 1.0, gamma: float = 1.0) -> None:
         self.n_features = n_features
         self.l2_lambda = l2_lambda
         self.gamma = gamma
 
         # A_inv = (λI)^-1 initially = (1/λ) I
-        self.A_inv: np.ndarray = (1.0 / l2_lambda) * np.eye(
-            n_features, dtype=np.float64
-        )
+        self.A_inv: np.ndarray = (1.0 / l2_lambda) * np.eye(n_features, dtype=np.float64)
 
         # Xty = Σ(w * x_i * y_i)   [response accumulator]
         self.Xty: np.ndarray = np.zeros(n_features, dtype=np.float64)
@@ -110,7 +106,7 @@ class RidgeRegression:
         """Batch update by iterating Sherman-Morrison over all observations.
 
         For large batches a Cholesky recompute would be faster, but SM is simpler
-        and sufficient for the batch sizes expected in pricing (< 10k rows).
+        and sufficient for the typical batch sizes seen in online learning (< 10k rows).
 
         Args:
             x_batch: Context matrix, shape (n_samples, n_features).
