@@ -4,14 +4,14 @@
 import numpy as np
 import pytest
 
-from coba.evaluation.metrics import (
+from coba.evaluation import (
     EvalResult,
     doubly_robust_eval,
     ncis_eval,
     rejection_sampling_eval,
 )
-from coba.offpolicy.ips import DoublyRobustUpdater, IPSConfig, IPSEstimator
-from coba.routers.cluster_router import ClusterRouter
+from coba.offpolicy import DoublyRobustUpdater, IPSConfig, IPSEstimator
+from coba.router import ClusterRouter
 
 ARMS = [1.0, 1.1, 1.2, 1.5]
 

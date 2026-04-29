@@ -53,7 +53,7 @@ def _build_arm_models(
 ) -> dict[Arm, BaseArmModel]:
     """Factory function: build one BaseArmModel per arm for the given policy type."""
     from coba.policies.linucb import LinUCBArmModel
-    from coba.policies.lints import LinTSArmModel
+    from coba.policies.lin_ts import LinTSArmModel
     from coba.policies.sklearn_models import (
         BootstrappedTSArmModel,
         BootstrappedUCBArmModel,

@@ -2,7 +2,7 @@
 
 from coba.policies.base import ArmStats, BaseArmModel
 from coba.policies.linucb import LinUCBArmModel
-from coba.policies.lints import LinTSArmModel
+from coba.policies.lin_ts import LinTSArmModel
 from coba.policies.logistic import LogisticTSArmModel, LogisticUCBArmModel
 from coba.policies.sklearn_models import (
     BootstrappedTSArmModel,

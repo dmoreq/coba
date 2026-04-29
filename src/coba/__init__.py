@@ -6,7 +6,7 @@ A generic, high-performance contextual bandit library combining:
 - mabwiser: Clean architecture, KMeans cluster routing, warm-start, dynamic arm management
 """
 
-from coba.cluster_bandit import ClusterBandit
+from coba.bandit import ClusterBandit
 from coba.schemas import BanditDecision
 from coba.types import Arm, PolicyType
 

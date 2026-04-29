@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 from coba.policies.linucb import LinUCBArmModel
-from coba.policies.lints import LinTSArmModel
+from coba.policies.lin_ts import LinTSArmModel
 from coba.policies.ridge import RidgeRegression
 from coba.policies.thompson import ThompsonArmModel
 from coba.policies.ucb1 import UCB1ArmModel

@@ -17,7 +17,7 @@ from pathlib import Path
 import joblib
 from loguru import logger
 
-from coba.cluster_bandit import ClusterBandit
+from coba.bandit import ClusterBandit
 
 
 def save_bandit(bandit: ClusterBandit, path: str | Path) -> None:

@@ -4,7 +4,7 @@
 import numpy as np
 import pytest
 
-from coba.routers.cluster_router import ClusterRouter
+from coba.router import ClusterRouter
 from coba.types import PolicyType
 
 

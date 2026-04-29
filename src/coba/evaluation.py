@@ -23,7 +23,7 @@ from dataclasses import dataclass
 import numpy as np
 from loguru import logger
 
-from coba.routers.cluster_router import ClusterRouter
+from coba.router import ClusterRouter
 
 
 @dataclass

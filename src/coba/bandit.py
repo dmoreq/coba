@@ -35,14 +35,14 @@ from typing import Any
 import numpy as np
 from loguru import logger
 
-from coba.evaluation.metrics import (
+from coba.evaluation import (
     EvalResult,
     doubly_robust_eval,
     ncis_eval,
     rejection_sampling_eval,
 )
-from coba.offpolicy.ips import DoublyRobustUpdater, IPSConfig
-from coba.routers.cluster_router import ClusterRouter
+from coba.offpolicy import DoublyRobustUpdater, IPSConfig
+from coba.router import ClusterRouter
 from coba.schemas import BanditDecision, BanditStats
 from coba.types import Arm, PolicyType
 

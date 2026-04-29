@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from sklearn.linear_model import SGDRegressor
 
-from coba.cluster_bandit import ClusterBandit
+from coba.bandit import ClusterBandit
 from coba.policies.sklearn_models import (
     BootstrappedTSArmModel,
     BootstrappedUCBArmModel,
