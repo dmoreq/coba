@@ -8,7 +8,7 @@ Nếu bạn huấn luyện AI thuần tuý trên tập dữ liệu này, AI sẽ
 
 **Inverse Propensity Scoring (IPS)** là cách khử thiên vị đó: thay vì học đều từ mọi bản ghi, ta gán **trọng số ngược chiều** với xác suất mà ông chủ cũ đã chọn món đó. Món D hiếm được chọn → trọng số cao → AI học từ đó nhiều hơn để bù đắp.
 
-> **Ứng dụng thực tế:** Khi khởi động hệ thống bandit mới từ log dữ liệu surge pricing cũ (ví dụ: hệ thống cũ luôn chọn mức giá ×1.0 vào giờ cao điểm), IPS giúp bootstrap mô hình mới mà không kế thừa sự thiên vị đó.
+> **Ứng dụng thực tế:** Khi khởi động hệ thống bandit mới từ log dữ liệu của một policy cũ (ví dụ: hệ thống cũ luôn ưu tiên chọn một arm nhất định trong hầu hết các tình huống), IPS giúp bootstrap mô hình mới mà không kế thừa sự thiên vị đó.
 
 ---
 
@@ -32,7 +32,7 @@ Trong đó:
 Nếu propensity quá thấp (ví dụ: 0.001), trọng số $w_i$ sẽ bùng nổ lên 1000, khiến mô hình mất ổn định. `coba` dùng **clipping** để giới hạn:
 
 ```python
-from coba.offpolicy.ips import IPSConfig
+from coba.offpolicy import IPSConfig
 
 config = IPSConfig(
     clip_min=1e-4,  # Propensity tối thiểu để tránh chia cho 0
@@ -67,7 +67,7 @@ $$\tilde{r}_i^{DR} = \hat{r}(x_i, a_i) + \frac{r_i - \hat{r}(x_i, a_i)}{\pi_{\te
 ### Kích hoạt DR trong COBA
 
 ```python
-from coba.offpolicy.ips import IPSConfig
+from coba.offpolicy import IPSConfig
 
 config = IPSConfig(
     clip_min=1e-4,
@@ -84,32 +84,32 @@ config = IPSConfig(
 
 ```python
 import numpy as np
-from coba.cluster_bandit import ClusterBandit
-from coba.offpolicy.ips import DoublyRobustUpdater, IPSConfig
+from coba import ClusterBandit
+from coba.offpolicy import DoublyRobustUpdater, IPSConfig
+from coba.router import ClusterRouter
 from coba.types import PolicyType
 
-# 1. Khởi tạo bandit mới (chưa được train)
-bandit = ClusterBandit(
-    arms=[1.0, 1.1, 1.2, 1.5],
+# 1. Khởi tạo router mới (chưa được train)
+router = ClusterRouter(
+    arms=["A", "B", "C", "D"],
     n_features=5,
     n_clusters=4,
     policy=PolicyType.LIN_TS,
 )
 
-# 2. Dữ liệu log từ hệ thống cũ — cực kỳ thiên vị về mức giá 1.0x
+# 2. Dữ liệu log từ hệ thống cũ — cực kỳ thiên vị về arm "A"
 n_samples = 2000
 contexts    = np.random.randn(n_samples, 5)
-decisions   = np.random.choice([1.0, 1.1, 1.2, 1.5], size=n_samples, p=[0.70, 0.15, 0.10, 0.05])
+decisions   = np.random.choice(["A", "B", "C", "D"], size=n_samples, p=[0.70, 0.15, 0.10, 0.05])
 rewards     = np.random.rand(n_samples)
-propensities = np.where(decisions == 1.0, 0.70,
-               np.where(decisions == 1.1, 0.15,
-               np.where(decisions == 1.2, 0.10, 0.05)))
+propensities = np.array([0.70 if d == "A" else 0.15 if d == "B" else 0.10 if d == "C" else 0.05
+                         for d in decisions])
 
 # 3. Cấu hình IPS/DR
 config = IPSConfig(clip_min=1e-4, clip_max=15.0, use_dr=False)
 
-# 4. Gắn updater vào bandit và train offline
-updater = DoublyRobustUpdater(bandit.router, config)
+# 4. Gắn updater vào router và train offline
+updater = DoublyRobustUpdater(router, config)
 updater.fit_from_logs(
     contexts=contexts,
     decisions=decisions,
@@ -117,7 +117,7 @@ updater.fit_from_logs(
     propensities=propensities,
 )
 
-print(f"Bandit đã được khởi động (bootstrapped): {bandit.router.is_fitted}")
+print(f"Router đã được khởi động (bootstrapped): {router.is_fitted}")
 ```
 
 ### 4b. Cập Nhật Online Hàng Ngày
@@ -125,7 +125,7 @@ print(f"Bandit đã được khởi động (bootstrapped): {bandit.router.is_fi
 ```python
 # Sau khi hệ thống đã live, mỗi ngày bạn nhận được log mới
 new_contexts    = np.random.randn(500, 5)
-new_decisions   = np.random.choice([1.0, 1.1, 1.2, 1.5], size=500)
+new_decisions   = np.random.choice(["A", "B", "C", "D"], size=500)
 new_rewards     = np.random.rand(500)
 # Hệ thống mới đã ngẫu nhiên hơn → propensity gần đều
 new_propensities = np.full(500, 0.25)

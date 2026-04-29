@@ -26,8 +26,8 @@ Dưới đây là ví dụ từng bước cách sử dụng module `evaluation` 
 
 ```python
 import numpy as np
-from coba.evaluation.metrics import rejection_sampling_eval, doubly_robust_eval, ncis_eval
-from coba.routers.cluster_router import ClusterRouter
+from coba.evaluation import rejection_sampling_eval, doubly_robust_eval, ncis_eval
+from coba.router import ClusterRouter
 
 # 1. Chuẩn bị dữ liệu lịch sử (historical data)
 n_samples = 1000
@@ -45,9 +45,9 @@ propensities = np.full(n_samples, 0.5) # Giả định logging policy chọn ng�
 # 3. Đánh giá bằng Rejection Sampling
 # Lý tưởng khi log được thu thập hoàn toàn ngẫu nhiên đều (uniform random).
 rej_result = rejection_sampling_eval(
-    router=router, 
-    contexts=contexts, 
-    decisions=decisions, 
+    router=router,
+    contexts=contexts,
+    decisions=decisions,
     rewards=rewards
 )
 print(rej_result)
@@ -56,7 +56,7 @@ print(rej_result)
 # 4. Đánh giá bằng Doubly Robust (DR)
 # Yêu cầu phải có ước lượng phần thưởng (reward estimates) cho các hành động đã chọn trong log.
 # Ở đây ta giả lập các ước lượng bằng mảng random để minh hoạ.
-reward_estimates = np.random.rand(n_samples) 
+reward_estimates = np.random.rand(n_samples)
 
 dr_result = doubly_robust_eval(
     router=router,
@@ -72,7 +72,7 @@ print(dr_result)
 # 5. Đánh giá bằng NCIS (Normalized Capped Importance Sampling)
 # Cần tính toán policy_scores (điểm/xác suất mà router của ta dự đoán cho các quyết định trong log)
 policy_scores = np.array([
-    router.score_all(ctx).get(dec, 0.0) 
+    router.score_all(ctx).get(dec, 0.0)
     for ctx, dec in zip(contexts, decisions)
 ])
 
