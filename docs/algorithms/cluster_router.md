@@ -2,71 +2,61 @@
 
 ## 1. The Intuition
 
-In dynamic pricing for ride-hailing or delivery, a high-demand downtown area during rush hour behaves fundamentally differently from a quiet suburb at midnight. A single linear model struggles to capture these contrasting behaviors.
+Context spaces are rarely uniform. Different regions of the feature space may exhibit very different reward patterns — a single linear model that must cover the entire space will either overfit one region or underfit another.
 
-COBA handles non-linear and non-stationary environments using a **Cluster Router**. Rather than training a single, massive bandit model for all possible contexts, the `ClusterRouter` splits the market into distinct "regimes" or clusters and manages an independent bandit for each.
+COBA handles this via a **Cluster Router**. Rather than training one massive bandit for all possible contexts, the `ClusterRouter` partitions the context space into $K$ distinct clusters and maintains an independent bandit per cluster.
 
 ## 2. How It Works
 
-By utilizing KMeans clustering on the context vectors:
-1. **Specialization**: Each cluster learns a specialized model tailored to its specific market conditions.
-2. **Efficiency**: Training $K$ small linear models is significantly faster and more stable than training one highly complex non-linear model.
-3. **Stability**: We use `MiniBatchKMeans` to support incremental (online) learning without completely restructuring the clusters on every update.
+Using KMeans clustering on context vectors:
+1. **Specialization**: Each cluster learns a model tailored to its local context region.
+2. **Efficiency**: $K$ small linear models are faster and more numerically stable than one complex non-linear model.
+3. **Online stability**: `MiniBatchKMeans` supports incremental updates without restructuring all clusters on every observation.
 
 ## 3. Dynamic Arm Management
 
-The `ClusterRouter` natively supports adding and removing arms on the fly, which is essential for dynamic pricing systems where you might introduce a new price tier.
+The `ClusterRouter` supports adding and removing arms at runtime across all clusters atomically.
 
-* **Warm Start**: When adding a new arm, you can copy the trained parameters of an existing arm. This prevents the new arm from starting completely randomly (cold start) and destroying user experience.
-* **Atomic Updates**: Adding or removing an arm updates all underlying cluster bandits atomically.
+* **Warm Start**: Copy trained parameters from an existing arm into the new one, avoiding random cold-start behavior.
+* **Atomic Updates**: Add/remove propagates to every cluster bandit in one operation.
 
 ## 4. Example Usage
 
-Here is a step-by-step example of how to use the `ClusterRouter`.
-
 ```python
 import numpy as np
-from coba.routers.cluster_router import ClusterRouter
+from coba.router import ClusterRouter
 from coba.types import PolicyType
 
 # 1. Initialize the router
-# We start with 3 pricing arms and 5 clusters
 router = ClusterRouter(
-    arms=[1.0, 1.2, 1.5],
+    arms=["A", "B", "C"],
     n_clusters=5,
     policy=PolicyType.LIN_UCB,
     n_features=4,
-    use_minibatch=True, # Recommended for online production systems
-    scale_contexts=True # Standardizes features before clustering
+    use_minibatch=True,   # recommended for online systems
+    scale_contexts=True   # standardizes features before clustering
 )
 
-# 2. Offline Training (Batch Fit)
-# In reality, this data comes from your historical logs
+# 2. Batch fit from historical data
 n_samples = 1000
-contexts = np.random.randn(n_samples, 4)
-decisions = np.random.choice([1.0, 1.2, 1.5], size=n_samples)
-rewards = np.random.rand(n_samples)
+contexts  = np.random.randn(n_samples, 4)
+decisions = np.random.choice(["A", "B", "C"], size=n_samples)
+rewards   = np.random.rand(n_samples)
 
 router.fit(contexts, decisions, rewards)
-print(f"Is fitted: {router.is_fitted}") # True
+print(f"Fitted: {router.is_fitted}")  # True
 
-# 3. Online Prediction
-# A new request comes in
-new_context = np.array([2.5, 0.5, 1.0, -0.2])
-chosen_arm = router.predict(new_context)
-print(f"Chosen price multiplier: {chosen_arm}")
+# 3. Online prediction
+ctx = np.array([2.5, 0.5, 1.0, -0.2])
+chosen = router.predict(ctx)
+print(f"Chosen arm: {chosen}")
 
-# 4. Online Update
-# The user accepted the price (reward = 1.0)
-router.update(new_context, chosen_arm, reward=1.0)
+# 4. Online update
+router.update(ctx, chosen, reward=0.9)
 
-# 5. Dynamic Arm Management (Warm Start)
-# We want to introduce a new 1.3x multiplier.
-# We "warm start" it using the learned weights of the 1.2x arm to avoid random behavior.
-router.add_arm(arm=1.3, warm_start_from=1.2)
+# 5. Add a new arm with warm start from "B"
+router.add_arm(arm="D", warm_start_from="B")
 
-# Verify the new arm exists
-scores = router.score_all(new_context)
-print(f"Scores for all arms: {scores}")
-# Output will now include 1.3
+scores = router.score_all(ctx)
+print(f"All arm scores: {scores}")  # now includes "D"
 ```

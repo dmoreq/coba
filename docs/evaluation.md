@@ -10,7 +10,7 @@ COBA provides three standard methodologies:
 * **Cons**: Throws away the vast majority of data. Unusable if the logging policy was not uniformly random.
 
 ## 2. Doubly Robust (DR)
-* **How it works**: Combines a reward model (Direct Method) with Inverse Propensity Scoring (IPS). 
+* **How it works**: Combines a reward model (Direct Method) with Inverse Propensity Scoring (IPS).
   $$ \hat{V}_{DR} = \frac{1}{N} \sum_{i=1}^N \left( \hat{r}(x_i, \pi(x_i)) + \frac{\mathbb{I}(a_i = \pi(x_i))}{p_i} (r_i - \hat{r}(x_i, a_i)) \right) $$
 * **Pros**: "Doubly robust" means the estimator is unbiased if *either* the reward model is accurate *or* the propensities are accurate. It offers significantly lower variance than standard IPS.
 * **Cons**: Requires you to know the propensities (probabilities) of the logging policy, and requires an estimator for the reward.
@@ -26,8 +26,8 @@ Here is a step-by-step example of how to use COBA's evaluation module to test a 
 
 ```python
 import numpy as np
-from coba.evaluation.metrics import rejection_sampling_eval, doubly_robust_eval, ncis_eval
-from coba.routers.cluster_router import ClusterRouter
+from coba.evaluation import rejection_sampling_eval, doubly_robust_eval, ncis_eval
+from coba.router import ClusterRouter
 
 # 1. Prepare historical data
 n_samples = 1000
@@ -45,18 +45,18 @@ propensities = np.full(n_samples, 0.5) # Assuming uniform logging policy
 # 3. Evaluate using Rejection Sampling
 # Ideal when logs were collected completely uniformly at random.
 rej_result = rejection_sampling_eval(
-    router=router, 
-    contexts=contexts, 
-    decisions=decisions, 
+    router=router,
+    contexts=contexts,
+    decisions=decisions,
     rewards=rewards
 )
 print(rej_result)
 # Output: EvalResult(method='rejection_sampling', estimated_reward=0.5100, n_used=502/1000 [50.2%])
 
 # 4. Evaluate using Doubly Robust (DR)
-# Requires reward estimates for the logged actions. 
+# Requires reward estimates for the logged actions.
 # Here we simulate estimates using a random array for the example.
-reward_estimates = np.random.rand(n_samples) 
+reward_estimates = np.random.rand(n_samples)
 
 dr_result = doubly_robust_eval(
     router=router,
@@ -72,7 +72,7 @@ print(dr_result)
 # 5. Evaluate using NCIS (Normalized Capped Importance Sampling)
 # We need to compute policy_scores (scores from our router for the logged decisions)
 policy_scores = np.array([
-    router.score_all(ctx).get(dec, 0.0) 
+    router.score_all(ctx).get(dec, 0.0)
     for ctx, dec in zip(contexts, decisions)
 ])
 

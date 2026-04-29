@@ -21,11 +21,11 @@ from coba import ClusterBandit
 from coba.types import PolicyType
 
 bandit = ClusterBandit(
-    arms=[1.0, 1.1, 1.2, 1.5],
+    arms=["A", "B", "C", "D"],
     n_features=7,
     policy=PolicyType.BOOTSTRAPPED_TS,
     n_clusters=5,
     base_estimator=LGBMRegressor(n_estimators=10, max_depth=3),
-    n_bootstraps=10, # Maintains 10 distinct LightGBM models
+    n_bootstraps=10,  # maintains 10 distinct LightGBM models
 )
 ```
