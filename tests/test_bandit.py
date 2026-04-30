@@ -150,6 +150,46 @@ class TestClusterBanditArmManagement:
         assert 1.0 not in stats_arms
 
 
+class TestClusterBanditTopK:
+    def test_top_k_before_fit_returns_first_k_arms(self):
+        bandit = make_bandit(fitted=False)
+        result = bandit.decide_top_k(make_context(), k=2)
+        assert len(result) == 2
+        assert result[0][0] == ARMS[0]
+        assert result[1][0] == ARMS[1]
+
+    def test_top_k_after_fit_returns_k_arms(self):
+        bandit = make_bandit(fitted=True)
+        result = bandit.decide_top_k(make_context(), k=2)
+        assert len(result) == 2
+        arms_returned = [arm for arm, _ in result]
+        for arm in arms_returned:
+            assert arm in ARMS
+
+    def test_top_k_scores_descending(self):
+        bandit = make_bandit(fitted=True)
+        result = bandit.decide_top_k(make_context(), k=3)
+        scores = [score for _, score in result]
+        assert scores == sorted(scores, reverse=True)
+
+    def test_top_k_clamped_to_n_arms(self):
+        bandit = make_bandit(fitted=True)
+        result = bandit.decide_top_k(make_context(), k=100)
+        assert len(result) == len(ARMS)
+
+    def test_top_k_first_matches_decide(self):
+        bandit = make_bandit(fitted=True)
+        ctx = make_context()
+        top1_arm = bandit.decide_top_k(ctx, k=1)[0][0]
+        decided_arm = bandit.decide(ctx).chosen_arm
+        assert top1_arm == decided_arm
+
+    def test_top_k_zero_raises(self):
+        bandit = make_bandit(fitted=True)
+        with pytest.raises(ValueError, match="k must be at least 1"):
+            bandit.decide_top_k(make_context(), k=0)
+
+
 class TestClusterBanditMonitoring:
     def test_get_stats_returns_all_arms(self):
         bandit = make_bandit(fitted=True)

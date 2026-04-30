@@ -188,6 +188,32 @@ class ClusterBandit:
             all_scores={str(k): v for k, v in all_scores.items()},
         )
 
+    def decide_top_k(self, context: np.ndarray, k: int) -> list[tuple[Arm, float]]:
+        """Return the top-k arms ranked by score for the given context.
+
+        Useful for ranked recommendation, list display, or exploration of
+        the second-best option when the best arm is unavailable.
+
+        Args:
+            context: Feature vector, shape (n_features,).
+            k: Number of arms to return. Clamped to len(arms) if k > n_arms.
+
+        Returns:
+            List of (arm, score) tuples in descending score order, length min(k, n_arms).
+        """
+        if k < 1:
+            raise ValueError(f"k must be at least 1, got {k}")
+
+        x = self._validate_context_vector(context)
+        k = min(k, len(self.arms))
+
+        if not self._router.is_fitted:
+            logger.debug("Bandit not fitted yet — returning first {k} arms for cold start", k=k)
+            return [(arm, 0.0) for arm in self.arms[:k]]
+
+        all_scores = self._router.score_all(x)
+        return sorted(all_scores.items(), key=lambda kv: kv[1], reverse=True)[:k]
+
     def score_all(self, context: np.ndarray) -> dict[Arm, float]:
         """Return per-arm scores for a single context."""
         x = self._validate_context_vector(context)
