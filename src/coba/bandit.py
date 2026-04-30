@@ -35,6 +35,7 @@ from typing import Any
 import numpy as np
 from loguru import logger
 
+from coba.drift import PageHinkleyDetector
 from coba.evaluation import (
     EvalResult,
     doubly_robust_eval,
@@ -82,6 +83,9 @@ class ClusterBandit:
         n_bootstraps: int = 10,
         epsilon: float = 0.1,
         gamma: float = 1.0,
+        enable_drift_detection: bool = False,
+        drift_delta: float = 0.005,
+        drift_lambda: float = 50.0,
     ) -> None:
         self.arms: list[Arm] = list(arms)
         self.policy = policy
@@ -106,6 +110,16 @@ class ClusterBandit:
 
         # Per-arm statistics for monitoring (pull counts, mean reward)
         self._arm_stats: dict[Arm, BanditStats] = {arm: BanditStats(arm=arm) for arm in self.arms}
+
+        # Optional per-arm drift detectors
+        self._drift_detectors: dict[Arm, PageHinkleyDetector] | None = None
+        if enable_drift_detection:
+            self._drift_detectors = {
+                arm: PageHinkleyDetector(delta=drift_delta, lambda_=drift_lambda)
+                for arm in self.arms
+            }
+            self._drift_delta = drift_delta
+            self._drift_lambda = drift_lambda
 
     # ------------------------------------------------------------------
     # Core Online API
@@ -288,6 +302,15 @@ class ClusterBandit:
         self._router.update(x, arm, reward, weight)
         self._update_arm_stats(arm, reward)
 
+        if self._drift_detectors is not None and arm in self._drift_detectors:
+            if self._drift_detectors[arm].update(reward):
+                logger.warning(
+                    "Drift detected for arm {arm} — resetting cluster models",
+                    arm=arm,
+                )
+                self._router.reset_arm(arm)
+                self._drift_detectors[arm].reset()
+
     def update_batch(
         self,
         contexts: np.ndarray,
@@ -404,6 +427,10 @@ class ClusterBandit:
         self._router.add_arm(arm, warm_start_from=warm_start_from, gamma=gamma)
         self.arms = self._router.arms
         self._arm_stats[arm] = BanditStats(arm=arm)
+        if self._drift_detectors is not None:
+            self._drift_detectors[arm] = PageHinkleyDetector(
+                delta=self._drift_delta, lambda_=self._drift_lambda
+            )
         logger.info(
             "Added arm {arm} (warm_start_from={src})",
             arm=arm,
@@ -419,6 +446,8 @@ class ClusterBandit:
         self._router.remove_arm(arm)
         self.arms = self._router.arms
         self._arm_stats.pop(arm, None)
+        if self._drift_detectors is not None:
+            self._drift_detectors.pop(arm, None)
         logger.info("Removed arm {arm}", arm=arm)
 
     # ------------------------------------------------------------------

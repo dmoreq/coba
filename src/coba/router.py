@@ -475,6 +475,22 @@ class ClusterRouter:
         for cluster_bandit in self._cluster_bandits:
             cluster_bandit.pop(arm, None)
 
+    def reset_arm(self, arm: Arm) -> None:
+        """Reset an arm's model across all clusters to its prior state.
+
+        Used by drift detection to discard stale knowledge after a reward
+        distribution shift is detected for that arm.
+
+        Args:
+            arm: Arm whose models should be reset.
+        """
+        if arm not in self.arms:
+            raise ValueError(f"Arm '{arm}' not found.")
+        for cluster_bandit in self._cluster_bandits:
+            if arm in cluster_bandit:
+                cluster_bandit[arm].reset()
+        logger.debug("Reset arm {arm} across all clusters after drift detection", arm=arm)
+
     # ------------------------------------------------------------------
     # Private helpers
     # ------------------------------------------------------------------

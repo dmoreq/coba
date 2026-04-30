@@ -96,6 +96,7 @@ See the [`examples/`](examples/) directory for runnable demonstrations of all fe
 | `examples/10_reward_normalizer.py` | Auto-scale raw business metrics before the bandit |
 | `examples/11_abstention.py` | Confidence-gap abstention with rule-based fallback |
 | `examples/12_per_arm_gamma.py` | Per-arm decay rates for newly launched arms |
+| `examples/13_drift_detection.py` | Auto-reset on reward distribution shift via `PageHinkleyDetector` |
 
 ## 🧪 Testing & Development
 
