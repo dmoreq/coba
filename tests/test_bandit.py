@@ -149,6 +149,19 @@ class TestClusterBanditArmManagement:
         stats_arms = {s.arm for s in bandit.get_stats()}
         assert 1.0 not in stats_arms
 
+    def test_add_arm_with_custom_gamma(self):
+        bandit = make_bandit(fitted=True)
+        bandit.add_arm("new_arm", gamma=0.9)
+        assert "new_arm" in bandit.arms
+        ctx = make_context()
+        decision = bandit.decide(ctx)
+        assert decision.chosen_arm in bandit.arms
+
+    def test_add_arm_gamma_none_uses_default(self):
+        bandit = make_bandit(fitted=True)
+        bandit.add_arm("default_gamma_arm", gamma=None)
+        assert "default_gamma_arm" in bandit.arms
+
 
 class TestConfidenceAbstention:
     def test_decide_no_gap_never_abstains(self):

@@ -406,7 +406,12 @@ class ClusterRouter:
         arm_models[arm].update(scaled_ctx, reward, weight)
         self._total_pulls += 1
 
-    def add_arm(self, arm: Arm, warm_start_from: Arm | None = None) -> None:
+    def add_arm(
+        self,
+        arm: Arm,
+        warm_start_from: Arm | None = None,
+        gamma: float | None = None,
+    ) -> None:
         """Dynamically add a new arm to all cluster bandits.
 
         If warm_start_from is provided and that arm is trained, the new arm's
@@ -416,10 +421,14 @@ class ClusterRouter:
         Args:
             arm: Identifier for the new arm.
             warm_start_from: If given, copy this arm's model as the starting point.
+            gamma: Discount factor for the new arm's model. Overrides the router-level
+                   gamma when provided. Useful for giving a newly launched arm a higher
+                   decay rate so it adapts faster to its own distribution.
         """
         if arm in self.arms:
             raise ValueError(f"Arm '{arm}' already exists.")
 
+        effective_gamma = gamma if gamma is not None else self.gamma
         self.arms.append(arm)
 
         for cluster_bandit in self._cluster_bandits:
@@ -435,7 +444,7 @@ class ClusterRouter:
                     source=warm_start_from,
                 )
             else:
-                # Cold start: fresh model
+                # Cold start: fresh model with optional per-arm gamma
                 new_models = _build_arm_models(
                     [arm],
                     self.policy,
@@ -447,7 +456,7 @@ class ClusterRouter:
                     base_estimator=self.base_estimator,
                     n_bootstraps=self.n_bootstraps,
                     epsilon=self.epsilon,
-                    gamma=self.gamma,
+                    gamma=effective_gamma,
                 )
                 cluster_bandit[arm] = new_models[arm]
 

@@ -384,15 +384,24 @@ class ClusterBandit:
     # Arm Management
     # ------------------------------------------------------------------
 
-    def add_arm(self, arm: Arm, warm_start_from: Arm | None = None) -> None:
+    def add_arm(
+        self,
+        arm: Arm,
+        warm_start_from: Arm | None = None,
+        gamma: float | None = None,
+    ) -> None:
         """Dynamically add a new arm to the bandit.
 
         Args:
             arm: New arm identifier.
             warm_start_from: If given, initialize the new arm's model by copying
                              this arm's trained model.
+            gamma: Per-arm discount factor. Overrides the bandit-level gamma for
+                   this arm only. A higher decay (e.g. 0.9) lets a newly launched
+                   arm adapt faster to its own reward distribution without affecting
+                   existing arms.
         """
-        self._router.add_arm(arm, warm_start_from=warm_start_from)
+        self._router.add_arm(arm, warm_start_from=warm_start_from, gamma=gamma)
         self.arms = self._router.arms
         self._arm_stats[arm] = BanditStats(arm=arm)
         logger.info(
