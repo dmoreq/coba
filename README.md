@@ -5,7 +5,7 @@
 
 ---
 
-**COBA** (COntextual BANdit engine) is a lightweight, high-performance reinforcement learning library for real-time decision making using Multi-Armed Bandits.
+**COBA** (COntextual BAndit engine) is a lightweight, high-performance reinforcement learning library for real-time decision making using Multi-Armed Bandits.
 
 By treating the context as a raw multi-dimensional feature vector, COBA strictly separates the machine learning math from your business logic, allowing it to seamlessly integrate into any existing domain architecture.
 
@@ -92,14 +92,6 @@ See the [`examples/`](examples/) directory for runnable demonstrations of all fe
 | `examples/06_persistence.py` | Save and load a bandit |
 | `examples/07_batch_update.py` | Batch and streaming log-replay |
 | `examples/08_monitoring.py` | Per-arm stats, scores, cluster assignments |
-| `examples/09_top_k_decisions.py` | Ranked top-K arm selection for list display |
-| `examples/10_reward_normalizer.py` | Auto-scale raw business metrics before the bandit |
-| `examples/11_abstention.py` | Confidence-gap abstention with rule-based fallback |
-| `examples/12_per_arm_gamma.py` | Per-arm decay rates for newly launched arms |
-| `examples/13_drift_detection.py` | Auto-reset on reward distribution shift via `PageHinkleyDetector` |
-| `examples/14_constrained_bandit.py` | Minimum pull-rate floors to guarantee per-arm exploration |
-| `examples/15_lin_ucb_hybrid.py` | `LinUCB-Hybrid`: shared user features + per-arm item features |
-| `examples/16_neural_linear.py` | `NeuralLinear`: MLP embedding backbone + per-arm LinTS head |
 
 ## 🧪 Testing & Development
 

@@ -28,3 +28,4 @@ class PolicyType(str, Enum):
     BOOTSTRAPPED_UCB = "bootstrapped_ucb"
     LOGISTIC_UCB = "logistic_ucb"
     LOGISTIC_TS = "logistic_ts"
+    GP_UCB = "gp_ucb"

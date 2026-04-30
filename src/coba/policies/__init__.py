@@ -1,6 +1,7 @@
 """Core subpackage — learning algorithm implementations."""
 
 from coba.policies.base import ArmStats, BaseArmModel
+from coba.policies.gp_ucb import GPUCBArmModel
 from coba.policies.linucb import LinUCBArmModel
 from coba.policies.lin_ts import LinTSArmModel
 from coba.policies.logistic import LogisticTSArmModel, LogisticUCBArmModel
@@ -15,6 +16,7 @@ from coba.policies.ucb1 import UCB1ArmModel
 __all__ = [
     "BaseArmModel",
     "ArmStats",
+    "GPUCBArmModel",
     "LinUCBArmModel",
     "LinTSArmModel",
     "ThompsonArmModel",

@@ -53,8 +53,13 @@ def _build_arm_models(
     n_shared_features: int = 0,
     shared_ridge: "Any | None" = None,
     neural_backbone: "Any | None" = None,
+    gp_beta: float = 2.0,
+    gp_length_scale: float = 1.0,
+    gp_noise_var: float = 0.1,
+    gp_max_obs: int = 500,
 ) -> dict[Arm, BaseArmModel]:
     """Factory function: build one BaseArmModel per arm for the given policy type."""
+    from coba.policies.gp_ucb import GPUCBArmModel
     from coba.policies.lin_ucb_hybrid import LinUCBHybridArmModel
     from coba.policies.linucb import LinUCBArmModel
     from coba.policies.lin_ts import LinTSArmModel
@@ -133,6 +138,15 @@ def _build_arm_models(
                 models[arm] = LogisticTSArmModel(
                     arm, n_features, v_sq=v_sq, l2_lambda=l2_lambda, rng=rng, gamma=gamma
                 )
+            case PolicyType.GP_UCB:
+                models[arm] = GPUCBArmModel(
+                    arm,
+                    beta=gp_beta,
+                    length_scale=gp_length_scale,
+                    noise_var=gp_noise_var,
+                    max_obs=gp_max_obs,
+                    rng=rng,
+                )
             case _:
                 raise ValueError(f"Unsupported policy: {policy}")
     return models
@@ -181,6 +195,10 @@ class ClusterRouter:
         neural_embedding_dim: int = 16,
         neural_hidden_sizes: tuple[int, ...] = (64, 32),
         neural_retrain_freq: int = 200,
+        gp_beta: float = 2.0,
+        gp_length_scale: float = 1.0,
+        gp_noise_var: float = 0.1,
+        gp_max_obs: int = 500,
     ) -> None:
         if n_clusters < 1:
             raise ValueError("n_clusters must be at least 1.")
@@ -204,6 +222,10 @@ class ClusterRouter:
         self.neural_embedding_dim = neural_embedding_dim
         self.neural_hidden_sizes = neural_hidden_sizes
         self.neural_retrain_freq = neural_retrain_freq
+        self.gp_beta = gp_beta
+        self.gp_length_scale = gp_length_scale
+        self.gp_noise_var = gp_noise_var
+        self.gp_max_obs = gp_max_obs
 
         self._rng = np.random.default_rng(seed)
 
@@ -268,6 +290,10 @@ class ClusterRouter:
                 neural_backbone=(
                     self._neural_backbones[c] if self._neural_backbones is not None else None
                 ),
+                gp_beta=gp_beta,
+                gp_length_scale=gp_length_scale,
+                gp_noise_var=gp_noise_var,
+                gp_max_obs=gp_max_obs,
             )
             for c in range(n_clusters)
         ]
@@ -546,6 +572,10 @@ class ClusterRouter:
                     n_shared_features=self.n_shared_features,
                     shared_ridge=cluster_shared_ridge,
                     neural_backbone=cluster_neural_backbone,
+                    gp_beta=self.gp_beta,
+                    gp_length_scale=self.gp_length_scale,
+                    gp_noise_var=self.gp_noise_var,
+                    gp_max_obs=self.gp_max_obs,
                 )
                 cluster_bandit[arm] = new_models[arm]
 

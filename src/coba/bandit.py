@@ -85,6 +85,14 @@ class ClusterBandit:
         neural_retrain_freq: Number of total arm updates before retraining the
             NEURAL_LINEAR backbone. Lower → more frequent retrains (slower but
             adapts faster). Higher → faster but backbone lags recent data.
+        gp_beta: UCB exploration coefficient for PolicyType.GP_UCB. Higher → more
+            exploration (wider confidence intervals).
+        gp_length_scale: RBF kernel bandwidth for GP_UCB. Controls how quickly
+            reward correlation decays with distance in context space.
+        gp_noise_var: Observation noise variance (σ²) for GP_UCB. Acts like L2
+            regularisation — higher values reduce overfitting to sparse data.
+        gp_max_obs: Maximum number of stored observations for GP_UCB. Oldest
+            observations are dropped (FIFO) to keep O(n²) inference tractable.
     """
 
     def __init__(
@@ -111,6 +119,10 @@ class ClusterBandit:
         neural_embedding_dim: int = 16,
         neural_hidden_sizes: tuple[int, ...] = (64, 32),
         neural_retrain_freq: int = 200,
+        gp_beta: float = 2.0,
+        gp_length_scale: float = 1.0,
+        gp_noise_var: float = 0.1,
+        gp_max_obs: int = 500,
     ) -> None:
         self.arms: list[Arm] = list(arms)
         self.policy = policy
@@ -135,6 +147,10 @@ class ClusterBandit:
             neural_embedding_dim=neural_embedding_dim,
             neural_hidden_sizes=neural_hidden_sizes,
             neural_retrain_freq=neural_retrain_freq,
+            gp_beta=gp_beta,
+            gp_length_scale=gp_length_scale,
+            gp_noise_var=gp_noise_var,
+            gp_max_obs=gp_max_obs,
         )
 
         # Per-arm statistics for monitoring (pull counts, mean reward)
