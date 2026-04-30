@@ -73,6 +73,11 @@ class ClusterBandit:
             that must go to that arm, e.g. {"new_arm": 0.05} guarantees at least
             5% exploration. Arms below their threshold are forced into the candidate
             set. Sum of all rates must be ≤ 1.0.
+        n_shared_features: Number of shared context dimensions for
+            PolicyType.LIN_UCB_HYBRID. The first n_shared_features elements of
+            each context vector are treated as global (user/session) features
+            learned jointly across all arms; the remaining n_features - n_shared_features
+            elements are arm-specific. Must be 0 for all other policy types.
     """
 
     def __init__(
@@ -95,6 +100,7 @@ class ClusterBandit:
         drift_delta: float = 0.005,
         drift_lambda: float = 50.0,
         min_pull_rates: dict[Arm, float] | None = None,
+        n_shared_features: int = 0,
     ) -> None:
         self.arms: list[Arm] = list(arms)
         self.policy = policy
@@ -115,6 +121,7 @@ class ClusterBandit:
             n_bootstraps=n_bootstraps,
             epsilon=epsilon,
             gamma=gamma,
+            n_shared_features=n_shared_features,
         )
 
         # Per-arm statistics for monitoring (pull counts, mean reward)

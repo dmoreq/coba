@@ -34,6 +34,7 @@ from sklearn.cluster import KMeans, MiniBatchKMeans
 from sklearn.preprocessing import StandardScaler
 
 from coba.policies.base import BaseArmModel
+from coba.policies.ridge import RidgeRegression
 from coba.types import Arm, PolicyType
 
 
@@ -49,8 +50,11 @@ def _build_arm_models(
     n_bootstraps: int = 10,
     epsilon: float = 0.1,
     gamma: float = 1.0,
+    n_shared_features: int = 0,
+    shared_ridge: "Any | None" = None,
 ) -> dict[Arm, BaseArmModel]:
     """Factory function: build one BaseArmModel per arm for the given policy type."""
+    from coba.policies.lin_ucb_hybrid import LinUCBHybridArmModel
     from coba.policies.linucb import LinUCBArmModel
     from coba.policies.lin_ts import LinTSArmModel
     from coba.policies.sklearn_models import (
@@ -65,6 +69,19 @@ def _build_arm_models(
     models: dict[Arm, BaseArmModel] = {}
     for arm in arms:
         match policy:
+            case PolicyType.LIN_UCB_HYBRID:
+                if shared_ridge is None:
+                    raise ValueError("shared_ridge must be provided for LIN_UCB_HYBRID policy")
+                models[arm] = LinUCBHybridArmModel(
+                    arm,
+                    n_shared=n_shared_features,
+                    n_arm=n_features - n_shared_features,
+                    shared_ridge=shared_ridge,
+                    alpha=alpha,
+                    l2_lambda=l2_lambda,
+                    rng=rng,
+                    gamma=gamma,
+                )
             case PolicyType.LIN_UCB:
                 models[arm] = LinUCBArmModel(
                     arm, n_features, alpha=alpha, l2_lambda=l2_lambda, rng=rng, gamma=gamma
@@ -147,6 +164,7 @@ class ClusterRouter:
         n_bootstraps: int = 10,
         epsilon: float = 0.1,
         gamma: float = 1.0,
+        n_shared_features: int = 0,
     ) -> None:
         if n_clusters < 1:
             raise ValueError("n_clusters must be at least 1.")
@@ -166,6 +184,7 @@ class ClusterRouter:
         self.n_bootstraps = n_bootstraps
         self.epsilon = epsilon
         self.gamma = gamma
+        self.n_shared_features = n_shared_features
 
         self._rng = np.random.default_rng(seed)
 
@@ -180,7 +199,21 @@ class ClusterRouter:
         # StandardScaler for context normalization
         self._scaler: StandardScaler | None = StandardScaler() if scale_contexts else None
 
-        # One dict of {arm: ArmModel} per cluster
+        # One dict of {arm: ArmModel} per cluster.
+        # For LIN_UCB_HYBRID, each cluster gets its own SharedRidge (not shared across clusters).
+        if policy == PolicyType.LIN_UCB_HYBRID:
+            if n_shared_features <= 0 or n_shared_features >= n_features:
+                raise ValueError(
+                    f"LIN_UCB_HYBRID requires 0 < n_shared_features < n_features, "
+                    f"got n_shared_features={n_shared_features}, n_features={n_features}"
+                )
+            self._shared_ridges: list[RidgeRegression] | None = [
+                RidgeRegression(n_features=n_shared_features, l2_lambda=l2_lambda, gamma=gamma)
+                for _ in range(n_clusters)
+            ]
+        else:
+            self._shared_ridges = None
+
         self._cluster_bandits: list[dict[Arm, BaseArmModel]] = [
             _build_arm_models(
                 arms,
@@ -194,8 +227,10 @@ class ClusterRouter:
                 n_bootstraps=self.n_bootstraps,
                 epsilon=self.epsilon,
                 gamma=self.gamma,
+                n_shared_features=n_shared_features,
+                shared_ridge=self._shared_ridges[c] if self._shared_ridges is not None else None,
             )
-            for _ in range(n_clusters)
+            for c in range(n_clusters)
         ]
 
         # Total pulls per arm across the entire router (for UCB1 denominator)
@@ -263,6 +298,9 @@ class ClusterRouter:
         for cluster_bandit in self._cluster_bandits:
             for model in cluster_bandit.values():
                 model.reset()
+        if self._shared_ridges is not None:
+            for sr in self._shared_ridges:
+                sr.reset()
 
         # Train each cluster's bandit on its subset of the data
         for c in range(self.n_clusters):
@@ -431,7 +469,10 @@ class ClusterRouter:
         effective_gamma = gamma if gamma is not None else self.gamma
         self.arms.append(arm)
 
-        for cluster_bandit in self._cluster_bandits:
+        for c_idx, cluster_bandit in enumerate(self._cluster_bandits):
+            cluster_shared_ridge = (
+                self._shared_ridges[c_idx] if self._shared_ridges is not None else None
+            )
             if warm_start_from is not None and warm_start_from in cluster_bandit:
                 # Warm start: copy the model from the source arm
                 source_model = cluster_bandit[warm_start_from]
@@ -457,6 +498,8 @@ class ClusterRouter:
                     n_bootstraps=self.n_bootstraps,
                     epsilon=self.epsilon,
                     gamma=effective_gamma,
+                    n_shared_features=self.n_shared_features,
+                    shared_ridge=cluster_shared_ridge,
                 )
                 cluster_bandit[arm] = new_models[arm]
 
