@@ -27,30 +27,26 @@ def make_fitted_router(n: int = 300, n_features: int = 7, seed: int = 0) -> Clus
 
 class TestIPSEstimator:
     def test_unit_propensity_gives_unit_weights(self):
-        rewards = np.array([0.5, 0.7, 0.3])
         propensities = np.ones(3)
-        weights = IPSEstimator.compute_weights(rewards, propensities)
+        weights = IPSEstimator.compute_weights(propensities)
         np.testing.assert_array_almost_equal(weights, np.ones(3))
 
     def test_half_propensity_gives_double_weights(self):
-        rewards = np.array([0.5, 0.5])
         propensities = np.array([0.5, 0.5])
-        weights = IPSEstimator.compute_weights(rewards, propensities)
+        weights = IPSEstimator.compute_weights(propensities)
         np.testing.assert_array_almost_equal(weights, np.array([2.0, 2.0]))
 
     def test_weights_clipped_at_min(self):
         """Very small propensities should be clipped."""
-        rewards = np.array([0.5])
         propensities = np.array([1e-10])  # very small
         config = IPSConfig(clip_min=1e-4, clip_max=None)
-        weights = IPSEstimator.compute_weights(rewards, propensities, config)
+        weights = IPSEstimator.compute_weights(propensities, config)
         assert weights[0] == pytest.approx(1.0 / 1e-4)
 
     def test_weights_clipped_at_max(self):
-        rewards = np.array([0.5])
         propensities = np.array([0.001])
         config = IPSConfig(clip_min=1e-4, clip_max=5.0)
-        weights = IPSEstimator.compute_weights(rewards, propensities, config)
+        weights = IPSEstimator.compute_weights(propensities, config)
         assert weights[0] == pytest.approx(5.0)
 
     def test_dr_rewards_formula(self):

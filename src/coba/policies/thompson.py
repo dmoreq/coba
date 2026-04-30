@@ -16,6 +16,7 @@ Note: rewards must be in [0, 1] (e.g. conversion rate, normalized engagement sco
 """
 
 import numpy as np
+from loguru import logger
 
 from coba.policies.base import BaseArmModel
 from coba.types import Arm
@@ -69,7 +70,13 @@ class ThompsonArmModel(BaseArmModel):
             reward: Observed reward in [0, 1].
             weight: Importance weight. Default 1.0.
         """
-        # Clip reward to [0, 1] to ensure valid Beta update
+        if reward < 0.0 or reward > 1.0:
+            logger.warning(
+                "ThompsonArmModel arm={arm}: reward {r:.4f} outside [0, 1] — clipping. "
+                "Thompson Sampling requires rewards in [0, 1].",
+                arm=self.arm,
+                r=reward,
+            )
         r = float(np.clip(reward, 0.0, 1.0))
         self._alpha += weight * r
         self._beta += weight * (1.0 - r)

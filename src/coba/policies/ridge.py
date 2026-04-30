@@ -75,8 +75,11 @@ class RidgeRegression:
         # Compute A_inv @ x once to reuse in both numerator and denominator
         a_inv_x = self.A_inv @ x  # shape (d,)
 
-        # Sherman-Morrison denominator: scalar
-        denom = 1.0 + weight * float(x @ a_inv_x)
+        # Sherman-Morrison denominator: scalar.
+        # Clamp to a small positive value — floating-point drift after many rank-1
+        # downdates can make (x @ A_inv @ x) go slightly negative, which would
+        # produce a near-zero or negative denominator and corrupt A_inv with NaN/inf.
+        denom = max(1.0 + weight * float(x @ a_inv_x), 1e-10)
 
         # Rank-1 downdate of A_inv: A_inv ← A_inv - w*(A_inv x x^T A_inv) / denom
         self.A_inv -= weight * np.outer(a_inv_x, a_inv_x) / denom
@@ -95,7 +98,7 @@ class RidgeRegression:
             self.A_inv /= self.gamma
             self.Xty *= self.gamma
         a_inv_x = self.A_inv @ x
-        denom = 1.0 + weight * float(x @ a_inv_x)
+        denom = max(1.0 + weight * float(x @ a_inv_x), 1e-10)
         self.A_inv -= weight * np.outer(a_inv_x, a_inv_x) / denom
         self.Xty += weight * x * y
         self.n_obs += 1

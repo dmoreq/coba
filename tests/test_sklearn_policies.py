@@ -28,9 +28,9 @@ def test_epsilon_greedy_arm_model(rng, base_estimator):
 
     assert not model.is_fitted
 
-    # Should return exploration value if not fitted
+    # Cold-start score must be inf to beat any finite model prediction
     score = model.score(np.array([1.0, 2.0]))
-    assert score > 100.0  # Exploration returns a large value (1e3 to 1e4)
+    assert np.isinf(score)
 
     # Train
     model.update(np.array([1.0, 2.0]), 0.5)
@@ -191,9 +191,8 @@ def test_bootstrapped_ts_optimistic_before_fit(
     preds = model._predict_all(np.array([1.0, 2.0]))
 
     assert len(preds) == 5
-    # Optimistic scores should be in the large range [1e3, 1e4]
-    assert (preds >= 1e3).all()
-    assert (preds <= 1e4).all()
+    # Cold-start scores must beat any finite model prediction
+    assert np.all(np.isinf(preds))
 
 
 def test_epsilon_greedy_explores_when_forced(
@@ -210,6 +209,6 @@ def test_epsilon_greedy_explores_when_forced(
     model.update(np.array([1.0, 2.0]), 0.5)
     assert model.is_fitted
 
-    # With epsilon=1.0, should still return exploration score
+    # With epsilon=1.0, should always return inf exploration score
     score = model.score(np.array([1.0, 2.0]))
-    assert score >= 1e3
+    assert np.isinf(score)

@@ -66,9 +66,10 @@ class OnlineLogisticRegression:
         # Prevent v from being exactly 0 to avoid degenerate Hessian updates
         v = max(v, 1e-6)
 
-        # Sherman-Morrison rank-1 downdate on the inverse Hessian
+        # Sherman-Morrison rank-1 downdate on the inverse Hessian.
+        # Clamp denominator — same drift guard as ridge.py.
         h_inv_x = self.H_inv @ x
-        denom = 1.0 + v * float(x @ h_inv_x)
+        denom = max(1.0 + v * float(x @ h_inv_x), 1e-10)
         self.H_inv -= v * np.outer(h_inv_x, h_inv_x) / denom
 
         # Gradient of the log-likelihood for this sample

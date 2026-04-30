@@ -229,8 +229,8 @@ class ClusterBandit:
         if not np.isfinite(propensity) or propensity <= 0:
             raise ValueError("propensity must be a finite value > 0")
 
-        # IPS weight: 1/propensity, clipped to avoid explosion
-        weight = float(np.clip(1.0 / max(propensity, 1e-4), 0.0, 10.0))
+        # IPS weight: 1/propensity, capped to avoid explosion from near-zero propensities
+        weight = min(1.0 / max(propensity, 1e-4), 10.0)
 
         self._router.update(x, arm, reward, weight)
         self._update_arm_stats(arm, reward)

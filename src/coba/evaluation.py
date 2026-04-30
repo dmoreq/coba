@@ -86,9 +86,9 @@ def rejection_sampling_eval(
     n_total = len(rewards)
     predictions = np.array([router.predict(ctx) for ctx in contexts])
     mask = predictions == decisions
-    accepted_rewards = rewards[mask].tolist()
+    accepted_rewards = rewards[mask]
 
-    n_accepted = len(accepted_rewards)
+    n_accepted = int(np.sum(mask))
     if n_accepted == 0:
         logger.warning("Rejection sampling: no samples accepted — policy may not overlap with logs")
         return EvalResult("rejection_sampling", 0.0, 0, n_total)

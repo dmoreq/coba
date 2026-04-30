@@ -71,14 +71,12 @@ class IPSEstimator:
 
     @staticmethod
     def compute_weights(
-        rewards: np.ndarray,
         propensities: np.ndarray,
         config: IPSConfig | None = None,
     ) -> np.ndarray:
-        """Compute clipped IPS importance weights.
+        """Compute clipped IPS importance weights (1 / propensity).
 
         Args:
-            rewards: Observed rewards, shape (n_samples,). Should be in [0, 1].
             propensities: Logging policy propensities, shape (n_samples,).
                          Must be in (0, 1].
             config: IPS configuration (clip_min, clip_max).
@@ -189,7 +187,7 @@ class DoublyRobustUpdater:
             weights = np.ones(len(rewards), dtype=np.float64)
         else:
             corrected_rewards = np.asarray(rewards, dtype=np.float64)
-            weights = IPSEstimator.compute_weights(rewards, propensities, self.config)
+            weights = IPSEstimator.compute_weights(propensities, self.config)
 
         logger.info(
             "Off-policy fit: {n} samples, mean_weight={mw:.3f}, mean_reward={mr:.3f}",
@@ -238,10 +236,10 @@ class DoublyRobustUpdater:
                 weights = np.ones(len(rewards), dtype=np.float64)
             else:
                 corrected_rewards = np.asarray(rewards, dtype=np.float64)
-                weights = IPSEstimator.compute_weights(rewards, propensities, self.config)
+                weights = IPSEstimator.compute_weights(propensities, self.config)
         else:
             corrected_rewards = np.asarray(rewards, dtype=np.float64)
-            weights = IPSEstimator.compute_weights(rewards, propensities, self.config)
+            weights = IPSEstimator.compute_weights(propensities, self.config)
 
         self.router.partial_fit(
             contexts=contexts,

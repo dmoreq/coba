@@ -14,11 +14,9 @@ import numpy as np
 from coba.policies.base import BaseArmModel
 from coba.types import Arm
 
-# Scores returned to force exploration for unfitted arms or epsilon-greedy trials.
-# Set deliberately high so any fitted arm with a real prediction will be preferred
-# once the model has enough data to trust its estimates.
-_EXPLORE_SCORE_LOW: float = 1e3
-_EXPLORE_SCORE_HIGH: float = 1e4
+# Score returned for arms that have never been updated (cold start).
+# Must beat any possible model prediction regardless of the reward scale.
+_COLD_START_SCORE: float = float("inf")
 
 
 class EpsilonGreedyArmModel(BaseArmModel):
@@ -54,12 +52,12 @@ class EpsilonGreedyArmModel(BaseArmModel):
     def score(self, x: np.ndarray) -> float:
         """Returns the predicted reward, or a large value for exploration."""
         if not self.is_fitted:
-            # Optimistic initialization for exploration
-            return self.rng.uniform(_EXPLORE_SCORE_LOW, _EXPLORE_SCORE_HIGH)
+            return _COLD_START_SCORE
 
         if self.rng.random() < self.epsilon:
-            # Force exploration: return a large score so this arm gets picked
-            return self.rng.uniform(_EXPLORE_SCORE_LOW, _EXPLORE_SCORE_HIGH)
+            # Exploration: return a score above any observed prediction to force selection.
+            # Using inf so the arm wins regardless of the estimator's output scale.
+            return _COLD_START_SCORE
 
         # Exploitation: predict using the underlying model
         pred = self.model.predict(x.reshape(1, -1))[0]
@@ -157,8 +155,7 @@ class _BootstrappedArmModelBase(BaseArmModel):
     def _predict_all(self, x: np.ndarray) -> np.ndarray:
         """Return predictions from all models in the ensemble."""
         if not self.is_fitted:
-            # Optimistic initialization — encourages equal exploration of all arms
-            return self.rng.uniform(_EXPLORE_SCORE_LOW, _EXPLORE_SCORE_HIGH, size=self.n_bootstraps)
+            return np.full(self.n_bootstraps, _COLD_START_SCORE)
 
         x_2d = x.reshape(1, -1)
         preds = [model.predict(x_2d)[0] for model in self.models]
