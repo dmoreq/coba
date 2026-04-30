@@ -14,11 +14,21 @@ from coba.types import Arm
 class BanditDecision(BaseModel):
     """Output of the bandit's decide() call."""
 
-    chosen_arm: Arm = Field(..., description="The selected arm identifier")
+    chosen_arm: Arm | None = Field(
+        ...,
+        description="The selected arm identifier. None when the decision was abstained.",
+    )
     score: float = Field(..., description="Score of the chosen arm (e.g. UCB/TS sample)")
     all_scores: dict[str, float] = Field(
         default_factory=dict,
         description="Scores for all arms (arm keys cast to str for JSON compatibility)",
+    )
+    abstained: bool = Field(
+        default=False,
+        description=(
+            "True when no arm had a sufficiently clear lead over the others "
+            "(controlled by min_confidence_gap in decide())."
+        ),
     )
 
     model_config = {"frozen": True}

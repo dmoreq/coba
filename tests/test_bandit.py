@@ -150,6 +150,37 @@ class TestClusterBanditArmManagement:
         assert 1.0 not in stats_arms
 
 
+class TestConfidenceAbstention:
+    def test_decide_no_gap_never_abstains(self):
+        bandit = make_bandit(fitted=True)
+        decision = bandit.decide(make_context(), min_confidence_gap=0.0)
+        assert not decision.abstained
+        assert decision.chosen_arm is not None
+
+    def test_decide_huge_gap_always_abstains(self):
+        bandit = make_bandit(fitted=True)
+        decision = bandit.decide(make_context(), min_confidence_gap=1e9)
+        assert decision.abstained
+        assert decision.chosen_arm is None
+
+    def test_abstained_still_has_all_scores(self):
+        bandit = make_bandit(fitted=True)
+        decision = bandit.decide(make_context(), min_confidence_gap=1e9)
+        assert len(decision.all_scores) == len(ARMS)
+
+    def test_normal_decision_not_abstained_by_default(self):
+        bandit = make_bandit(fitted=True)
+        decision = bandit.decide(make_context())
+        assert not decision.abstained
+
+    def test_cold_start_never_abstains(self):
+        bandit = make_bandit(fitted=False)
+        decision = bandit.decide(make_context(), min_confidence_gap=1e9)
+        # Cold start ignores min_confidence_gap and always returns base arm
+        assert not decision.abstained
+        assert decision.chosen_arm == ARMS[0]
+
+
 class TestClusterBanditTopK:
     def test_top_k_before_fit_returns_first_k_arms(self):
         bandit = make_bandit(fitted=False)

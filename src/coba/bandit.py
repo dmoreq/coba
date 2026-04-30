@@ -156,7 +156,11 @@ class ClusterBandit:
                 raise ValueError("propensities must be > 0")
         return ctx, arm_arr, rew, p
 
-    def decide(self, context: np.ndarray) -> BanditDecision:
+    def decide(
+        self,
+        context: np.ndarray,
+        min_confidence_gap: float = 0.0,
+    ) -> BanditDecision:
         """Select the optimal arm for the given context vector.
 
         If the bandit is not yet fitted (cold start), falls back to the first
@@ -164,9 +168,15 @@ class ClusterBandit:
 
         Args:
             context: Feature vector, shape (n_features,).
+            min_confidence_gap: If > 0, abstain when the score gap between the
+                best and second-best arm is smaller than this threshold.
+                Returns BanditDecision(chosen_arm=None, abstained=True) so the
+                caller can apply a fallback (e.g. a rule-based policy).
+                Default 0.0 disables abstention.
 
         Returns:
             BanditDecision with the chosen arm and score breakdown.
+            Check `.abstained` before using `.chosen_arm`.
         """
         x = self._validate_context_vector(context)
 
@@ -180,11 +190,28 @@ class ClusterBandit:
             )
 
         all_scores = self._router.score_all(x)
-        chosen_arm = max(all_scores, key=lambda a: all_scores[a])
+        sorted_arms = sorted(all_scores.items(), key=lambda kv: kv[1], reverse=True)
+        chosen_arm, best_score = sorted_arms[0]
+
+        if min_confidence_gap > 0.0 and len(sorted_arms) >= 2:
+            second_score = sorted_arms[1][1]
+            gap = best_score - second_score
+            if gap < min_confidence_gap:
+                logger.debug(
+                    "decide() abstaining: gap={gap:.4f} < threshold={thr:.4f}",
+                    gap=gap,
+                    thr=min_confidence_gap,
+                )
+                return BanditDecision(
+                    chosen_arm=None,
+                    score=best_score,
+                    all_scores={str(k): v for k, v in all_scores.items()},
+                    abstained=True,
+                )
 
         return BanditDecision(
             chosen_arm=chosen_arm,
-            score=all_scores[chosen_arm],
+            score=best_score,
             all_scores={str(k): v for k, v in all_scores.items()},
         )
 
