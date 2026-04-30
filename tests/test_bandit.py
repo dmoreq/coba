@@ -333,3 +333,71 @@ class TestClusterBanditMonitoring:
                 use_dr=True,
                 reward_estimates=None,
             )
+
+
+class TestConstrainedBandit:
+    def _make_constrained(self, min_pull_rates: dict) -> ClusterBandit:
+        return ClusterBandit(
+            arms=ARMS,
+            n_features=7,
+            policy=PolicyType.LIN_UCB,
+            n_clusters=3,
+            seed=0,
+            min_pull_rates=min_pull_rates,
+        )
+
+    def test_constrained_bandit_creates_without_error(self):
+        bandit = self._make_constrained({1.0: 0.1, 1.1: 0.1})
+        assert bandit._min_pull_rates is not None
+
+    def test_invalid_rate_raises(self):
+        with pytest.raises(ValueError, match="min_pull_rates"):
+            self._make_constrained({1.0: 0.0})
+
+    def test_rate_exceeds_one_raises(self):
+        with pytest.raises(ValueError, match="min_pull_rates"):
+            self._make_constrained({1.0: 1.5})
+
+    def test_sum_exceeds_one_raises(self):
+        with pytest.raises(ValueError, match="sum"):
+            self._make_constrained({1.0: 0.5, 1.1: 0.6})
+
+    def test_unknown_arm_raises(self):
+        with pytest.raises(ValueError, match="unknown arms"):
+            self._make_constrained({99.9: 0.1})
+
+    def test_constrained_arm_is_forced_when_under_pulled(self):
+        # 1.5 should be chosen frequently since it is constrained at 50% and
+        # starts with 0 pulls — the first decision must be for 1.5
+        bandit = self._make_constrained({1.5: 0.5})
+        rng = np.random.default_rng(0)
+        n = 200
+        contexts = rng.standard_normal((n, 7))
+        decisions = rng.choice(ARMS, size=n)
+        rewards = rng.uniform(0, 1, n)
+        bandit.fit_offline(contexts, decisions, rewards)
+
+        # After fit, pull 1.5 enough times to see the constraint force it
+        pull_counts = {arm: 0 for arm in ARMS}
+        for _ in range(200):
+            ctx = make_context()
+            decision = bandit.decide(ctx)
+            arm = decision.chosen_arm
+            pull_counts[arm] += 1
+            bandit.update(context=ctx, arm=arm, reward=0.5)
+
+        total = sum(pull_counts.values())
+        rate_1_5 = pull_counts[1.5] / total
+        # With min_pull_rate=0.5, arm 1.5 should be chosen at least 40% of the time
+        assert rate_1_5 >= 0.40, f"Expected ≥40% pulls for constrained arm, got {rate_1_5:.2%}"
+
+    def test_remove_arm_cleans_up_constraint(self):
+        bandit = self._make_constrained({1.0: 0.1})
+        bandit.remove_arm(1.0)
+        assert 1.0 not in (bandit._min_pull_rates or {})
+
+    def test_unconstrained_bandit_normal_operation(self):
+        bandit = make_bandit(fitted=True)
+        assert bandit._min_pull_rates is None
+        decision = bandit.decide(make_context())
+        assert decision.chosen_arm in ARMS

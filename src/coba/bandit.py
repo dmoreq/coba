@@ -65,6 +65,14 @@ class ClusterBandit:
         base_estimator: A scikit-learn compatible estimator for non-linear policies.
         n_bootstraps: Number of bootstrapped models for bootstrapped policies.
         epsilon: Epsilon value for epsilon-greedy exploration.
+        enable_drift_detection: If True, monitor per-arm reward streams with a
+            PageHinkleyDetector. Detected shift resets that arm's cluster models.
+        drift_delta: Minimum detectable change magnitude for the PH test.
+        drift_lambda: Detection threshold for the PH test (higher → fewer false alarms).
+        min_pull_rates: Optional dict mapping arm → minimum fraction of decisions
+            that must go to that arm, e.g. {"new_arm": 0.05} guarantees at least
+            5% exploration. Arms below their threshold are forced into the candidate
+            set. Sum of all rates must be ≤ 1.0.
     """
 
     def __init__(
@@ -86,6 +94,7 @@ class ClusterBandit:
         enable_drift_detection: bool = False,
         drift_delta: float = 0.005,
         drift_lambda: float = 50.0,
+        min_pull_rates: dict[Arm, float] | None = None,
     ) -> None:
         self.arms: list[Arm] = list(arms)
         self.policy = policy
@@ -120,6 +129,20 @@ class ClusterBandit:
             }
             self._drift_delta = drift_delta
             self._drift_lambda = drift_lambda
+
+        # Optional minimum pull-rate constraints {arm: fraction in (0, 1]}
+        if min_pull_rates is not None:
+            unknown = set(min_pull_rates) - set(self.arms)
+            if unknown:
+                raise ValueError(f"min_pull_rates contains unknown arms: {unknown}")
+            for arm, rate in min_pull_rates.items():
+                if not (0.0 < rate <= 1.0):
+                    raise ValueError(f"min_pull_rates[{arm!r}] must be in (0, 1], got {rate}")
+            total = sum(min_pull_rates.values())
+            if total > 1.0:
+                raise ValueError(f"sum of min_pull_rates must be ≤ 1.0, got {total:.4f}")
+        self._min_pull_rates: dict[Arm, float] | None = min_pull_rates
+        self._total_decisions: int = 0
 
     # ------------------------------------------------------------------
     # Core Online API
@@ -197,6 +220,7 @@ class ClusterBandit:
         if not self._router.is_fitted:
             logger.debug("Bandit not fitted yet — returning base arm for cold start")
             base_arm = self.arms[0]
+            self._total_decisions += 1
             return BanditDecision(
                 chosen_arm=base_arm,
                 score=0.0,
@@ -204,7 +228,24 @@ class ClusterBandit:
             )
 
         all_scores = self._router.score_all(x)
-        sorted_arms = sorted(all_scores.items(), key=lambda kv: kv[1], reverse=True)
+
+        # Minimum pull-rate enforcement: force under-pulled arms into the candidate set
+        if self._min_pull_rates is not None and self._total_decisions > 0:
+            forced: set[Arm] = set()
+            for arm, min_rate in self._min_pull_rates.items():
+                arm_pulls = self._arm_stats[arm].n_pulls
+                actual_rate = arm_pulls / self._total_decisions
+                if actual_rate < min_rate:
+                    forced.add(arm)
+            if forced:
+                # Restrict scores to forced arms only; pick best among them
+                candidate_scores = {a: s for a, s in all_scores.items() if a in forced}
+            else:
+                candidate_scores = all_scores
+        else:
+            candidate_scores = all_scores
+
+        sorted_arms = sorted(candidate_scores.items(), key=lambda kv: kv[1], reverse=True)
         chosen_arm, best_score = sorted_arms[0]
 
         if min_confidence_gap > 0.0 and len(sorted_arms) >= 2:
@@ -216,6 +257,7 @@ class ClusterBandit:
                     gap=gap,
                     thr=min_confidence_gap,
                 )
+                self._total_decisions += 1
                 return BanditDecision(
                     chosen_arm=None,
                     score=best_score,
@@ -223,6 +265,7 @@ class ClusterBandit:
                     abstained=True,
                 )
 
+        self._total_decisions += 1
         return BanditDecision(
             chosen_arm=chosen_arm,
             score=best_score,
@@ -431,6 +474,7 @@ class ClusterBandit:
             self._drift_detectors[arm] = PageHinkleyDetector(
                 delta=self._drift_delta, lambda_=self._drift_lambda
             )
+        # New arms are not automatically constrained; caller sets min_pull_rates at init
         logger.info(
             "Added arm {arm} (warm_start_from={src})",
             arm=arm,
@@ -448,6 +492,8 @@ class ClusterBandit:
         self._arm_stats.pop(arm, None)
         if self._drift_detectors is not None:
             self._drift_detectors.pop(arm, None)
+        if self._min_pull_rates is not None:
+            self._min_pull_rates.pop(arm, None)
         logger.info("Removed arm {arm}", arm=arm)
 
     # ------------------------------------------------------------------
