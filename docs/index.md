@@ -16,38 +16,27 @@
 - `coba.evaluation`: Offline policy evaluation (Rejection Sampling, Doubly Robust, NCIS).
 - `coba.offpolicy`: Inverse Propensity Scoring (IPS) utilities for bootstrapping from biased historical logs.
 
-## Quick Start
+## Advanced Patterns
+
+### Multi-Objective via Reward Scalarization
+
+To optimize multiple metrics simultaneously, compute a composite reward before calling `update()`:
 
 ```python
-import numpy as np
-from coba import ClusterBandit
-from coba.types import PolicyType
+w_primary   = 0.7
+w_secondary = 0.3
 
-# 1. Initialize Bandit
-bandit = ClusterBandit(
-    arms=["A", "B", "C", "D"],
-    n_features=5,
-    policy=PolicyType.LIN_UCB,
-    n_clusters=3
-)
+normalized_primary   = raw_primary / max_primary
+normalized_secondary = raw_secondary / max_secondary
 
-# 2. Bootstrap from Historical Logs
-bandit.fit_offline(
-    contexts=np.random.randn(1000, 5),
-    decisions=np.random.choice(["A", "B", "C", "D"], 1000),
-    rewards=np.random.rand(1000),
-    propensities=np.full(1000, 0.25)
-)
-
-# 3. Online Decision
-context = np.array([0.5, -1.2, 0.3, 2.1, -0.8])
-decision = bandit.decide(context)
-print(f"Chosen arm: {decision.chosen_arm}")
-
-# 4. Observe Reward and Update
-bandit.update(context=context, arm=decision.chosen_arm, reward=0.85)
+composite_reward = (w_primary * normalized_primary) + (w_secondary * normalized_secondary)
+bandit.update(context=ctx, arm=chosen_arm, reward=composite_reward)
 ```
 
-## Integrating with Your Domain
+This keeps all learning engines at full speed while multi-objective logic lives entirely in the application layer.
+
+### Domain Integration
 
 Build a **Domain Facade** that translates your domain objects into the raw `numpy` arrays COBA expects. COBA never needs to know what the context features or arm identifiers mean — that mapping lives entirely in your application layer.
+
+> For a runnable Quick Start, see the [README](../README.md).

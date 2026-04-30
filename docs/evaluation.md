@@ -28,19 +28,24 @@ Here is a step-by-step example of how to use COBA's evaluation module to test a 
 import numpy as np
 from coba.evaluation import rejection_sampling_eval, doubly_robust_eval, ncis_eval
 from coba.router import ClusterRouter
+from coba.types import PolicyType
 
 # 1. Prepare historical data
 n_samples = 1000
 n_features = 5
-contexts = np.random.randn(n_samples, n_features) # Simulated context vectors
-decisions = np.random.choice(["arm_A", "arm_B"], size=n_samples) # Logged actions
-rewards = np.random.rand(n_samples) # Logged rewards
-propensities = np.full(n_samples, 0.5) # Assuming uniform logging policy
+contexts = np.random.randn(n_samples, n_features)
+decisions = np.random.choice(["arm_A", "arm_B"], size=n_samples)
+rewards = np.random.rand(n_samples)
+propensities = np.full(n_samples, 0.5)  # uniform logging policy
 
-# 2. Train or initialize your router
-# (Assuming `router` is already fitted on some training data)
-# router = ClusterRouter(...)
-# router.fit(X_train, y_train_actions, y_train_rewards)
+# 2. Initialize and fit the router on the same data
+router = ClusterRouter(
+    arms=["arm_A", "arm_B"],
+    n_clusters=2,
+    policy=PolicyType.LIN_UCB,
+    n_features=n_features,
+)
+router.fit(contexts, decisions, rewards)
 
 # 3. Evaluate using Rejection Sampling
 # Ideal when logs were collected completely uniformly at random.

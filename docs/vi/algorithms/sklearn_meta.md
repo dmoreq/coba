@@ -19,7 +19,13 @@ Thuật toán này duy trì một danh sách (Ensemble) gồm nhiều mô hình 
 * 90% thời gian (Xác suất $1 - \epsilon$), nó sẽ ngoan ngoãn nghe lời mô hình để tối đa hoá lợi nhuận.
 * 10% thời gian (Xác suất $\epsilon$), nó phớt lờ hoàn toàn mô hình, nhắm mắt đưa ra một mức giá bừa bãi cực kỳ lớn (hoặc ngẫu nhiên) để thử phản ứng của thị trường.
 
-## 4. Ví dụ Chạy Độc Lập (Code Mẫu)
+## 4. Tham Số Quan Trọng
+
+* `base_estimator`: Bất kỳ mô hình scikit-learn nào có `partial_fit` và `predict` (ví dụ: `SGDRegressor`, `LGBMRegressor`).
+* `n_bootstraps` (chỉ Bootstrapped): Số lượng mô hình trong ensemble. Nhiều hơn → ước lượng bất định tốt hơn, nhưng tốn bộ nhớ và CPU hơn. Thông thường: 5–20.
+* `epsilon` (chỉ EpsilonGreedy): Xác suất khám phá. `epsilon=0.1` nghĩa là 10% ngẫu nhiên, 90% tham lam.
+
+## 5. Ví dụ Chạy Độc Lập (Code Mẫu)
 
 Dưới đây là cách sử dụng `BootstrappedTSArmModel` kết hợp với thư viện `LightGBM` đỉnh cao.
 
@@ -50,6 +56,6 @@ print(f"Điểm từ LightGBM (Bootstrapped): {score}")
 model.update(context, reward=1.0)
 ```
 
-## 5. Nguồn Tham Khảo (References)
+## 6. Nguồn Tham Khảo (References)
 
 > Eckles, D., & Kaptein, M. (2014). *Thompson sampling with the online bootstrap*. arXiv preprint arXiv:1410.4009. (Mô tả lý thuyết cực kỳ nền tảng để biến một mô hình học máy bình thường thành Contextual Bandit).

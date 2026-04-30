@@ -11,7 +11,7 @@ These algorithms analyze a feature vector at each decision step to predict the o
 1. **[LinUCB (Linear Upper Confidence Bound)](algorithms/linucb.md)**
    A deterministic algorithm that adds an exploration bonus proportional to uncertainty in unexplored context regions.
 
-2. **[LinTS (Linear Thompson Sampling)](algorithms/lints.md)**
+2. **[LinTS (Linear Thompson Sampling)](algorithms/lin_ts.md)**
    A stochastic Bayesian algorithm. Often the best choice for systems with delayed feedback or batch updates.
 
 3. **[Logistic Bandits (Laplace Approximation)](algorithms/logistic.md)**
@@ -39,19 +39,4 @@ These algorithms ignore the context vector and rely purely on aggregate arm stat
 2. **[Off-Policy Learning (IPS & Doubly-Robust)](algorithms/offpolicy_ips.md)**
    Bootstrap a new bandit from biased historical data collected by a prior policy. Uses Inverse Propensity Scoring to de-bias the logs.
 
-3. **Multi-Objective via Reward Scalarization**
-   To optimize multiple metrics simultaneously, compute a composite reward before calling `update()`:
-
-```python
-# Weights defined by application requirements
-w_primary   = 0.7
-w_secondary = 0.3
-
-normalized_primary   = raw_primary / max_primary
-normalized_secondary = raw_secondary / max_secondary
-
-composite_reward = (w_primary * normalized_primary) + (w_secondary * normalized_secondary)
-bandit.update(context=ctx, arm=chosen_arm, reward=composite_reward)
-```
-
-This keeps the core math engines at full speed while leaving multi-objective logic entirely in the application layer.
+3. **Multi-Objective via Reward Scalarization** — see [Architecture & Patterns](index.md#multi-objective-via-reward-scalarization).

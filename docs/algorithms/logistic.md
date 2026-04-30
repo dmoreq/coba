@@ -15,7 +15,14 @@ To keep computation fast in an online setting, COBA uses an **Online Laplace App
 * **Logistic UCB**: Applies the confidence bound in logit space before passing it through the sigmoid.
 * **Logistic TS**: Samples from the Gaussian posterior over the logistic weights before applying the sigmoid.
 
-## 3. Example Usage
+## 3. Key Hyperparameters
+
+* `alpha` (UCB only): Exploration width in logit space (default 1.0). Higher → wider confidence bound.
+* `v_sq` (TS only): Posterior variance multiplier (default 1.0). Higher → more stochastic exploration.
+* `l2_lambda`: L2 regularization on the Hessian approximation (default 1.0).
+* `gamma`: Discount factor for non-stationarity (default 1.0). Set `< 1.0` (e.g., 0.99) to down-weight old observations.
+
+## 4. Example Usage
 
 ```python
 import numpy as np

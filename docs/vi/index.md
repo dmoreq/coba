@@ -23,38 +23,27 @@
 - `coba.evaluation`: Các phương pháp đánh giá offline.
 - `coba.offpolicy`: Các tiện ích Inverse Propensity Scoring (IPS).
 
-## Hướng Dẫn Nhanh (Quick Start)
+## Các Mẫu Nâng Cao
+
+### Tối ưu Đa Mục Tiêu (Multi-Objective via Scalarization)
+
+Để tối ưu hóa nhiều chỉ số cùng lúc, tính composite reward trước khi gọi `update()`:
 
 ```python
-import numpy as np
-from coba import ClusterBandit
-from coba.types import PolicyType
+w_primary   = 0.7
+w_secondary = 0.3
 
-# 1. Khởi tạo hệ thống Bandit
-bandit = ClusterBandit(
-    arms=["A", "B", "C", "D"],
-    n_features=5,
-    policy=PolicyType.LIN_UCB,
-    n_clusters=3
-)
+normalized_primary   = raw_primary / max_primary
+normalized_secondary = raw_secondary / max_secondary
 
-# 2. Bootstrapping từ Historical Logs (Học Offline)
-bandit.fit_offline(
-    contexts=np.random.randn(1000, 5),
-    decisions=np.random.choice(["A", "B", "C", "D"], 1000),
-    rewards=np.random.rand(1000),
-    propensities=np.full(1000, 0.25)
-)
-
-# 3. Ra quyết định trực tuyến (Online)
-ctx = np.array([0.5, -1.2, 0.3, 2.1, -0.8])
-decision = bandit.decide(ctx)
-print(f"Arm được chọn: {decision.chosen_arm}")
-
-# 4. Nhận phản hồi và cập nhật
-bandit.update(context=ctx, arm=decision.chosen_arm, reward=0.85)
+composite_reward = (w_primary * normalized_primary) + (w_secondary * normalized_secondary)
+bandit.update(context=ctx, arm=chosen_arm, reward=composite_reward)
 ```
 
-## Tích hợp vào Domain của bạn
+Cách tiếp cận này giữ engine lõi chạy với tốc độ tối đa, trong khi Business Logic hoàn toàn linh hoạt ở tầng ứng dụng.
+
+### Tích hợp vào Domain của bạn
 
 Xây dựng một **Domain Facade** để dịch các đối tượng domain của bạn thành vector `numpy` thuần túy mà COBA yêu cầu. COBA không cần biết ý nghĩa của các feature hay tên của arms — ánh xạ đó hoàn toàn nằm ở tầng ứng dụng của bạn.
+
+> Để chạy ví dụ nhanh (Quick Start), xem [README](../../README.md).

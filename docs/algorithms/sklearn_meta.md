@@ -13,7 +13,13 @@ These policies act as wrappers around any standard machine learning model (like 
 * **Contextual Epsilon-Greedy**: Uses a single base estimator. $1-\epsilon$ of the time it exploits the best prediction, and $\epsilon$ of the time it explores randomly.
 * **Bootstrapped Thompson Sampling / UCB**: Maintains an ensemble of `n_bootstraps` models. Each model in the ensemble is updated with Poisson/Gamma-sampled weights (Online Bootstrapping) to simulate posterior uncertainty. At prediction time, TS picks one model randomly, while UCB takes the mean + standard deviation across the ensemble.
 
-## 3. Example Usage
+## 3. Key Hyperparameters
+
+* `base_estimator`: Any scikit-learn estimator implementing `partial_fit` and `predict` (e.g., `SGDRegressor`, `LGBMRegressor`).
+* `n_bootstraps` (Bootstrapped only): Number of models in the ensemble. More → better uncertainty estimate, higher memory/CPU cost. Typical range: 5–20.
+* `epsilon` (EpsilonGreedy only): Exploration probability. `epsilon=0.1` means 10% random, 90% greedy.
+
+## 4. Example Usage
 
 ```python
 from lightgbm import LGBMRegressor

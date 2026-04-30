@@ -11,7 +11,7 @@ Hệ thống `coba` cung cấp một tập hợp các thuật toán Multi-Armed 
 1. **[LinUCB (Linear Upper Confidence Bound)](algorithms/linucb.md)**
    Thuật toán tất định (Deterministic) sử dụng "khoảng tin cậy" để khuyến khích khám phá trong các vùng ngữ cảnh chưa quen.
 
-2. **[LinTS (Linear Thompson Sampling)](algorithms/lints.md)**
+2. **[LinTS (Linear Thompson Sampling)](algorithms/lin_ts.md)**
    Thuật toán ngẫu nhiên (Stochastic) sử dụng phân phối Bayesian. Rất phù hợp cho hệ thống có độ trễ phản hồi (delayed feedback) và batch-updates.
 
 3. **[Logistic Bandits (Laplace Approximation)](algorithms/logistic.md)**
@@ -39,18 +39,4 @@ Nhóm này không sử dụng feature vector, chỉ dựa vào thống kê tổn
 2. **[Học Ngoại Tuyến (Off-Policy Learning)](algorithms/offpolicy_ips.md)**
    Khởi động mô hình Bandit mới từ dữ liệu lịch sử bị thiên vị. COBA sử dụng IPS và Doubly-Robust để khử nhiễu.
 
-3. **Tối ưu Đa Mục Tiêu (Multi-Objective via Scalarization)**
-   Để tối ưu hóa nhiều chỉ số cùng lúc, tính composite reward trước khi gọi `update()`:
-
-```python
-w_primary   = 0.7
-w_secondary = 0.3
-
-normalized_primary   = raw_primary / max_primary
-normalized_secondary = raw_secondary / max_secondary
-
-composite_reward = (w_primary * normalized_primary) + (w_secondary * normalized_secondary)
-bandit.update(context=ctx, arm=chosen_arm, reward=composite_reward)
-```
-
-Cách tiếp cận này giữ engine lõi chạy với tốc độ tối đa, trong khi Business Logic hoàn toàn linh hoạt ở tầng ứng dụng.
+3. **Tối ưu Đa Mục Tiêu (Multi-Objective via Scalarization)** — xem [Kiến Trúc & Mẫu](index.md#tối-ưu-đa-mục-tiêu-multi-objective-via-scalarization).

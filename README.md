@@ -93,6 +93,7 @@ See the [`examples/`](examples/) directory for runnable demonstrations of all fe
 | `examples/07_batch_update.py` | Batch and streaming log-replay |
 | `examples/08_monitoring.py` | Per-arm stats, scores, cluster assignments |
 | `examples/09_top_k_decisions.py` | Ranked top-K arm selection for list display |
+| `examples/10_reward_normalizer.py` | Auto-scale raw business metrics before the bandit |
 
 ## 🧪 Testing & Development
 

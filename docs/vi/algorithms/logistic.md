@@ -22,7 +22,14 @@ $$ p = \frac{1}{1 + e^{-x^T w}} $$
 
 **Tham số:** Kế thừa toàn bộ các tham số của LinUCB (`alpha`) và LinTS (`v_sq`), đồng thời hỗ trợ cả cơ chế quên lãng (`gamma`).
 
-## 4. Ví dụ Chạy Độc Lập (Code Mẫu)
+## 4. Tham Số Quan Trọng
+
+* `alpha` (chỉ UCB): Độ rộng khoảng tin cậy trong không gian logit (mặc định 1.0). Lớn hơn → khám phá nhiều hơn.
+* `v_sq` (chỉ TS): Hệ số khuếch đại phương sai hậu nghiệm (mặc định 1.0). Lớn hơn → khám phá ngẫu nhiên nhiều hơn.
+* `l2_lambda`: Hệ số chính quy hóa L2 trên xấp xỉ Hessian (mặc định 1.0).
+* `gamma`: Hệ số quên lãng cho môi trường không dừng (mặc định 1.0). Đặt `< 1.0` (ví dụ: 0.99) để giảm trọng số dữ liệu cũ.
+
+## 5. Ví dụ Chạy Độc Lập (Code Mẫu)
 
 ```python
 import numpy as np
@@ -51,6 +58,6 @@ new_prob = model.score(context)
 print(f"Xác suất chuyển đổi sau khi cập nhật: {new_prob * 100:.2f}%")
 ```
 
-## 5. Nguồn Tham Khảo (References)
+## 6. Nguồn Tham Khảo (References)
 
 > Chapelle, O., & Li, L. (2011). *An empirical evaluation of thompson sampling*. In Advances in neural information processing systems (NeurIPS). (Phân tích chi tiết về áp dụng Laplace Approximation cho Logistic Bandits).

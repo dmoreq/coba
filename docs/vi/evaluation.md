@@ -28,19 +28,24 @@ Dưới đây là ví dụ từng bước cách sử dụng module `evaluation` 
 import numpy as np
 from coba.evaluation import rejection_sampling_eval, doubly_robust_eval, ncis_eval
 from coba.router import ClusterRouter
+from coba.types import PolicyType
 
 # 1. Chuẩn bị dữ liệu lịch sử (historical data)
 n_samples = 1000
 n_features = 5
-contexts = np.random.randn(n_samples, n_features) # Vectors ngữ cảnh giả lập
-decisions = np.random.choice(["arm_A", "arm_B"], size=n_samples) # Các quyết định (actions) đã lưu log
-rewards = np.random.rand(n_samples) # Phần thưởng thực tế trong log
-propensities = np.full(n_samples, 0.5) # Giả định logging policy chọn ngẫu nhiên đều 50/50
+contexts = np.random.randn(n_samples, n_features)
+decisions = np.random.choice(["arm_A", "arm_B"], size=n_samples)
+rewards = np.random.rand(n_samples)
+propensities = np.full(n_samples, 0.5)  # logging policy chọn ngẫu nhiên đều 50/50
 
 # 2. Khởi tạo và huấn luyện router
-# (Giả định `router` đã được huấn luyện trên tập dữ liệu train)
-# router = ClusterRouter(...)
-# router.fit(X_train, y_train_actions, y_train_rewards)
+router = ClusterRouter(
+    arms=["arm_A", "arm_B"],
+    n_clusters=2,
+    policy=PolicyType.LIN_UCB,
+    n_features=n_features,
+)
+router.fit(contexts, decisions, rewards)
 
 # 3. Đánh giá bằng Rejection Sampling
 # Lý tưởng khi log được thu thập hoàn toàn ngẫu nhiên đều (uniform random).
