@@ -99,6 +99,7 @@ See the [`examples/`](examples/) directory for runnable demonstrations of all fe
 | `examples/13_drift_detection.py` | Auto-reset on reward distribution shift via `PageHinkleyDetector` |
 | `examples/14_constrained_bandit.py` | Minimum pull-rate floors to guarantee per-arm exploration |
 | `examples/15_lin_ucb_hybrid.py` | `LinUCB-Hybrid`: shared user features + per-arm item features |
+| `examples/16_neural_linear.py` | `NeuralLinear`: MLP embedding backbone + per-arm LinTS head |
 
 ## 🧪 Testing & Development
 

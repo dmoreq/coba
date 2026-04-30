@@ -20,6 +20,7 @@ class PolicyType(str, Enum):
     LIN_UCB = "linucb"
     LIN_TS = "lints"
     LIN_UCB_HYBRID = "linucb_hybrid"
+    NEURAL_LINEAR = "neural_linear"
     THOMPSON = "thompson"
     UCB1 = "ucb1"
     EPSILON_GREEDY = "epsilon_greedy"

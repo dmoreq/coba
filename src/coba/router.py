@@ -52,11 +52,13 @@ def _build_arm_models(
     gamma: float = 1.0,
     n_shared_features: int = 0,
     shared_ridge: "Any | None" = None,
+    neural_backbone: "Any | None" = None,
 ) -> dict[Arm, BaseArmModel]:
     """Factory function: build one BaseArmModel per arm for the given policy type."""
     from coba.policies.lin_ucb_hybrid import LinUCBHybridArmModel
     from coba.policies.linucb import LinUCBArmModel
     from coba.policies.lin_ts import LinTSArmModel
+    from coba.policies.neural_linear import NeuralLinearArmModel
     from coba.policies.sklearn_models import (
         BootstrappedTSArmModel,
         BootstrappedUCBArmModel,
@@ -69,6 +71,17 @@ def _build_arm_models(
     models: dict[Arm, BaseArmModel] = {}
     for arm in arms:
         match policy:
+            case PolicyType.NEURAL_LINEAR:
+                if neural_backbone is None:
+                    raise ValueError("neural_backbone must be provided for NEURAL_LINEAR policy")
+                models[arm] = NeuralLinearArmModel(
+                    arm,
+                    backbone=neural_backbone,
+                    v_sq=v_sq,
+                    l2_lambda=l2_lambda,
+                    gamma=gamma,
+                    rng=rng,
+                )
             case PolicyType.LIN_UCB_HYBRID:
                 if shared_ridge is None:
                     raise ValueError("shared_ridge must be provided for LIN_UCB_HYBRID policy")
@@ -165,6 +178,9 @@ class ClusterRouter:
         epsilon: float = 0.1,
         gamma: float = 1.0,
         n_shared_features: int = 0,
+        neural_embedding_dim: int = 16,
+        neural_hidden_sizes: tuple[int, ...] = (64, 32),
+        neural_retrain_freq: int = 200,
     ) -> None:
         if n_clusters < 1:
             raise ValueError("n_clusters must be at least 1.")
@@ -185,6 +201,9 @@ class ClusterRouter:
         self.epsilon = epsilon
         self.gamma = gamma
         self.n_shared_features = n_shared_features
+        self.neural_embedding_dim = neural_embedding_dim
+        self.neural_hidden_sizes = neural_hidden_sizes
+        self.neural_retrain_freq = neural_retrain_freq
 
         self._rng = np.random.default_rng(seed)
 
@@ -200,6 +219,23 @@ class ClusterRouter:
         self._scaler: StandardScaler | None = StandardScaler() if scale_contexts else None
 
         # One dict of {arm: ArmModel} per cluster.
+        # For NEURAL_LINEAR, each cluster gets its own NeuralLinearBackbone.
+        if policy == PolicyType.NEURAL_LINEAR:
+            from coba.policies.neural_linear import NeuralLinearBackbone
+
+            self._neural_backbones: list[NeuralLinearBackbone] | None = [
+                NeuralLinearBackbone(
+                    n_features=n_features,
+                    embedding_dim=neural_embedding_dim,
+                    hidden_sizes=neural_hidden_sizes,
+                    retrain_freq=neural_retrain_freq,
+                    seed=seed + c,
+                )
+                for c in range(n_clusters)
+            ]
+        else:
+            self._neural_backbones = None
+
         # For LIN_UCB_HYBRID, each cluster gets its own SharedRidge (not shared across clusters).
         if policy == PolicyType.LIN_UCB_HYBRID:
             if n_shared_features <= 0 or n_shared_features >= n_features:
@@ -229,6 +265,9 @@ class ClusterRouter:
                 gamma=self.gamma,
                 n_shared_features=n_shared_features,
                 shared_ridge=self._shared_ridges[c] if self._shared_ridges is not None else None,
+                neural_backbone=(
+                    self._neural_backbones[c] if self._neural_backbones is not None else None
+                ),
             )
             for c in range(n_clusters)
         ]
@@ -301,6 +340,9 @@ class ClusterRouter:
         if self._shared_ridges is not None:
             for sr in self._shared_ridges:
                 sr.reset()
+        if self._neural_backbones is not None:
+            for nb in self._neural_backbones:
+                nb.reset()
 
         # Train each cluster's bandit on its subset of the data
         for c in range(self.n_clusters):
@@ -473,6 +515,9 @@ class ClusterRouter:
             cluster_shared_ridge = (
                 self._shared_ridges[c_idx] if self._shared_ridges is not None else None
             )
+            cluster_neural_backbone = (
+                self._neural_backbones[c_idx] if self._neural_backbones is not None else None
+            )
             if warm_start_from is not None and warm_start_from in cluster_bandit:
                 # Warm start: copy the model from the source arm
                 source_model = cluster_bandit[warm_start_from]
@@ -500,6 +545,7 @@ class ClusterRouter:
                     gamma=effective_gamma,
                     n_shared_features=self.n_shared_features,
                     shared_ridge=cluster_shared_ridge,
+                    neural_backbone=cluster_neural_backbone,
                 )
                 cluster_bandit[arm] = new_models[arm]
 

@@ -78,6 +78,13 @@ class ClusterBandit:
             each context vector are treated as global (user/session) features
             learned jointly across all arms; the remaining n_features - n_shared_features
             elements are arm-specific. Must be 0 for all other policy types.
+        neural_embedding_dim: Dimensionality of the penultimate MLP layer for
+            PolicyType.NEURAL_LINEAR. This is the size of the embedding fed to LinTS.
+        neural_hidden_sizes: Hidden layer widths for the NEURAL_LINEAR backbone MLP.
+            An additional output layer of width neural_embedding_dim is appended.
+        neural_retrain_freq: Number of total arm updates before retraining the
+            NEURAL_LINEAR backbone. Lower → more frequent retrains (slower but
+            adapts faster). Higher → faster but backbone lags recent data.
     """
 
     def __init__(
@@ -101,6 +108,9 @@ class ClusterBandit:
         drift_lambda: float = 50.0,
         min_pull_rates: dict[Arm, float] | None = None,
         n_shared_features: int = 0,
+        neural_embedding_dim: int = 16,
+        neural_hidden_sizes: tuple[int, ...] = (64, 32),
+        neural_retrain_freq: int = 200,
     ) -> None:
         self.arms: list[Arm] = list(arms)
         self.policy = policy
@@ -122,6 +132,9 @@ class ClusterBandit:
             epsilon=epsilon,
             gamma=gamma,
             n_shared_features=n_shared_features,
+            neural_embedding_dim=neural_embedding_dim,
+            neural_hidden_sizes=neural_hidden_sizes,
+            neural_retrain_freq=neural_retrain_freq,
         )
 
         # Per-arm statistics for monitoring (pull counts, mean reward)
