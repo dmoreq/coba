@@ -26,6 +26,10 @@ dev = [
     "ruff>=0.4",
     "pre-commit>=3.0",
 ]
+streamlit = [
+    "streamlit>=1.30",
+    "plotly>=5.18",
+]
 
 [tool.pytest.ini_options]
 # Disable pytest-asyncio auto-collection (coba has no async code).
