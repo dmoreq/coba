@@ -13,6 +13,12 @@ build/
 .coverage.*
 htmlcov/
 .pytest_cache/
+coverage/
+
+# JavaScript
+node_modules/
+.next/
+out/
 
 # Linting cache
 .ruff_cache/
