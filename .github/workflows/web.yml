@@ -1,0 +1,42 @@
+name: Web Platform CI
+
+on:
+  push:
+    paths:
+      - "coba-web/**"
+      - ".github/workflows/web.yml"
+  pull_request:
+    paths:
+      - "coba-web/**"
+      - ".github/workflows/web.yml"
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: coba-web/backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements.txt
+      - run: PYTHONPATH=../../src:. ruff check .
+      - run: PYTHONPATH=../../src:. pytest tests --cov=engine --cov=models --cov=routers --cov=main --cov-fail-under=90
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: coba-web/frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run type-check
+      - run: npm test
+      - run: npm run build
