@@ -78,20 +78,25 @@ Detailed documentation is available in the `docs/` directory:
   * [Các thuật toán MAB](docs/vi/policies.md)
   * [Đánh giá ngoại tuyến (Offline Evaluation)](docs/vi/evaluation.md)
 
-## 💡 Examples
+## 💡 Interactive Web Lab
 
-See the [`examples/`](examples/) directory for runnable demonstrations of all features:
+The **coba Interactive Lab** (`coba-web/`) is a full-stack Next.js + FastAPI application with live visualisations of every algorithm and feature:
 
-| File | What it shows |
+| Page | What it shows |
 |---|---|
-| `examples/01_quickstart.py` | Basic decide → update loop |
-| `examples/02_policy_types.py` | Every `PolicyType` in action |
-| `examples/03_offline_bootstrap.py` | `fit_offline` with IPS & DR correction |
-| `examples/04_arm_management.py` | Add/remove arms with warm start |
-| `examples/05_evaluation.py` | Rejection sampling, DR, NCIS metrics |
-| `examples/06_persistence.py` | Save and load a bandit |
-| `examples/07_batch_update.py` | Batch and streaming log-replay |
-| `examples/08_monitoring.py` | Per-arm stats, scores, cluster assignments |
+| Playground | Live bandit with configurable policy, arms, and feature count |
+| Policy Lab | Head-to-head policy race with leaderboard |
+| Offline Eval | IPS / DR / Naive counterfactual comparison |
+| Arm Lifecycle | Add/remove arms during live learning |
+| Drift Lab | Page-Hinkley drift detection in real time |
+| Production | Top-K, normalizer, abstention, constraints, persistence |
+| Algorithms | Policy taxonomy and KMeans cluster routing demo |
+
+```bash
+# Start both services
+cd coba-web && docker compose up
+# Then open http://localhost:3000
+```
 
 ## 🧪 Testing & Development
 
