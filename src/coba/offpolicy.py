@@ -141,6 +141,25 @@ class IPSEstimator:
         return dr_rewards
 
 
+def _apply_correction(
+    config: IPSConfig,
+    rewards: np.ndarray,
+    propensities: np.ndarray,
+    reward_estimates: "np.ndarray | None",
+) -> tuple[np.ndarray, np.ndarray]:
+    """Return (corrected_rewards, weights) applying DR or IPS depending on config.
+
+    Extracted to avoid duplicating the branching logic between fit_offline and
+    update_from_logs.
+    """
+    if config.use_dr and reward_estimates is not None:
+        corrected_rewards = IPSEstimator.compute_dr_rewards(
+            rewards, propensities, reward_estimates, config
+        )
+        return corrected_rewards, np.ones(len(rewards), dtype=np.float64)
+    return np.asarray(rewards, dtype=np.float64), IPSEstimator.compute_weights(propensities, config)
+
+
 class DoublyRobustUpdater:
     """Updates a ClusterRouter from historical off-policy logs using DR/IPS correction.
 
@@ -175,27 +194,21 @@ class DoublyRobustUpdater:
             reward_estimates: Direct method reward estimates, shape (n_samples,).
                              Required when config.use_dr=True. Pass None for pure IPS.
         """
-        if self.config.use_dr:
-            if reward_estimates is None:
-                raise ValueError(
-                    "reward_estimates must be provided when use_dr=True. "
-                    "Fit a reward model first and pass its predictions."
-                )
-            corrected_rewards = IPSEstimator.compute_dr_rewards(
-                rewards, propensities, reward_estimates, self.config
+        if self.config.use_dr and reward_estimates is None:
+            raise ValueError(
+                "reward_estimates must be provided when use_dr=True. "
+                "Fit a reward model first and pass its predictions."
             )
-            weights = np.ones(len(rewards), dtype=np.float64)
-        else:
-            corrected_rewards = np.asarray(rewards, dtype=np.float64)
-            weights = IPSEstimator.compute_weights(propensities, self.config)
 
+        corrected_rewards, weights = _apply_correction(
+            self.config, rewards, propensities, reward_estimates
+        )
         logger.info(
             "Off-policy fit: {n} samples, mean_weight={mw:.3f}, mean_reward={mr:.3f}",
             n=len(rewards),
             mw=float(np.mean(weights)),
             mr=float(np.mean(corrected_rewards)),
         )
-
         self.router.fit(
             contexts=contexts,
             decisions=decisions,
@@ -222,25 +235,19 @@ class DoublyRobustUpdater:
             propensities: Logging policy propensities, shape (n_samples,).
             reward_estimates: DR reward model estimates (optional).
         """
-        if self.config.use_dr:
-            if reward_estimates is None and not self.config.allow_ips_fallback_when_dr_missing:
-                raise ValueError(
-                    "reward_estimates must be provided when use_dr=True. "
-                    "Set allow_ips_fallback_when_dr_missing=True to explicitly "
-                    "fallback to IPS."
-                )
-            if reward_estimates is not None:
-                corrected_rewards = IPSEstimator.compute_dr_rewards(
-                    rewards, propensities, reward_estimates, self.config
-                )
-                weights = np.ones(len(rewards), dtype=np.float64)
-            else:
-                corrected_rewards = np.asarray(rewards, dtype=np.float64)
-                weights = IPSEstimator.compute_weights(propensities, self.config)
-        else:
-            corrected_rewards = np.asarray(rewards, dtype=np.float64)
-            weights = IPSEstimator.compute_weights(propensities, self.config)
+        if (
+            self.config.use_dr
+            and reward_estimates is None
+            and not self.config.allow_ips_fallback_when_dr_missing
+        ):
+            raise ValueError(
+                "reward_estimates must be provided when use_dr=True. "
+                "Set allow_ips_fallback_when_dr_missing=True to explicitly fallback to IPS."
+            )
 
+        corrected_rewards, weights = _apply_correction(
+            self.config, rewards, propensities, reward_estimates
+        )
         self.router.partial_fit(
             contexts=contexts,
             decisions=decisions,

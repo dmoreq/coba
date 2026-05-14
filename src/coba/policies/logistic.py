@@ -10,7 +10,7 @@ maintain O(d^2) complexity, suitable for high-throughput real-time systems.
 
 import numpy as np
 
-from coba.policies.base import BaseArmModel
+from coba.policies.base import _LogisticBackedArmModel
 from coba.types import Arm
 
 
@@ -99,7 +99,7 @@ class OnlineLogisticRegression:
         self.n_obs = 0
 
 
-class LogisticUCBArmModel(BaseArmModel):
+class LogisticUCBArmModel(_LogisticBackedArmModel):
     """Logistic UCB using Laplace Approximation.
 
     Computes the UCB in the logit space and applies the sigmoid function.
@@ -114,45 +114,18 @@ class LogisticUCBArmModel(BaseArmModel):
         gamma: float = 1.0,
         rng: np.random.Generator | None = None,
     ) -> None:
-        super().__init__(arm, rng or np.random.default_rng())
-        self.n_features = n_features
+        super().__init__(arm, n_features, l2_lambda, gamma, rng)
         self.alpha = alpha
-        self.l2_lambda = l2_lambda
-        self.gamma = gamma
-        self.model = OnlineLogisticRegression(n_features, l2_lambda, gamma)
 
     def score(self, x: np.ndarray) -> float:
         """Compute the Upper Confidence Bound for the probability."""
         logit_mu = float(x @ self.model.w)
-
-        # Variance of the logit prediction: x^T H_inv x
         variance = float(x @ self.model.H_inv @ x)
         ucb_width = self.alpha * np.sqrt(max(variance, 0.0))
-
-        # Because sigmoid is monotonically increasing, UCB in probability
-        # space is simply the sigmoid of the UCB in logit space.
         return sigmoid(logit_mu + ucb_width)
 
-    def update(self, x: np.ndarray, reward: float, weight: float = 1.0) -> None:
-        self.model.update(x, reward, weight)
-        self.is_fitted = True
 
-    def update_batch(
-        self, x_batch: np.ndarray, y: np.ndarray, weights: np.ndarray | None = None
-    ) -> None:
-        self.model.update_batch(x_batch, y, weights)
-        self.is_fitted = True
-
-    def reset(self) -> None:
-        self.model.reset()
-        self.is_fitted = False
-
-    @property
-    def n_obs(self) -> int:
-        return self.model.n_obs
-
-
-class LogisticTSArmModel(BaseArmModel):
+class LogisticTSArmModel(_LogisticBackedArmModel):
     """Logistic Thompson Sampling using Laplace Approximation.
 
     Samples weights from the Gaussian posterior and returns the probability.
@@ -167,44 +140,16 @@ class LogisticTSArmModel(BaseArmModel):
         gamma: float = 1.0,
         rng: np.random.Generator | None = None,
     ) -> None:
-        super().__init__(arm, rng or np.random.default_rng())
-        self.n_features = n_features
+        super().__init__(arm, n_features, l2_lambda, gamma, rng)
         self.v_sq = v_sq
-        self.l2_lambda = l2_lambda
-        self.gamma = gamma
-        self.model = OnlineLogisticRegression(n_features, l2_lambda, gamma)
 
     def score(self, x: np.ndarray) -> float:
         """Sample coefficients from posterior and return predicted probability."""
         cov = self.v_sq * self.model.H_inv
-
-        # Ensure positive semi-definiteness
         cov = (cov + cov.T) / 2.0
         min_diag = 1e-10
         cov[np.diag_indices_from(cov)] = np.maximum(np.diag(cov), min_diag)
-
-        # Cholesky decomposition for sampling
         chol_l = np.linalg.cholesky(cov)
         z = self.rng.standard_normal(self.n_features)
         w_sample = self.model.w + chol_l @ z
-        logit_sample = float(x @ w_sample)
-
-        return sigmoid(logit_sample)
-
-    def update(self, x: np.ndarray, reward: float, weight: float = 1.0) -> None:
-        self.model.update(x, reward, weight)
-        self.is_fitted = True
-
-    def update_batch(
-        self, x_batch: np.ndarray, y: np.ndarray, weights: np.ndarray | None = None
-    ) -> None:
-        self.model.update_batch(x_batch, y, weights)
-        self.is_fitted = True
-
-    def reset(self) -> None:
-        self.model.reset()
-        self.is_fitted = False
-
-    @property
-    def n_obs(self) -> int:
-        return self.model.n_obs
+        return sigmoid(float(x @ w_sample))

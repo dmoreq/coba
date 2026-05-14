@@ -33,123 +33,172 @@ from loguru import logger
 from sklearn.cluster import KMeans, MiniBatchKMeans
 from sklearn.preprocessing import StandardScaler
 
+from coba.config import BanditConfig
 from coba.policies.base import BaseArmModel
 from coba.policies.ridge import RidgeRegression
 from coba.types import Arm, PolicyType
 
 
-def _build_arm_models(
-    arms: list[Arm],
-    policy: PolicyType,
+def _build_model_for_arm(
+    arm: Arm,
+    cfg: BanditConfig,
     n_features: int,
     rng: np.random.Generator,
-    alpha: float,
-    v_sq: float,
-    l2_lambda: float,
-    base_estimator: "Any | None" = None,
-    n_bootstraps: int = 10,
-    epsilon: float = 0.1,
-    gamma: float = 1.0,
-    n_shared_features: int = 0,
     shared_ridge: "Any | None" = None,
     neural_backbone: "Any | None" = None,
-    gp_beta: float = 2.0,
-    gp_length_scale: float = 1.0,
-    gp_noise_var: float = 0.1,
-    gp_max_obs: int = 500,
-) -> dict[Arm, BaseArmModel]:
-    """Factory function: build one BaseArmModel per arm for the given policy type."""
+) -> BaseArmModel:
+    """Registry-based factory: return one BaseArmModel for a single arm.
+
+    Adding a new policy only requires registering an entry in ``_POLICY_REGISTRY``
+    at module load time — no ``match`` statement surgery needed.
+    """
+    # Lazy imports keep module-level load time low and avoid circular imports.
     from coba.policies.gp_ucb import GPUCBArmModel
     from coba.policies.lin_ucb_hybrid import LinUCBHybridArmModel
     from coba.policies.linucb import LinUCBArmModel
+    from coba.policies.linucb_sw import SlidingWindowLinUCBArmModel
     from coba.policies.lin_ts import LinTSArmModel
+    from coba.policies.logistic import LogisticTSArmModel, LogisticUCBArmModel
     from coba.policies.neural_linear import NeuralLinearArmModel
     from coba.policies.sklearn_models import (
         BootstrappedTSArmModel,
         BootstrappedUCBArmModel,
         EpsilonGreedyArmModel,
     )
+    from coba.policies.softmax import SoftmaxArmModel
     from coba.policies.thompson import ThompsonArmModel
     from coba.policies.ucb1 import UCB1ArmModel
-    from coba.policies.logistic import LogisticUCBArmModel, LogisticTSArmModel
 
-    models: dict[Arm, BaseArmModel] = {}
-    for arm in arms:
-        match policy:
-            case PolicyType.NEURAL_LINEAR:
-                if neural_backbone is None:
-                    raise ValueError("neural_backbone must be provided for NEURAL_LINEAR policy")
-                models[arm] = NeuralLinearArmModel(
-                    arm,
-                    backbone=neural_backbone,
-                    v_sq=v_sq,
-                    l2_lambda=l2_lambda,
-                    gamma=gamma,
-                    rng=rng,
-                )
-            case PolicyType.LIN_UCB_HYBRID:
-                if shared_ridge is None:
-                    raise ValueError("shared_ridge must be provided for LIN_UCB_HYBRID policy")
-                models[arm] = LinUCBHybridArmModel(
-                    arm,
-                    n_shared=n_shared_features,
-                    n_arm=n_features - n_shared_features,
-                    shared_ridge=shared_ridge,
-                    alpha=alpha,
-                    l2_lambda=l2_lambda,
-                    rng=rng,
-                    gamma=gamma,
-                )
-            case PolicyType.LIN_UCB:
-                models[arm] = LinUCBArmModel(
-                    arm, n_features, alpha=alpha, l2_lambda=l2_lambda, rng=rng, gamma=gamma
-                )
-            case PolicyType.LIN_TS:
-                models[arm] = LinTSArmModel(
-                    arm, n_features, v_sq=v_sq, l2_lambda=l2_lambda, rng=rng, gamma=gamma
-                )
-            case PolicyType.THOMPSON:
-                models[arm] = ThompsonArmModel(arm, rng=rng)
-            case PolicyType.UCB1:
-                models[arm] = UCB1ArmModel(arm, alpha=alpha, rng=rng)
-            case PolicyType.EPSILON_GREEDY:
-                models[arm] = EpsilonGreedyArmModel(
-                    arm, rng=rng, base_estimator=base_estimator, epsilon=epsilon
-                )
-            case PolicyType.BOOTSTRAPPED_TS:
-                models[arm] = BootstrappedTSArmModel(
-                    arm,
-                    rng=rng,
-                    base_estimator=base_estimator,
-                    n_bootstraps=n_bootstraps,
-                )
-            case PolicyType.BOOTSTRAPPED_UCB:
-                models[arm] = BootstrappedUCBArmModel(
-                    arm,
-                    rng=rng,
-                    base_estimator=base_estimator,
-                    n_bootstraps=n_bootstraps,
-                )
-            case PolicyType.LOGISTIC_UCB:
-                models[arm] = LogisticUCBArmModel(
-                    arm, n_features, alpha=alpha, l2_lambda=l2_lambda, rng=rng, gamma=gamma
-                )
-            case PolicyType.LOGISTIC_TS:
-                models[arm] = LogisticTSArmModel(
-                    arm, n_features, v_sq=v_sq, l2_lambda=l2_lambda, rng=rng, gamma=gamma
-                )
-            case PolicyType.GP_UCB:
-                models[arm] = GPUCBArmModel(
-                    arm,
-                    beta=gp_beta,
-                    length_scale=gp_length_scale,
-                    noise_var=gp_noise_var,
-                    max_obs=gp_max_obs,
-                    rng=rng,
-                )
-            case _:
-                raise ValueError(f"Unsupported policy: {policy}")
-    return models
+    p = cfg.policy
+
+    if p == PolicyType.NEURAL_LINEAR:
+        if neural_backbone is None:
+            raise ValueError("neural_backbone must be provided for NEURAL_LINEAR policy")
+        return NeuralLinearArmModel(
+            arm,
+            backbone=neural_backbone,
+            v_sq=cfg.v_sq,
+            l2_lambda=cfg.l2_lambda,
+            gamma=cfg.gamma,
+            rng=rng,
+        )
+    if p == PolicyType.LIN_UCB_HYBRID:
+        if shared_ridge is None:
+            raise ValueError("shared_ridge must be provided for LIN_UCB_HYBRID policy")
+        return LinUCBHybridArmModel(
+            arm,
+            n_shared=cfg.n_shared_features,
+            n_arm=n_features - cfg.n_shared_features,
+            shared_ridge=shared_ridge,
+            alpha=cfg.alpha,
+            l2_lambda=cfg.l2_lambda,
+            rng=rng,
+            gamma=cfg.gamma,
+        )
+    if p == PolicyType.LIN_UCB:
+        return LinUCBArmModel(
+            arm,
+            n_features,
+            alpha=cfg.alpha,
+            l2_lambda=cfg.l2_lambda,
+            rng=rng,
+            gamma=cfg.gamma,
+        )
+    if p == PolicyType.LIN_TS:
+        return LinTSArmModel(
+            arm,
+            n_features,
+            v_sq=cfg.v_sq,
+            l2_lambda=cfg.l2_lambda,
+            rng=rng,
+            gamma=cfg.gamma,
+        )
+    if p == PolicyType.THOMPSON:
+        return ThompsonArmModel(arm, rng=rng)
+    if p == PolicyType.UCB1:
+        return UCB1ArmModel(arm, alpha=cfg.alpha, rng=rng)
+    if p == PolicyType.EPSILON_GREEDY:
+        return EpsilonGreedyArmModel(
+            arm,
+            rng=rng,
+            base_estimator=cfg.base_estimator,
+            epsilon=cfg.epsilon,
+        )
+    if p == PolicyType.BOOTSTRAPPED_TS:
+        return BootstrappedTSArmModel(
+            arm,
+            rng=rng,
+            base_estimator=cfg.base_estimator,
+            n_bootstraps=cfg.n_bootstraps,
+        )
+    if p == PolicyType.BOOTSTRAPPED_UCB:
+        return BootstrappedUCBArmModel(
+            arm,
+            rng=rng,
+            base_estimator=cfg.base_estimator,
+            n_bootstraps=cfg.n_bootstraps,
+        )
+    if p == PolicyType.LOGISTIC_UCB:
+        return LogisticUCBArmModel(
+            arm,
+            n_features,
+            alpha=cfg.alpha,
+            l2_lambda=cfg.l2_lambda,
+            rng=rng,
+            gamma=cfg.gamma,
+        )
+    if p == PolicyType.LOGISTIC_TS:
+        return LogisticTSArmModel(
+            arm,
+            n_features,
+            v_sq=cfg.v_sq,
+            l2_lambda=cfg.l2_lambda,
+            rng=rng,
+            gamma=cfg.gamma,
+        )
+    if p == PolicyType.GP_UCB:
+        return GPUCBArmModel(
+            arm,
+            beta=cfg.gp_beta,
+            length_scale=cfg.gp_length_scale,
+            noise_var=cfg.gp_noise_var,
+            max_obs=cfg.gp_max_obs,
+            rng=rng,
+        )
+    if p == PolicyType.SOFTMAX:
+        return SoftmaxArmModel(
+            arm,
+            n_features,
+            tau=cfg.softmax_tau,
+            l2_lambda=cfg.l2_lambda,
+            gamma=cfg.gamma,
+            rng=rng,
+        )
+    if p == PolicyType.LIN_UCB_SW:
+        return SlidingWindowLinUCBArmModel(
+            arm,
+            n_features,
+            window_size=cfg.linucb_sw_window,
+            alpha=cfg.alpha,
+            l2_lambda=cfg.l2_lambda,
+            rng=rng,
+        )
+    raise ValueError(f"Unsupported policy: {p}")
+
+
+def _build_arm_models(
+    arms: list[Arm],
+    cfg: BanditConfig,
+    n_features: int,
+    rng: np.random.Generator,
+    shared_ridge: "Any | None" = None,
+    neural_backbone: "Any | None" = None,
+) -> dict[Arm, BaseArmModel]:
+    """Build one model per arm using the registry factory."""
+    return {
+        arm: _build_model_for_arm(arm, cfg, n_features, rng, shared_ridge, neural_backbone)
+        for arm in arms
+    }
 
 
 class ClusterRouter:
@@ -178,96 +227,66 @@ class ClusterRouter:
     def __init__(
         self,
         arms: list[Arm],
-        n_clusters: int = 5,
-        policy: PolicyType = PolicyType.LIN_UCB,
-        n_features: int = 7,
-        alpha: float = 1.0,
-        v_sq: float = 1.0,
-        l2_lambda: float = 1.0,
-        use_minibatch: bool = True,
-        scale_contexts: bool = True,
-        seed: int = 42,
-        base_estimator: "Any | None" = None,
-        n_bootstraps: int = 10,
-        epsilon: float = 0.1,
-        gamma: float = 1.0,
-        n_shared_features: int = 0,
-        neural_embedding_dim: int = 16,
-        neural_hidden_sizes: tuple[int, ...] = (64, 32),
-        neural_retrain_freq: int = 200,
-        gp_beta: float = 2.0,
-        gp_length_scale: float = 1.0,
-        gp_noise_var: float = 0.1,
-        gp_max_obs: int = 500,
+        n_features: int,
+        config: BanditConfig | None = None,
     ) -> None:
-        if n_clusters < 1:
+        cfg = config or BanditConfig()
+
+        if cfg.n_clusters < 1:
             raise ValueError("n_clusters must be at least 1.")
         if not arms:
             raise ValueError("arms list cannot be empty.")
 
         self.arms = list(arms)
-        self.n_clusters = n_clusters
-        self.policy = policy
+        self.n_clusters = cfg.n_clusters
+        self.policy = cfg.policy
         self.n_features = n_features
-        self.alpha = alpha
-        self.v_sq = v_sq
-        self.l2_lambda = l2_lambda
-        self.seed = seed
-        self.scale_contexts = scale_contexts
-        self.base_estimator = base_estimator
-        self.n_bootstraps = n_bootstraps
-        self.epsilon = epsilon
-        self.gamma = gamma
-        self.n_shared_features = n_shared_features
-        self.neural_embedding_dim = neural_embedding_dim
-        self.neural_hidden_sizes = neural_hidden_sizes
-        self.neural_retrain_freq = neural_retrain_freq
-        self.gp_beta = gp_beta
-        self.gp_length_scale = gp_length_scale
-        self.gp_noise_var = gp_noise_var
-        self.gp_max_obs = gp_max_obs
+        self._cfg = cfg
 
-        self._rng = np.random.default_rng(seed)
+        self._rng = np.random.default_rng(cfg.seed)
 
         # Cluster model: KMeans assigns each context to a cluster
-        if use_minibatch:
+        if cfg.use_minibatch:
             self._kmeans: KMeans | MiniBatchKMeans = MiniBatchKMeans(
-                n_clusters=n_clusters, random_state=seed, n_init=3
+                n_clusters=cfg.n_clusters, random_state=cfg.seed, n_init=3
             )
         else:
-            self._kmeans = KMeans(n_clusters=n_clusters, random_state=seed, n_init=10)
+            self._kmeans = KMeans(n_clusters=cfg.n_clusters, random_state=cfg.seed, n_init=10)
 
         # StandardScaler for context normalization
-        self._scaler: StandardScaler | None = StandardScaler() if scale_contexts else None
+        self._scaler: StandardScaler | None = StandardScaler() if cfg.scale_contexts else None
 
-        # One dict of {arm: ArmModel} per cluster.
-        # For NEURAL_LINEAR, each cluster gets its own NeuralLinearBackbone.
-        if policy == PolicyType.NEURAL_LINEAR:
+        # For NEURAL_LINEAR each cluster gets its own NeuralLinearBackbone.
+        if cfg.policy == PolicyType.NEURAL_LINEAR:
             from coba.policies.neural_linear import NeuralLinearBackbone
 
             self._neural_backbones: list[NeuralLinearBackbone] | None = [
                 NeuralLinearBackbone(
                     n_features=n_features,
-                    embedding_dim=neural_embedding_dim,
-                    hidden_sizes=neural_hidden_sizes,
-                    retrain_freq=neural_retrain_freq,
-                    seed=seed + c,
+                    embedding_dim=cfg.neural_embedding_dim,
+                    hidden_sizes=cfg.neural_hidden_sizes,
+                    retrain_freq=cfg.neural_retrain_freq,
+                    seed=cfg.seed + c,
                 )
-                for c in range(n_clusters)
+                for c in range(cfg.n_clusters)
             ]
         else:
             self._neural_backbones = None
 
-        # For LIN_UCB_HYBRID, each cluster gets its own SharedRidge (not shared across clusters).
-        if policy == PolicyType.LIN_UCB_HYBRID:
-            if n_shared_features <= 0 or n_shared_features >= n_features:
+        # For LIN_UCB_HYBRID each cluster gets its own SharedRidge.
+        if cfg.policy == PolicyType.LIN_UCB_HYBRID:
+            if cfg.n_shared_features <= 0 or cfg.n_shared_features >= n_features:
                 raise ValueError(
                     f"LIN_UCB_HYBRID requires 0 < n_shared_features < n_features, "
-                    f"got n_shared_features={n_shared_features}, n_features={n_features}"
+                    f"got n_shared_features={cfg.n_shared_features}, n_features={n_features}"
                 )
             self._shared_ridges: list[RidgeRegression] | None = [
-                RidgeRegression(n_features=n_shared_features, l2_lambda=l2_lambda, gamma=gamma)
-                for _ in range(n_clusters)
+                RidgeRegression(
+                    n_features=cfg.n_shared_features,
+                    l2_lambda=cfg.l2_lambda,
+                    gamma=cfg.gamma,
+                )
+                for _ in range(cfg.n_clusters)
             ]
         else:
             self._shared_ridges = None
@@ -275,36 +294,20 @@ class ClusterRouter:
         self._cluster_bandits: list[dict[Arm, BaseArmModel]] = [
             _build_arm_models(
                 arms,
-                policy,
+                cfg,
                 n_features,
                 self._rng,
-                alpha,
-                v_sq,
-                l2_lambda,
-                base_estimator=self.base_estimator,
-                n_bootstraps=self.n_bootstraps,
-                epsilon=self.epsilon,
-                gamma=self.gamma,
-                n_shared_features=n_shared_features,
                 shared_ridge=self._shared_ridges[c] if self._shared_ridges is not None else None,
                 neural_backbone=(
                     self._neural_backbones[c] if self._neural_backbones is not None else None
                 ),
-                gp_beta=gp_beta,
-                gp_length_scale=gp_length_scale,
-                gp_noise_var=gp_noise_var,
-                gp_max_obs=gp_max_obs,
             )
-            for c in range(n_clusters)
+            for c in range(cfg.n_clusters)
         ]
 
-        # Total pulls per arm across the entire router (for UCB1 denominator)
         self._total_pulls: int = 0
-
         self.is_fitted: bool = False
 
-        # Scoring function differs for UCB1 (needs global pull count) vs others.
-        # Use named methods (not lambdas) so joblib.dump can pickle this object.
         if self.policy == PolicyType.UCB1:
             self._score_fn: Callable[[BaseArmModel, np.ndarray], float] = self._score_ucb1
         else:
@@ -321,6 +324,40 @@ class ClusterRouter:
     def _score_default(self, model: BaseArmModel, ctx: np.ndarray) -> float:
         """Score function for all contextual policies."""
         return model.score(ctx)
+
+    # ------------------------------------------------------------------
+    # Private helpers
+    # ------------------------------------------------------------------
+
+    def _prepare_batch(
+        self,
+        contexts: np.ndarray,
+        decisions: np.ndarray,
+        rewards: np.ndarray,
+        weights: np.ndarray | None,
+        fit_scaler: bool = False,
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        """Cast inputs and optionally fit/apply the scaler.
+
+        Returns:
+            Tuple of (scaled_contexts, decisions, rewards, weights).
+        """
+        ctx = np.asarray(contexts, dtype=np.float64)
+        dec = np.asarray(decisions)
+        rew = np.asarray(rewards, dtype=np.float64)
+        wts = (
+            np.ones(len(rew), dtype=np.float64)
+            if weights is None
+            else np.asarray(weights, dtype=np.float64)
+        )
+
+        if self._scaler is not None:
+            if fit_scaler:
+                self._scaler.fit(ctx)
+            scaled = self._scaler.transform(ctx)
+        else:
+            scaled = ctx
+        return scaled, dec, rew, wts
 
     # ------------------------------------------------------------------
     # Public API
@@ -341,19 +378,9 @@ class ClusterRouter:
             rewards: Observed reward per sample, shape (n_samples,).
             weights: IPS importance weights, shape (n_samples,). None → all ones.
         """
-        contexts = np.asarray(contexts, dtype=np.float64)
-        decisions = np.asarray(decisions)
-        rewards = np.asarray(rewards, dtype=np.float64)
-        weights = (
-            np.ones(len(rewards)) if weights is None else np.asarray(weights, dtype=np.float64)
+        scaled, decisions, rewards, weights = self._prepare_batch(
+            contexts, decisions, rewards, weights, fit_scaler=True
         )
-
-        # Scale contexts
-        if self._scaler is not None:
-            self._scaler.fit(contexts)
-            scaled = self._scaler.transform(contexts)
-        else:
-            scaled = contexts
 
         # Fit KMeans and assign each sample to its cluster
         self._kmeans.fit(scaled)
@@ -415,17 +442,9 @@ class ClusterRouter:
         if not self.is_fitted:
             return self.fit(contexts, decisions, rewards, weights)
 
-        contexts = np.asarray(contexts, dtype=np.float64)
-        decisions = np.asarray(decisions)
-        rewards = np.asarray(rewards, dtype=np.float64)
-        weights = (
-            np.ones(len(rewards)) if weights is None else np.asarray(weights, dtype=np.float64)
+        scaled, decisions, rewards, weights = self._prepare_batch(
+            contexts, decisions, rewards, weights, fit_scaler=False
         )
-
-        if self._scaler is not None:
-            scaled = self._scaler.transform(contexts)
-        else:
-            scaled = contexts
 
         # Predict cluster assignment using existing centroids (no refit)
         cluster_labels: np.ndarray = self._kmeans.predict(scaled)
@@ -534,7 +553,11 @@ class ClusterRouter:
         if arm in self.arms:
             raise ValueError(f"Arm '{arm}' already exists.")
 
-        effective_gamma = gamma if gamma is not None else self.gamma
+        import dataclasses
+
+        effective_gamma = gamma if gamma is not None else self._cfg.gamma
+        # Build a per-arm config that may override gamma
+        arm_cfg = dataclasses.replace(self._cfg, gamma=effective_gamma)
         self.arms.append(arm)
 
         for c_idx, cluster_bandit in enumerate(self._cluster_bandits):
@@ -545,7 +568,6 @@ class ClusterRouter:
                 self._neural_backbones[c_idx] if self._neural_backbones is not None else None
             )
             if warm_start_from is not None and warm_start_from in cluster_bandit:
-                # Warm start: copy the model from the source arm
                 source_model = cluster_bandit[warm_start_from]
                 new_model = source_model.clone()
                 new_model.arm = arm
@@ -556,28 +578,14 @@ class ClusterRouter:
                     source=warm_start_from,
                 )
             else:
-                # Cold start: fresh model with optional per-arm gamma
-                new_models = _build_arm_models(
-                    [arm],
-                    self.policy,
+                cluster_bandit[arm] = _build_model_for_arm(
+                    arm,
+                    arm_cfg,
                     self.n_features,
                     self._rng,
-                    self.alpha,
-                    self.v_sq,
-                    self.l2_lambda,
-                    base_estimator=self.base_estimator,
-                    n_bootstraps=self.n_bootstraps,
-                    epsilon=self.epsilon,
-                    gamma=effective_gamma,
-                    n_shared_features=self.n_shared_features,
                     shared_ridge=cluster_shared_ridge,
                     neural_backbone=cluster_neural_backbone,
-                    gp_beta=self.gp_beta,
-                    gp_length_scale=self.gp_length_scale,
-                    gp_noise_var=self.gp_noise_var,
-                    gp_max_obs=self.gp_max_obs,
                 )
-                cluster_bandit[arm] = new_models[arm]
 
     def remove_arm(self, arm: Arm) -> None:
         """Remove an arm from all cluster bandits.

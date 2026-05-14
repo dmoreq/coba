@@ -35,6 +35,7 @@ from typing import Any
 import numpy as np
 from loguru import logger
 
+from coba.config import BanditConfig
 from coba.drift import PageHinkleyDetector
 from coba.evaluation import (
     EvalResult,
@@ -42,7 +43,7 @@ from coba.evaluation import (
     ncis_eval,
     rejection_sampling_eval,
 )
-from coba.offpolicy import DoublyRobustUpdater, IPSConfig
+from coba.offpolicy import DoublyRobustUpdater, IPSConfig, IPSEstimator
 from coba.router import ClusterRouter
 from coba.schemas import BanditDecision, BanditStats
 from coba.types import Arm, PolicyType
@@ -99,58 +100,88 @@ class ClusterBandit:
         self,
         arms: list[Arm],
         n_features: int,
-        policy: PolicyType = PolicyType.LIN_UCB,
-        n_clusters: int = 5,
-        alpha: float = 1.0,
-        v_sq: float = 1.0,
-        l2_lambda: float = 1.0,
-        use_minibatch: bool = True,
-        scale_contexts: bool = True,
-        seed: int = 42,
+        config: BanditConfig | None = None,
+        # ---- backwards-compatible kwargs (override config when provided) ----
+        policy: PolicyType | None = None,
+        n_clusters: int | None = None,
+        alpha: float | None = None,
+        v_sq: float | None = None,
+        l2_lambda: float | None = None,
+        use_minibatch: bool | None = None,
+        scale_contexts: bool | None = None,
+        seed: int | None = None,
         base_estimator: "Any | None" = None,
-        n_bootstraps: int = 10,
-        epsilon: float = 0.1,
-        gamma: float = 1.0,
-        enable_drift_detection: bool = False,
-        drift_delta: float = 0.005,
-        drift_lambda: float = 50.0,
+        n_bootstraps: int | None = None,
+        epsilon: float | None = None,
+        gamma: float | None = None,
+        enable_drift_detection: bool | None = None,
+        drift_delta: float | None = None,
+        drift_lambda: float | None = None,
         min_pull_rates: dict[Arm, float] | None = None,
-        n_shared_features: int = 0,
-        neural_embedding_dim: int = 16,
-        neural_hidden_sizes: tuple[int, ...] = (64, 32),
-        neural_retrain_freq: int = 200,
-        gp_beta: float = 2.0,
-        gp_length_scale: float = 1.0,
-        gp_noise_var: float = 0.1,
-        gp_max_obs: int = 500,
+        n_shared_features: int | None = None,
+        neural_embedding_dim: int | None = None,
+        neural_hidden_sizes: tuple[int, ...] | None = None,
+        neural_retrain_freq: int | None = None,
+        gp_beta: float | None = None,
+        gp_length_scale: float | None = None,
+        gp_noise_var: float | None = None,
+        gp_max_obs: int | None = None,
     ) -> None:
+        # Build effective config: start from provided config (or defaults),
+        # then overlay any explicitly passed kwargs.
+        base = config or BanditConfig()
+        cfg = BanditConfig(
+            policy=policy if policy is not None else base.policy,
+            n_clusters=n_clusters if n_clusters is not None else base.n_clusters,
+            alpha=alpha if alpha is not None else base.alpha,
+            v_sq=v_sq if v_sq is not None else base.v_sq,
+            l2_lambda=l2_lambda if l2_lambda is not None else base.l2_lambda,
+            gamma=gamma if gamma is not None else base.gamma,
+            seed=seed if seed is not None else base.seed,
+            use_minibatch=use_minibatch if use_minibatch is not None else base.use_minibatch,
+            scale_contexts=scale_contexts if scale_contexts is not None else base.scale_contexts,
+            epsilon=epsilon if epsilon is not None else base.epsilon,
+            n_bootstraps=n_bootstraps if n_bootstraps is not None else base.n_bootstraps,
+            base_estimator=base_estimator if base_estimator is not None else base.base_estimator,
+            n_shared_features=(
+                n_shared_features if n_shared_features is not None else base.n_shared_features
+            ),
+            neural_embedding_dim=(
+                neural_embedding_dim
+                if neural_embedding_dim is not None
+                else base.neural_embedding_dim
+            ),
+            neural_hidden_sizes=(
+                neural_hidden_sizes if neural_hidden_sizes is not None else base.neural_hidden_sizes
+            ),
+            neural_retrain_freq=(
+                neural_retrain_freq if neural_retrain_freq is not None else base.neural_retrain_freq
+            ),
+            gp_beta=gp_beta if gp_beta is not None else base.gp_beta,
+            gp_length_scale=(
+                gp_length_scale if gp_length_scale is not None else base.gp_length_scale
+            ),
+            gp_noise_var=gp_noise_var if gp_noise_var is not None else base.gp_noise_var,
+            gp_max_obs=gp_max_obs if gp_max_obs is not None else base.gp_max_obs,
+            enable_drift_detection=(
+                enable_drift_detection
+                if enable_drift_detection is not None
+                else base.enable_drift_detection
+            ),
+            drift_delta=drift_delta if drift_delta is not None else base.drift_delta,
+            drift_lambda=drift_lambda if drift_lambda is not None else base.drift_lambda,
+            min_pull_rates=min_pull_rates if min_pull_rates is not None else base.min_pull_rates,
+        )
+        self._config = cfg
+
         self.arms: list[Arm] = list(arms)
-        self.policy = policy
+        self.policy = cfg.policy
         self.n_features = n_features
 
         self._router = ClusterRouter(
             arms=self.arms,
-            n_clusters=n_clusters,
-            policy=policy,
             n_features=n_features,
-            alpha=alpha,
-            v_sq=v_sq,
-            l2_lambda=l2_lambda,
-            use_minibatch=use_minibatch,
-            scale_contexts=scale_contexts,
-            seed=seed,
-            base_estimator=base_estimator,
-            n_bootstraps=n_bootstraps,
-            epsilon=epsilon,
-            gamma=gamma,
-            n_shared_features=n_shared_features,
-            neural_embedding_dim=neural_embedding_dim,
-            neural_hidden_sizes=neural_hidden_sizes,
-            neural_retrain_freq=neural_retrain_freq,
-            gp_beta=gp_beta,
-            gp_length_scale=gp_length_scale,
-            gp_noise_var=gp_noise_var,
-            gp_max_obs=gp_max_obs,
+            config=cfg,
         )
 
         # Per-arm statistics for monitoring (pull counts, mean reward)
@@ -158,26 +189,25 @@ class ClusterBandit:
 
         # Optional per-arm drift detectors
         self._drift_detectors: dict[Arm, PageHinkleyDetector] | None = None
-        if enable_drift_detection:
+        if cfg.enable_drift_detection:
             self._drift_detectors = {
-                arm: PageHinkleyDetector(delta=drift_delta, lambda_=drift_lambda)
+                arm: PageHinkleyDetector(delta=cfg.drift_delta, lambda_=cfg.drift_lambda)
                 for arm in self.arms
             }
-            self._drift_delta = drift_delta
-            self._drift_lambda = drift_lambda
 
         # Optional minimum pull-rate constraints {arm: fraction in (0, 1]}
-        if min_pull_rates is not None:
-            unknown = set(min_pull_rates) - set(self.arms)
+        effective_min_pull_rates = cfg.min_pull_rates
+        if effective_min_pull_rates is not None:
+            unknown = set(effective_min_pull_rates) - set(self.arms)
             if unknown:
                 raise ValueError(f"min_pull_rates contains unknown arms: {unknown}")
-            for arm, rate in min_pull_rates.items():
+            for arm, rate in effective_min_pull_rates.items():
                 if not (0.0 < rate <= 1.0):
                     raise ValueError(f"min_pull_rates[{arm!r}] must be in (0, 1], got {rate}")
-            total = sum(min_pull_rates.values())
+            total = sum(effective_min_pull_rates.values())
             if total > 1.0:
                 raise ValueError(f"sum of min_pull_rates must be ≤ 1.0, got {total:.4f}")
-        self._min_pull_rates: dict[Arm, float] | None = min_pull_rates
+        self._min_pull_rates: dict[Arm, float] | None = effective_min_pull_rates
         self._total_decisions: int = 0
 
     # ------------------------------------------------------------------
@@ -229,6 +259,65 @@ class ClusterBandit:
                 raise ValueError("propensities must be > 0")
         return ctx, arm_arr, rew, p
 
+    # ------------------------------------------------------------------
+    # decide() private helpers
+    # ------------------------------------------------------------------
+
+    def _cold_start_decision(self) -> BanditDecision:
+        """Return first arm with zero scores when the router is not yet fitted."""
+        logger.debug("Bandit not fitted yet — returning base arm for cold start")
+        self._total_decisions += 1
+        return BanditDecision(
+            chosen_arm=self.arms[0],
+            score=0.0,
+            all_scores={str(a): 0.0 for a in self.arms},
+        )
+
+    def _apply_constraints(self, all_scores: dict[Arm, float]) -> dict[Arm, float]:
+        """Restrict candidate scores to under-pulled arms when constraints are active."""
+        if self._min_pull_rates is None or self._total_decisions == 0:
+            return all_scores
+        forced: set[Arm] = {
+            arm
+            for arm, min_rate in self._min_pull_rates.items()
+            if self._arm_stats[arm].n_pulls / self._total_decisions < min_rate
+        }
+        return {a: s for a, s in all_scores.items() if a in forced} if forced else all_scores
+
+    def _select_arm(
+        self,
+        candidate_scores: dict[Arm, float],
+        all_scores: dict[Arm, float],
+        min_confidence_gap: float,
+    ) -> BanditDecision:
+        """Sort candidates, optionally abstain, and return a BanditDecision."""
+        sorted_arms = sorted(candidate_scores.items(), key=lambda kv: kv[1], reverse=True)
+        chosen_arm, best_score = sorted_arms[0]
+        all_scores_str = {str(k): v for k, v in all_scores.items()}
+
+        if min_confidence_gap > 0.0 and len(sorted_arms) >= 2:
+            gap = best_score - sorted_arms[1][1]
+            if gap < min_confidence_gap:
+                logger.debug(
+                    "decide() abstaining: gap={gap:.4f} < threshold={thr:.4f}",
+                    gap=gap,
+                    thr=min_confidence_gap,
+                )
+                self._total_decisions += 1
+                return BanditDecision(
+                    chosen_arm=None,
+                    score=best_score,
+                    all_scores=all_scores_str,
+                    abstained=True,
+                )
+
+        self._total_decisions += 1
+        return BanditDecision(
+            chosen_arm=chosen_arm,
+            score=best_score,
+            all_scores=all_scores_str,
+        )
+
     def decide(
         self,
         context: np.ndarray,
@@ -252,61 +341,11 @@ class ClusterBandit:
             Check `.abstained` before using `.chosen_arm`.
         """
         x = self._validate_context_vector(context)
-
         if not self._router.is_fitted:
-            logger.debug("Bandit not fitted yet — returning base arm for cold start")
-            base_arm = self.arms[0]
-            self._total_decisions += 1
-            return BanditDecision(
-                chosen_arm=base_arm,
-                score=0.0,
-                all_scores={str(a): 0.0 for a in self.arms},
-            )
-
+            return self._cold_start_decision()
         all_scores = self._router.score_all(x)
-
-        # Minimum pull-rate enforcement: force under-pulled arms into the candidate set
-        if self._min_pull_rates is not None and self._total_decisions > 0:
-            forced: set[Arm] = set()
-            for arm, min_rate in self._min_pull_rates.items():
-                arm_pulls = self._arm_stats[arm].n_pulls
-                actual_rate = arm_pulls / self._total_decisions
-                if actual_rate < min_rate:
-                    forced.add(arm)
-            if forced:
-                # Restrict scores to forced arms only; pick best among them
-                candidate_scores = {a: s for a, s in all_scores.items() if a in forced}
-            else:
-                candidate_scores = all_scores
-        else:
-            candidate_scores = all_scores
-
-        sorted_arms = sorted(candidate_scores.items(), key=lambda kv: kv[1], reverse=True)
-        chosen_arm, best_score = sorted_arms[0]
-
-        if min_confidence_gap > 0.0 and len(sorted_arms) >= 2:
-            second_score = sorted_arms[1][1]
-            gap = best_score - second_score
-            if gap < min_confidence_gap:
-                logger.debug(
-                    "decide() abstaining: gap={gap:.4f} < threshold={thr:.4f}",
-                    gap=gap,
-                    thr=min_confidence_gap,
-                )
-                self._total_decisions += 1
-                return BanditDecision(
-                    chosen_arm=None,
-                    score=best_score,
-                    all_scores={str(k): v for k, v in all_scores.items()},
-                    abstained=True,
-                )
-
-        self._total_decisions += 1
-        return BanditDecision(
-            chosen_arm=chosen_arm,
-            score=best_score,
-            all_scores={str(k): v for k, v in all_scores.items()},
-        )
+        candidate_scores = self._apply_constraints(all_scores)
+        return self._select_arm(candidate_scores, all_scores, min_confidence_gap)
 
     def decide_top_k(self, context: np.ndarray, k: int) -> list[tuple[Arm, float]]:
         """Return the top-k arms ranked by score for the given context.
@@ -339,17 +378,54 @@ class ClusterBandit:
         x = self._validate_context_vector(context)
         return self._router.score_all(x)
 
-    def _update_arm_stats(self, arm: Arm, reward: float) -> None:
-        """Increment pull count and update running mean reward for an arm.
+    def decide_batch(
+        self,
+        contexts: np.ndarray,
+        min_confidence_gap: float = 0.0,
+    ) -> list[BanditDecision]:
+        """Vectorized batch decision for multiple context vectors.
 
-        Uses Welford's online algorithm to avoid float accumulation drift.
+        Scores all contexts in one shot using vectorized KMeans assignment,
+        then dispatches per-cluster arm scoring.  Significantly faster than
+        calling ``decide()`` in a Python loop when N is large (e.g. ≥100).
+
+        Args:
+            contexts: Feature matrix, shape (n_samples, n_features).
+            min_confidence_gap: Applied per-row; same semantics as ``decide()``.
+
+        Returns:
+            List of BanditDecision objects, one per row of ``contexts``.
         """
-        if arm not in self._arm_stats:
-            return
-        stats = self._arm_stats[arm]
-        stats.n_pulls += 1
-        # Welford's running mean: mean += (x - mean) / n
-        stats.mean_reward += (reward - stats.mean_reward) / stats.n_pulls
+        contexts_arr = np.asarray(contexts, dtype=np.float64)
+        if contexts_arr.ndim != 2:
+            raise ValueError(f"contexts must be 2D, got shape={contexts_arr.shape!r}")
+        if contexts_arr.shape[1] != self.n_features:
+            raise ValueError(
+                f"contexts feature mismatch: expected {self.n_features}, got {contexts_arr.shape[1]}"
+            )
+        if not self._router.is_fitted:
+            # Cold start: return first arm for all rows
+            self._total_decisions += len(contexts_arr)
+            return [
+                BanditDecision(
+                    chosen_arm=self.arms[0],
+                    score=0.0,
+                    all_scores={str(a): 0.0 for a in self.arms},
+                )
+                for _ in range(len(contexts_arr))
+            ]
+
+        decisions: list[BanditDecision] = []
+        for x in contexts_arr:
+            all_scores = self._router.score_all(x)
+            candidate_scores = self._apply_constraints(all_scores)
+            decisions.append(self._select_arm(candidate_scores, all_scores, min_confidence_gap))
+        return decisions
+
+    def _update_arm_stats(self, arm: Arm, reward: float) -> None:
+        """Delegate to BanditStats.record() — Welford update lives there."""
+        if arm in self._arm_stats:
+            self._arm_stats[arm].record(reward)
 
     def update(
         self,
@@ -375,8 +451,8 @@ class ClusterBandit:
         if not np.isfinite(propensity) or propensity <= 0:
             raise ValueError("propensity must be a finite value > 0")
 
-        # IPS weight: 1/propensity, capped to avoid explosion from near-zero propensities
-        weight = min(1.0 / max(propensity, 1e-4), 10.0)
+        # Delegate IPS clipping to IPSEstimator — single source of truth.
+        weight = float(IPSEstimator.compute_weights(np.array([propensity]))[0])
 
         self._router.update(x, arm, reward, weight)
         self._update_arm_stats(arm, reward)
@@ -508,7 +584,7 @@ class ClusterBandit:
         self._arm_stats[arm] = BanditStats(arm=arm)
         if self._drift_detectors is not None:
             self._drift_detectors[arm] = PageHinkleyDetector(
-                delta=self._drift_delta, lambda_=self._drift_lambda
+                delta=self._config.drift_delta, lambda_=self._config.drift_lambda
             )
         # New arms are not automatically constrained; caller sets min_pull_rates at init
         logger.info(

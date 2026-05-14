@@ -30,6 +30,16 @@ class BanditDecision(BaseModel):
             "(controlled by min_confidence_gap in decide())."
         ),
     )
+    # Optional decomposition of score into exploitation + exploration terms.
+    # Populated by LinUCB (and future UCB variants) for observability.
+    mean_estimate: float | None = Field(
+        default=None,
+        description="Expected reward component of the score (exploitation term, x @ beta).",
+    )
+    confidence_width: float | None = Field(
+        default=None,
+        description="Exploration bonus component of the score (UCB width, alpha * sqrt(x A_inv x)).",
+    )
 
     model_config = {"frozen": True}
 
@@ -43,3 +53,13 @@ class BanditStats(BaseModel):
     last_score: float | None = Field(default=None)
 
     model_config = {"frozen": False}
+
+    def record(self, reward: float) -> None:
+        """Increment pull count and update running mean using Welford's algorithm.
+
+        Welford's online update avoids floating-point accumulation drift that
+        occurs when summing large numbers of rewards:
+            mean_n = mean_{n-1} + (x - mean_{n-1}) / n
+        """
+        self.n_pulls += 1
+        self.mean_reward += (reward - self.mean_reward) / self.n_pulls

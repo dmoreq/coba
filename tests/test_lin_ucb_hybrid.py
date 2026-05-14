@@ -140,7 +140,7 @@ class TestClusterBanditHybridPolicy:
 
     def test_hybrid_bandit_creates(self):
         bandit = self._make_bandit()
-        assert bandit._router.n_shared_features == N_SHARED
+        assert bandit._router._cfg.n_shared_features == N_SHARED
 
     def test_invalid_n_shared_raises(self):
         with pytest.raises(ValueError):

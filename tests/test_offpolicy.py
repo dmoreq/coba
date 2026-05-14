@@ -3,6 +3,7 @@
 import numpy as np
 import pytest
 
+from coba.config import BanditConfig
 from coba.evaluation import (
     EvalResult,
     doubly_robust_eval,
@@ -11,16 +12,20 @@ from coba.evaluation import (
 )
 from coba.offpolicy import DoublyRobustUpdater, IPSConfig, IPSEstimator
 from coba.router import ClusterRouter
+from coba.types import PolicyType
 
 ARMS = [1.0, 1.1, 1.2, 1.5]
 
 
-def make_fitted_router(n: int = 300, n_features: int = 7, seed: int = 0) -> ClusterRouter:
+def make_fitted_router(
+    n: int = 300, n_features: int = 7, seed: int = 0, n_clusters: int = 3
+) -> ClusterRouter:
     rng = np.random.default_rng(seed)
     contexts = rng.standard_normal((n, n_features))
     decisions = rng.choice(ARMS, size=n)
     rewards = rng.uniform(0, 1, n)
-    router = ClusterRouter(arms=ARMS, n_clusters=3, n_features=n_features, seed=seed)
+    cfg = BanditConfig(n_clusters=n_clusters, policy=PolicyType.LIN_UCB, seed=seed)
+    router = ClusterRouter(arms=ARMS, n_features=n_features, config=cfg)
     router.fit(contexts, decisions, rewards)
     return router
 
@@ -71,14 +76,15 @@ class TestIPSEstimator:
 
 class TestDoublyRobustUpdater:
     def test_fit_offline(self):
+        router = make_fitted_router(n=200, n_features=7, seed=0, n_clusters=3)
+        # Clear the fitted state to test fit_offline
+        router.is_fitted = False
         rng = np.random.default_rng(0)
-        n = 200
-        contexts = rng.standard_normal((n, 7))
-        decisions = rng.choice(ARMS, size=n)
-        rewards = rng.uniform(0, 1, n)
-        propensities = np.full(n, 0.25)
+        contexts = rng.standard_normal((200, 7))
+        decisions = rng.choice(ARMS, size=200)
+        rewards = rng.uniform(0, 1, 200)
+        propensities = np.full(200, 0.25)
 
-        router = ClusterRouter(arms=ARMS, n_clusters=3, n_features=7, seed=0)
         updater = DoublyRobustUpdater(router)
         updater.fit_offline(contexts, decisions, rewards, propensities)
         assert router.is_fitted
@@ -91,7 +97,7 @@ class TestDoublyRobustUpdater:
         rewards = rng.uniform(0, 1, n)
         propensities = np.full(n, 0.25)
 
-        router = ClusterRouter(arms=ARMS, n_clusters=3, n_features=7, seed=1)
+        router = make_fitted_router(n_clusters=3, n_features=7, seed=1)
         updater = DoublyRobustUpdater(router)
         updater.fit_offline(contexts, decisions, rewards, propensities)
         before = router._total_pulls
@@ -108,7 +114,7 @@ class TestDoublyRobustUpdater:
         rewards = rng.uniform(0, 1, n)
         propensities = np.full(n, 0.25)
 
-        router = ClusterRouter(arms=ARMS, n_clusters=3, n_features=7, seed=2)
+        router = make_fitted_router(n_clusters=3, n_features=7, seed=2)
         config = IPSConfig(use_dr=True)
         updater = DoublyRobustUpdater(router, config=config)
 
@@ -138,7 +144,8 @@ class TestRejectionSamplingEval:
         assert 0.0 <= result.utilization_rate <= 1.0
 
     def test_unfitted_router_raises(self):
-        router = ClusterRouter(arms=ARMS, n_clusters=3, n_features=7)
+        cfg = BanditConfig(n_clusters=3, policy=PolicyType.LIN_UCB)
+        router = ClusterRouter(arms=ARMS, n_features=7, config=cfg)
         with pytest.raises(ValueError, match="fitted"):
             rejection_sampling_eval(
                 router,
@@ -262,7 +269,7 @@ class TestDoublyRobustUpdaterDRMode:
         propensities = np.full(n, 0.25)
         reward_estimates = rng.uniform(0, 1, n)
 
-        router = ClusterRouter(arms=ARMS, n_clusters=3, n_features=7, seed=10)
+        router = make_fitted_router(n_clusters=3, n_features=7, seed=10)
         config = IPSConfig(use_dr=True)
         updater = DoublyRobustUpdater(router, config=config)
 
@@ -290,7 +297,7 @@ class TestDoublyRobustUpdaterDRMode:
         rewards = rng.uniform(0, 1, n)
         propensities = np.full(n, 0.25)
 
-        router = ClusterRouter(arms=ARMS, n_clusters=3, n_features=7, seed=11)
+        router = make_fitted_router(n_clusters=3, n_features=7, seed=11)
         # First fit to enable partial_fit
         router.fit(contexts, decisions, rewards)
         before_pulls = router._total_pulls
@@ -316,7 +323,7 @@ class TestDoublyRobustUpdaterDRMode:
         rewards = rng.uniform(0, 1, n)
         propensities = np.full(n, 0.25)
 
-        router = ClusterRouter(arms=ARMS, n_clusters=3, n_features=7, seed=12)
+        router = make_fitted_router(n_clusters=3, n_features=7, seed=12)
         router.fit(contexts, decisions, rewards)
         before_pulls = router._total_pulls
 

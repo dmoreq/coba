@@ -10,6 +10,7 @@ import copy
 from typing import Any
 
 import numpy as np
+from sklearn.base import clone as _sklearn_clone
 
 from coba.policies.base import BaseArmModel
 from coba.types import Arm
@@ -17,6 +18,11 @@ from coba.types import Arm
 # Score returned for arms that have never been updated (cold start).
 # Must beat any possible model prediction regardless of the reward scale.
 _COLD_START_SCORE: float = float("inf")
+
+
+def _clone_estimator(estimator: Any) -> Any:
+    """Return a fresh, unfitted clone of a scikit-learn compatible estimator."""
+    return _sklearn_clone(estimator)
 
 
 class EpsilonGreedyArmModel(BaseArmModel):
@@ -78,9 +84,7 @@ class EpsilonGreedyArmModel(BaseArmModel):
 
     def reset(self) -> None:
         """Reset the model by re-instantiating the estimator."""
-        from sklearn.base import clone
-
-        self.model = clone(self.model)
+        self.model = _clone_estimator(self.model)
         self.is_fitted = False
 
 
@@ -147,9 +151,7 @@ class _BootstrappedArmModelBase(BaseArmModel):
 
     def reset(self) -> None:
         """Reset all estimators in the ensemble."""
-        from sklearn.base import clone
-
-        self.models = [clone(m) for m in self.models]
+        self.models = [_clone_estimator(m) for m in self.models]
         self.is_fitted = False
 
     def _predict_all(self, x: np.ndarray) -> np.ndarray:
