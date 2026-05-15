@@ -71,6 +71,8 @@ class CATSPolicy:
         self._total_pulls: int = 0
         self.is_fitted: bool = False
 
+    # ---- Private helpers ----
+
     # ---- Public API ----
 
     def decide(self, context: np.ndarray) -> ContinuousDecision:
@@ -159,8 +161,8 @@ class CATSPolicy:
         x = np.asarray(context, dtype=np.float64)
         if not np.isfinite(reward):
             raise ValueError(f"reward must be finite, got {reward}")
-        if not (0 < propensity <= 1.0):
-            raise ValueError(f"propensity must be in (0, 1.0], got {propensity}")
+        if propensity <= 0 or not np.isfinite(propensity):
+            raise ValueError(f"propensity must be positive and finite, got {propensity}")
 
         # Find the leaf containing this action
         leaf = self._tree.leaf_for_action(action)

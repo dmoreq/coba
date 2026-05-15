@@ -197,7 +197,7 @@ class TestCATSPolicyUpdate:
             policy.update(x, action, np.nan)
 
     def test_update_propensity_validation(self) -> None:
-        """update() validates propensity is in (0, 1.0]."""
+        """update() validates propensity is positive and finite."""
         tree = BinaryActionTree(a_min=0.0, a_max=1.0, depth=2)
         policy = CATSPolicy(tree=tree, n_features=3)
 
@@ -206,12 +206,12 @@ class TestCATSPolicyUpdate:
         reward = 0.8
 
         # Zero propensity
-        with pytest.raises(ValueError, match="propensity must be in"):
+        with pytest.raises(ValueError, match="propensity must be positive"):
             policy.update(x, action, reward, propensity=0.0)
 
-        # Out of range propensity
-        with pytest.raises(ValueError, match="propensity must be in"):
-            policy.update(x, action, reward, propensity=1.5)
+        # NaN propensity
+        with pytest.raises(ValueError, match="propensity must be positive"):
+            policy.update(x, action, reward, propensity=np.nan)
 
 
 class TestCATSPolicyBatchUpdate:
