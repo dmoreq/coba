@@ -60,6 +60,11 @@ class BanditConfig:
         cats_a_min: Lower bound of CATS action space.
         cats_a_max: Upper bound of CATS action space.
         cats_depth: Binary tree depth for CATS (n_leaves = 2^cats_depth).
+        rf_n_estimators: Number of Random Forest trees for tree-ensemble bandits.
+        rf_max_depth: Maximum tree depth for Random Forest bandit models.
+        rf_min_samples_leaf: Minimum samples per RF leaf.
+        rf_max_obs: Maximum observations retained per arm model before FIFO eviction.
+        rf_min_uncertainty: Lower bound for ensemble-disagreement uncertainty.
     """
 
     # --- Core ---
@@ -116,3 +121,10 @@ class BanditConfig:
     cats_a_min: float = 0.0
     cats_a_max: float = 1.0
     cats_depth: int = 6  # 2^6 = 64 leaves
+
+    # --- Tree ensemble bandits ---
+    rf_n_estimators: int = 50
+    rf_max_depth: int | None = 6
+    rf_min_samples_leaf: int = 1
+    rf_max_obs: int = 1000
+    rf_min_uncertainty: float = 1e-6

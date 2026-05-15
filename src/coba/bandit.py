@@ -163,6 +163,11 @@ class ClusterBandit:
             ),
             gp_noise_var=gp_noise_var if gp_noise_var is not None else base.gp_noise_var,
             gp_max_obs=gp_max_obs if gp_max_obs is not None else base.gp_max_obs,
+            rf_n_estimators=base.rf_n_estimators,
+            rf_max_depth=base.rf_max_depth,
+            rf_min_samples_leaf=base.rf_min_samples_leaf,
+            rf_max_obs=base.rf_max_obs,
+            rf_min_uncertainty=base.rf_min_uncertainty,
             enable_drift_detection=(
                 enable_drift_detection
                 if enable_drift_detection is not None

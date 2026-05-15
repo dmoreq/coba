@@ -67,6 +67,7 @@ def _build_model_for_arm(
     )
     from coba.policies.softmax import SoftmaxArmModel
     from coba.policies.thompson import ThompsonArmModel
+    from coba.policies.tree_ensemble import RandomForestTSArmModel, RandomForestUCBArmModel
     from coba.policies.ucb1 import UCB1ArmModel
 
     p = cfg.policy
@@ -182,6 +183,27 @@ def _build_model_for_arm(
             alpha=cfg.alpha,
             l2_lambda=cfg.l2_lambda,
             rng=rng,
+        )
+    if p == PolicyType.RANDOM_FOREST_UCB:
+        return RandomForestUCBArmModel(
+            arm,
+            rng=rng,
+            alpha=cfg.alpha,
+            n_estimators=cfg.rf_n_estimators,
+            max_depth=cfg.rf_max_depth,
+            min_samples_leaf=cfg.rf_min_samples_leaf,
+            max_obs=cfg.rf_max_obs,
+            min_uncertainty=cfg.rf_min_uncertainty,
+        )
+    if p == PolicyType.RANDOM_FOREST_TS:
+        return RandomForestTSArmModel(
+            arm,
+            rng=rng,
+            n_estimators=cfg.rf_n_estimators,
+            max_depth=cfg.rf_max_depth,
+            min_samples_leaf=cfg.rf_min_samples_leaf,
+            max_obs=cfg.rf_max_obs,
+            min_uncertainty=cfg.rf_min_uncertainty,
         )
     raise ValueError(f"Unsupported policy: {p}")
 
