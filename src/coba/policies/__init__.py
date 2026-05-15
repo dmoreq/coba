@@ -15,7 +15,6 @@ from coba.policies.ucb1 import UCB1ArmModel
 
 __all__ = [
     "BaseArmModel",
-    "ArmStats",
     "GPUCBArmModel",
     "LinUCBArmModel",
     "LinTSArmModel",
