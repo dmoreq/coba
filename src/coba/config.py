@@ -57,6 +57,9 @@ class BanditConfig:
         drift_delta: Minimum detectable change for PageHinkley.
         drift_lambda: Detection threshold for PageHinkley.
         min_pull_rates: Optional per-arm minimum traffic fraction constraints.
+        cats_a_min: Lower bound of CATS action space.
+        cats_a_max: Upper bound of CATS action space.
+        cats_depth: Binary tree depth for CATS (n_leaves = 2^cats_depth).
     """
 
     # --- Core ---
@@ -108,3 +111,8 @@ class BanditConfig:
 
     # --- Traffic constraints ---
     min_pull_rates: dict | None = field(default=None, repr=False)
+
+    # --- CATS (Continuous Action Tree Sampling) ---
+    cats_a_min: float = 0.0
+    cats_a_max: float = 1.0
+    cats_depth: int = 6  # 2^6 = 64 leaves

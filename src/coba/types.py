@@ -31,3 +31,4 @@ class PolicyType(str, Enum):
     GP_UCB = "gp_ucb"
     SOFTMAX = "softmax"
     LIN_UCB_SW = "linucb_sw"  # Sliding-window LinUCB
+    CATS = "cats"  # Continuous Action Tree Sampling
