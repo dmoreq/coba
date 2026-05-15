@@ -32,12 +32,14 @@ Typical workflow::
 """
 
 from coba.continuous.action_tree import ActionLeaf, BinaryActionTree
+from coba.continuous.bandit import ContinuousBandit
 from coba.continuous.policy import CATSPolicy
 from coba.continuous.schemas import ContinuousDecision
 
 __all__ = [
     "ActionLeaf",
     "BinaryActionTree",
+    "ContinuousBandit",
     "CATSPolicy",
     "ContinuousDecision",
 ]
