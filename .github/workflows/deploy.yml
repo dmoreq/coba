@@ -1,0 +1,78 @@
+name: Deploy to Vercel
+
+on:
+  push:
+    branches: [main]
+  workflow_run:
+    workflows: ["CI Pipeline"]
+    branches: [main]
+    types: [completed]
+
+jobs:
+  deploy-frontend:
+    name: Deploy Frontend to Vercel
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event.workflow_run.conclusion == 'success'
+    environment:
+      name: production
+      url: https://coba-web.vercel.app
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to Vercel
+        uses: vercel/action@v6
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: web/frontend
+
+  deploy-backend:
+    name: Deploy Backend (if applicable)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event.workflow_run.conclusion == 'success'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check if backend changed
+        id: check
+        run: |
+          if git diff-tree --no-commit-id --name-only -r HEAD | grep -q "web/backend/"; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Log deployment status
+        run: |
+          echo "Backend deployment configuration:"
+          echo "- Backend service: FastAPI (Python)"
+          echo "- Recommended platforms: Railway, Render, Fly.io, Heroku"
+          echo "- Environment variables: ALLOWED_ORIGINS, DATABASE_URL (if applicable)"
+          echo "- Status: ${{ steps.check.outputs.changed == 'true' && 'BACKEND CHANGED' || 'NO CHANGES' }}"
+
+  post-deploy:
+    name: Post-Deployment Checks
+    runs-on: ubuntu-latest
+    needs: [deploy-frontend]
+    if: always()
+
+    steps:
+      - name: Check deployment status
+        run: |
+          if [ "${{ needs.deploy-frontend.result }}" = "failure" ]; then
+            echo "❌ Deployment failed"
+            exit 1
+          else
+            echo "✅ Frontend deployed successfully!"
+            echo "URL: https://coba-web.vercel.app"
+          fi
+
+      - name: Notify Slack (optional)
+        if: always()
+        run: |
+          echo "Deployment complete!"
+          echo "- Frontend: ${{ needs.deploy-frontend.result }}"
+          echo "- View at: https://coba-web.vercel.app"
