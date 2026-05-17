@@ -553,6 +553,23 @@ class ClusterRouter:
         arm_models[arm].update(scaled_ctx, reward, weight)
         self._total_pulls += 1
 
+        # After the first online update, attempt to mark as fitted so that
+        # subsequent decide() calls skip the cold-start path and use real scores.
+        # KMeans requires at least n_clusters samples, so we keep a small buffer
+        # of (context, arm, reward, weight) tuples until we have enough.
+        if not self.is_fitted:
+            if not hasattr(self, "_pending_updates"):
+                self._pending_updates: list[tuple] = []
+            self._pending_updates.append((scaled_ctx.copy(), arm, reward, weight))
+            if len(self._pending_updates) >= self.n_clusters:
+                ctxs = np.array([p[0] for p in self._pending_updates])
+                if self._scaler is not None and not hasattr(self._scaler, "mean_"):
+                    self._scaler.fit(ctxs)
+                    ctxs = self._scaler.transform(ctxs)
+                self._kmeans.fit(ctxs)
+                self.is_fitted = True
+                self._pending_updates = []
+
     def add_arm(
         self,
         arm: Arm,
