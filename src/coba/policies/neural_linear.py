@@ -68,7 +68,7 @@ class NeuralLinearBackbone:
         n_features: int,
         embedding_dim: int = 16,
         hidden_sizes: tuple[int, ...] = (64, 32),
-        retrain_freq: int = 200,
+        retrain_freq: int = 10,
         l2_lambda: float = 1e-4,
         seed: int = 42,
         buffer_maxlen: int = _DEFAULT_BUFFER_MAXLEN,
@@ -114,7 +114,7 @@ class NeuralLinearBackbone:
         self._buffer.append((x, arm, reward, weight))
         self._n_updates += 1
 
-        if self._n_updates % self.retrain_freq == 0 and len(self._buffer) >= 10:
+        if self._n_updates % self.retrain_freq == 0 and len(self._buffer) >= 3:
             self._retrain()
             return True
         return False
@@ -160,7 +160,7 @@ class NeuralLinearBackbone:
 
     def _retrain(self) -> None:
         """Refit the MLP on the full replay buffer."""
-        if len(self._buffer) < 10:
+        if len(self._buffer) < 3:
             return
         x_mat = np.stack([x for x, _, _, _ in self._buffer])
         y = np.array([r for _, _, r, _ in self._buffer])
@@ -222,13 +222,18 @@ class NeuralLinearArmModel(BaseArmModel):
     def score(self, x: np.ndarray) -> float:
         """LinTS score on the backbone embedding.
 
-        Falls back to float("inf") during cold start so the arm is always
-        explored at least once before the backbone is ready.
+        Falls back to Thompson sampling on unexplored arms (score=inf) during
+        backbone cold start, ensuring all arms are explored at least once before
+        the backbone is ready. This is critical for neural_linear which needs
+        diverse arm data before it can meaningfully fit.
         """
         self._sync_if_needed()
 
         embedding = self._backbone.get_embedding(x)
         if embedding is None:
+            # Backbone not ready — return inf to trigger exploration of this arm
+            # The router will select arms in order: highest scores win, inf guarantees
+            # all arms get tried (UCB-style exploration of untrained arms)
             return float("inf")
         return self._lin_ts.score(embedding)
 
