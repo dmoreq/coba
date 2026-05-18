@@ -202,6 +202,7 @@ These policies learn a linear model per arm, using context features.
 | **Offline evaluation** | IPS, DR, NCIS | De-bias logged data |
 | **Low-volume decisions** | GP-UCB | Full uncertainty, O(n²) okay |
 | **High-throughput** | LinUCB, Forest, Neural Linear | O(d²) or O(1) per decision |
+| **Binary outcomes** | Logistic, Thompson, Forest | Suited to 0/1 rewards |
 
 ---
 
@@ -242,7 +243,7 @@ These policies learn a linear model per arm, using context features.
 | 13 | PageHinkley Drift Detection | linucb (drift-aware) | Advanced |
 | 14 | Offline Eval IPS/DR/NCIS | linucb | Advanced |
 | 15 | CATS Real-Time Bidding | cats | Advanced |
-| 16 | Production Features | linucb | Advanced |
+| 16 | Production Constraints and Abstention | linucb | Advanced |
 
 ---
 

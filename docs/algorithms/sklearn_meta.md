@@ -19,6 +19,26 @@ These policies act as wrappers around any standard machine learning model (like 
 * `n_bootstraps` (Bootstrapped only): Number of models in the ensemble. More → better uncertainty estimate, higher memory/CPU cost. Typical range: 5–20.
 * `epsilon` (EpsilonGreedy only): Exploration probability. `epsilon=0.1` means 10% random, 90% greedy.
 
+## 3b. Random Forest Specific Parameters
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `rf_n_estimators` | `50` | Number of trees in the Random Forest ensemble |
+| `rf_max_depth` | `6` | Maximum depth per tree. Higher → more complex, more overfitting risk |
+| `rf_min_samples_leaf` | `1` | Minimum samples required to create a leaf node. Higher → smoother trees, less overfitting |
+| `rf_max_obs` | `1000` | Maximum observations to store before FIFO eviction. Prevents unbounded memory growth |
+| `rf_min_uncertainty` | `1e-6` | Lower bound for ensemble disagreement (uncertainty estimate). Prevents zero-division when trees agree too much |
+
+## 3c. Bootstrap-Specific Parameters
+
+| Policy | Parameter | Default | Description |
+|--------|-----------|---------|-------------|
+| `BootstrappedUCB` | `bootstrap_method` | `"poisson"` | Poisson vs Gamma bootstrap resampling. Poisson more common for approximate bootstrap |
+| `BootstrappedUCB` | `percentile` | `0.75` | UCB percentile: 0.75 means use 75th percentile of samples as the optimistic estimate |
+| All Bootstrapped | `n_bootstraps` | `10` | Number of bootstrap models. Higher → better uncertainty, higher cost |
+
+**Note:** `bootstrap_method` is selected internally based on policy type. For `BootstrappedUCB`, the percentile controls the trade-off between exploration and exploitation via the upper percentile of sampled scores.
+
 ## 4. PolicyType Mapping
 
 | Policy | Class | Lesson | Use Case |

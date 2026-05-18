@@ -23,6 +23,15 @@ where $\mu_i$ is the mean reward for arm $i$, $N$ is total pulls across all arms
 * **How it works**: Maintains a $\text{Beta}(\alpha, \beta)$ posterior per arm — $\alpha$ counts successes, $\beta$ counts failures. At each step it samples one value from each arm's Beta distribution and picks the arm with the highest sample. Arms with fewer observations have wider, more uncertain distributions, so they get chosen more often to reduce uncertainty.
 * **Constraints**: Rewards must be in $[0, 1]$ (e.g., conversion rate, binary accept/reject).
 
+### Key Hyperparameters
+
+| Parameter | Default | Effect |
+|-----------|---------|--------|
+| `alpha_prior` | `1.0` | Prior count of successes (Beta $\alpha$ parameter). Higher → start optimistic |
+| `beta_prior` | `1.0` | Prior count of failures (Beta $\beta$ parameter). Higher → start pessimistic |
+
+**Note:** Uniform priors (`alpha_prior=1, beta_prior=1`) are most common, corresponding to a uniform distribution over [0,1] before any observations. Change these if you have strong domain beliefs about arm quality.
+
 ## 4. Example
 
 ```python

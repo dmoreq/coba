@@ -10,10 +10,13 @@
 
 ## Tính Năng Nổi Bật
 
-- **Hỗ Trợ Đa Thuật Toán (Multi-Policies)**: Bao gồm cả thuật toán theo ngữ cảnh (LinUCB, LinTS, Logistic) và không theo ngữ cảnh (UCB1, Thompson Sampling).
+- **Hỗ Trợ 17 Thuật Toán (Multi-Policies)**: Bao gồm thuật toán không bối cảnh (epsilon-greedy, UCB1, Thompson, Softmax), bối cảnh tuyến tính (LinUCB, LinTS, Logistic, LinUCB-Hybrid), bối cảnh phi tuyến (Neural Linear, Random Forest, GP-UCB, Cluster Routing), và hành động liên tục (CATS). Plus các biến thể drift-aware và sliding-window.
 - **Hỗ Trợ Offline Evaluation**: Đánh giá hiệu năng của policy mới dựa trên historical logs với các kỹ thuật Rejection Sampling, Doubly Robust, và NCIS.
 - **Bootstrapping từ Dữ Liệu Cũ (Off-policy learning)**: Tự động hiệu chỉnh bias khi học từ dữ liệu logs cũ bằng Inverse Propensity Scoring (IPS).
 - **Cơ chế Thêm/Bớt Arms Động (Dynamic Arm Management)**: Thêm bớt arms trực tiếp khi hệ thống đang chạy với cơ chế warm-start.
+- **Phát Hiện Drift & Thích Ứng**: Phát hiện tự động sự dịch chuyển phân phối phần thưởng thông qua Page-Hinkley test và thích ứng nhanh chóng.
+- **Model Persistence**: Lưu và tải các bandit được huấn luyện thông qua joblib để triển khai sản xuất.
+- **Các Hoạt Động Batch**: Vectorized `decide_batch()` và `update_batch()` cho hệ thống thông lượng cao.
 
 ## Kiến Trúc Hệ Thống
 
