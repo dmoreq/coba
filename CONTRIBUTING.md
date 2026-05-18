@@ -244,6 +244,109 @@ Closes #123
 
 ---
 
+## Testing & Quality Assurance
+
+### Accessibility Testing (WCAG 2.1 AA)
+
+All new components must pass accessibility checks:
+
+#### Keyboard Navigation
+- [ ] All interactive elements reachable via Tab key
+- [ ] Tab order is logical and intuitive
+- [ ] Escape key closes modals
+- [ ] Enter/Space activates buttons and links
+- [ ] Focus indicator always visible
+
+**Testing:**
+```bash
+# Disable mouse; test with keyboard only
+# Mac: System Preferences > Accessibility > Keyboard > Full Keyboard Access
+# Windows: Alt+Left Arrow or Tab navigation
+```
+
+#### Screen Reader Compatibility
+- [ ] All buttons have accessible labels
+- [ ] Form fields have associated labels
+- [ ] Images have alt text (if needed)
+- [ ] Headings properly nested (h1 → h2 → h3)
+- [ ] Interactive elements announce state
+
+**Testing:**
+```bash
+# Mac: VoiceOver (Cmd+F5)
+# Windows: NVDA (free screen reader)
+# Browse each page and verify narration
+```
+
+#### Color Contrast
+- [ ] Normal text: 4.5:1 contrast ratio (WCAG AA)
+- [ ] Large text (18pt+): 3:1 contrast ratio
+- [ ] Focus indicators: at least 3:1 contrast
+
+**Tools:**
+- WebAIM Contrast Checker: https://webaim.org/resources/contrastchecker/
+- axe DevTools browser extension
+- Lighthouse (Chrome DevTools)
+
+#### Responsive Design
+- [ ] Mobile (375px): readable, no horizontal scroll
+- [ ] Tablet (768px): proper layout
+- [ ] Desktop (1024px+): optimal viewing
+- [ ] Touch targets: minimum 44×44 pixels
+
+**Testing:**
+```bash
+# Chrome DevTools > Device Toolbar
+# Test at 375px, 768px, 1024px widths
+```
+
+#### Motion & Animation
+- [ ] Animations respect `prefers-reduced-motion`
+- [ ] No auto-playing videos or sound
+- [ ] Flashing content does not exceed 3 per second
+
+### Performance Testing
+
+Target Lighthouse scores:
+- **Performance**: > 85
+- **Accessibility**: > 95
+- **Best Practices**: > 90
+- **SEO**: > 90
+
+### Manual Testing Checklist (Before Each Release)
+
+- [ ] **Keyboard**: Tab through entire app
+- [ ] **Screen reader**: Verify narration on each page
+- [ ] **Mobile**: Test on real mobile devices
+- [ ] **Dark mode**: Verify contrast and colors
+- [ ] **Reduced motion**: Enable in OS, verify animations minimal
+- [ ] **Zoom**: Test at 125% and 200% zoom
+- [ ] **Touch**: Test all interactive elements on touch device
+
+### Device Testing Matrix
+
+| Device | OS | Browser | Status |
+|--------|-----|---------|--------|
+| iPhone SE | iOS 17 | Safari | ✓ |
+| Pixel 6 | Android 13 | Chrome | ✓ |
+| iPad | iPadOS 17 | Safari | ✓ |
+| MacBook | macOS 13 | Chrome | ✓ |
+| Windows PC | Win 11 | Edge | ✓ |
+
+### Coverage Targets
+
+- **Unit tests**: 80%+ coverage
+- **Critical paths**: 100% coverage
+- **All new code**: 85%+ coverage
+
+**Run coverage:**
+```bash
+npm run test:coverage  # frontend
+pytest --cov           # backend
+```
+
+---
+
 ## Code Style and Standards
 
 ### Frontend (TypeScript/React)
@@ -303,17 +406,28 @@ def getLessonByNumber(number):
     return LESSONS.get(number)
 ```
 
-### Testing
+### Testing Frameworks & Tools
 
 - **Jest** + **React Testing Library** (frontend)
 - **Pytest** (backend)
 - **Snapshot tests** for UI components
 - **Unit test** each component
 - **E2E tests** for critical flows
-- **80%+ code coverage** target
 
-Example:
+**Run locally:**
+```bash
+# Frontend
+npm run test                  # Run tests
+npm run test:coverage         # Coverage report
+npm run test:watch          # Watch mode
 
+# Backend
+pytest                        # Run tests
+pytest --cov                  # Coverage report
+pytest -v                     # Verbose output
+```
+
+**Example test:**
 ```typescript
 // ✅ Good
 describe("LessonHeader", () => {
@@ -321,30 +435,7 @@ describe("LessonHeader", () => {
     render(<LessonHeader lessonNumber={2} />);
     expect(screen.getByText(/lesson 2/i)).toBeInTheDocument();
   });
-
-  it("displays level badge for beginner lessons", () => {
-    render(<LessonHeader lessonNumber={2} />);
-    expect(screen.getByText(/beginner/i)).toBeInTheDocument();
-  });
 });
-```
-
----
-
-## Running Tests Locally
-
-```bash
-# Frontend
-cd coba-web/frontend
-npm run test                  # Run tests
-npm run test:coverage         # Coverage report
-npm run test:watch          # Watch mode
-
-# Backend
-cd coba-web/backend
-pytest                        # Run tests
-pytest --cov                  # Coverage report
-pytest -v                     # Verbose output
 ```
 
 ---

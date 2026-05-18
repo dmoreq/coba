@@ -15,7 +15,7 @@ Welcome to COBA Web — an **interactive educational platform** for learning **1
 
 ### For Educators
 - **[Adding New Lessons](./ADDING_LESSONS.md)** — Implement a new algorithm
-- **[Testing Accessibility](./TESTING_ACCESSIBILITY.md)** — Verify keyboard nav & screen readers
+- **[Contributing Guide](../CONTRIBUTING.md)** — Code standards, testing, accessibility
 
 ### Reference
 - **[Algorithm Library](./algorithms/)** — Deep dives: LinUCB, Neural Linear, GP-UCB, etc.
@@ -93,8 +93,8 @@ For full COBA library docs, see the [main README](../README.md).
 
 | Metric | Value |
 |--------|-------|
-| Frontend Tests | 103/103 ✅ |
-| Backend Tests | 63/63 (90% coverage) ✅ |
+| Frontend Tests | 294/294 ✅ |
+| Backend Tests | 79+ (Pytest) ✅ |
 | TypeScript Errors | 0 ✅ |
 | Lessons | 17 |
 | Components | 50+ |

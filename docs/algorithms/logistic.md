@@ -22,7 +22,15 @@ To keep computation fast in an online setting, COBA uses an **Online Laplace App
 * `l2_lambda`: L2 regularization on the Hessian approximation (default 1.0).
 * `gamma`: Discount factor for non-stationarity (default 1.0). Set `< 1.0` (e.g., 0.99) to down-weight old observations.
 
-## 4. Example Usage
+## 4. Variants
+
+**Logistic Thompson Sampling (LogisticTS)**
+- Bayesian variant: samples from Gaussian posterior over logistic coefficients
+- Same computational complexity as LogisticUCB (Laplace approximation)
+- Better for uncertainty quantification; tends to explore more aggressively
+- Lesson: Not featured (available as policy), but you can experiment via Python API
+
+## 5. Example Usage
 
 ```python
 import numpy as np

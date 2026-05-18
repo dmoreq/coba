@@ -19,7 +19,19 @@ These policies act as wrappers around any standard machine learning model (like 
 * `n_bootstraps` (Bootstrapped only): Number of models in the ensemble. More → better uncertainty estimate, higher memory/CPU cost. Typical range: 5–20.
 * `epsilon` (EpsilonGreedy only): Exploration probability. `epsilon=0.1` means 10% random, 90% greedy.
 
-## 4. Example Usage
+## 4. PolicyType Mapping
+
+| Policy | Class | Lesson | Use Case |
+|--------|-------|--------|----------|
+| `epsilon_greedy` | `EpsilonGreedyArmModel` | Not featured | Hard exploration cutoff |
+| `bootstrapped_ts` | `BootstrappedTSArmModel` | Not featured | Ensemble + Bayesian uncertainty |
+| `bootstrapped_ucb` | `BootstrappedUCBArmModel` | Not featured | Ensemble + confidence bounds |
+| `random_forest_ucb` | Random Forest (sklearn) | Lesson 9 (Pricing) | Tree-based non-linear + UCB |
+| `random_forest_ts` | Random Forest (sklearn) | Not featured | Tree-based non-linear + TS |
+
+See [Policies Reference](../policies.md) for all 17 policies.
+
+## 5. Example Usage
 
 ```python
 from lightgbm import LGBMRegressor
