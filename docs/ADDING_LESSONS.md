@@ -1,311 +1,354 @@
-# Adding New Lessons to COBA-Web
+# Adding New Lessons to COBA Web
 
-This guide explains how to extend the curriculum by adding new lessons.
+This guide explains how to add a new interactive lesson to the platform.
 
 ## Overview
 
-The curriculum is structured as 8 progressive lessons + 1 reference page. Each lesson teaches one core concept through:
-1. **Problem** — plain-English statement of the challenge
-2. **Why It's Hard** — analysis of the difficulty
-3. **The Technique** — how the algorithm solves it
-4. **Interactive Demo** — controls, charts, step-by-step narrative
-5. **What You're Seeing** — chart interpretation guide
+A lesson teaches one algorithm through an interactive simulation:
+1. **Theory** — problem, intuition, technique (collapsible card)
+2. **Simulation** — real-time stepping with configurable speed (1x/10x/100x)
+3. **Visualization** — reward/regret curves, arm scores, trace log
+4. **Learning by doing** — adjust parameters, watch behavior change
 
-## Lesson Structure
+All 17 lessons are registered in a single file (`lib/lessons.ts`) and rendered via a dynamic route.
 
-### 1. Add Lesson Metadata
+---
 
-Update `lib/lessons.ts`:
+## Step 1: Add Lesson Metadata to Registry
+
+**File:** `web/frontend/lib/lessons.ts`
+
+The `LESSONS` array defines all 17 lessons. Add a new `LessonMeta` object:
 
 ```typescript
-// lib/lessons.ts
-export const LESSONS = [
-  // ... existing lessons
-  {
-    number: 9,
-    href: "/my-new-lesson",
-    icon: "🎯",
-    label: "Your Lesson Title",
-    level: "advanced", // "beginner", "intermediate", or "advanced"
-    problem: "Clear one-sentence problem statement",
-    prereqs: [2, 3], // Lessons that must come first
+{
+  slug: "my-new-algorithm",           // URL slug (unique, kebab-case)
+  index: 17,                          // Position in curriculum (0-16 existing)
+  title: "My New Algorithm",          // Display title
+  scenario: "Real-world use case...", // Problem description (1 sentence)
+  difficulty: "advanced",             // "beginner" | "intermediate" | "advanced"
+  policy: "my_policy",                // Policy type (must exist in backend)
+  arms: ["Option A", "Option B"],     // Arm names (or [] for continuous)
+  nFeatures: 5,                       // Context feature count
+  defaultConfig: {                    // BanditConfig defaults
+    policy: "my_policy",
+    alpha: 1.0,
+    nClusters: 3,
   },
-];
+  prerequisites: [15],                // Lesson indices that must come first
+  rewardFn: (arm: string, context: number[]) => {
+    // Client-side reward function
+    // Maps (arm, context) → reward (0-1)
+    return Math.random(); // Replace with actual logic
+  },
+}
 ```
 
-Also add to backend `routers/curriculum.py`:
+### Key Fields Explained
+
+- **`slug`**: Used in URL (`/lesson/my-new-algorithm`). Must be unique.
+- **`index`**: Position in curriculum. For 18th lesson, use 17 (0-indexed).
+- **`policy`**: Must match a `PolicyType` in `web/frontend/lib/types.ts` AND be implemented in the backend (`web/backend/app/simulators/`).
+- **`arms`**: List of arm names. Empty for continuous policies like CATS.
+- **`nFeatures`**: Context dimension. Backend validates: `len(context) == nFeatures`.
+- **`defaultConfig`**: Initial `BanditConfig` for the lesson. Users can adjust in UI.
+- **`prerequisites`**: Array of lesson indices that should be completed first. Blocks progression in the UI.
+- **`rewardFn`**: **Important** — rewards are computed **client-side**, not server-side. This function observes the chosen arm and context, returns a reward in `[0, 1]`.
+
+---
+
+## Step 2: Implement Backend Reward Simulator
+
+**File:** `web/backend/app/simulators/`
+
+The backend doesn't compute rewards for the bandit; it only runs the decision logic. The frontend calls `rewardFn` to generate the reward, then sends it via `POST /api/sessions/{id}/update`.
+
+However, for **offline evaluation** and **drift injection** tests, the backend needs to know the reward function.
+
+Add your simulator to the appropriate file:
+
+- **Context-free policies** (UCB1, Thompson) → `context_free.py`
+- **Linear contextual** (LinUCB, LinTS, Logistic) → `contextual_linear.py`
+- **Advanced** (Neural, Forest, GP, CATS) → `advanced.py`
 
 ```python
-# routers/curriculum.py
-LESSONS = [
-    # ... existing lessons
-    {
-        "number": 9,
-        "href": "/my-new-lesson",
-        "icon": "🎯",
-        "label": "Your Lesson Title",
-        "level": "advanced",
-        "problem": "...",
-        "prereqs": [2, 3],
-    },
-]
+# web/backend/app/simulators/advanced.py
+
+def reward_my_new_algorithm(arm: str, context: np.ndarray) -> float:
+    """Return reward in [0, 1] for (arm, context) pair."""
+    # Example: sigmoid of dot product
+    weights = {"Option A": [0.3, 0.5, -0.1], ...}
+    w = weights.get(arm, [0] * len(context))
+    logit = sum(w[i] * context[i] for i in range(len(context)))
+    return 1 / (1 + np.exp(-logit))  # sigmoid
 ```
 
-### 2. Create Lesson Page
+---
 
-Create `app/my-new-lesson/page.tsx`:
+## Step 3: Create Lesson Component
 
-```typescript
+**File:** `web/frontend/components/lesson/MyNewAlgorithmLesson.tsx`
+
+All lessons follow the same structure:
+
+```tsx
 "use client";
 
 import { useState } from "react";
-import { LessonHeader } from "@/components/education/LessonHeader";
-import { LessonNav } from "@/components/education/LessonNav";
-import { PageShell } from "@/components/layout/PageShell";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useSession } from "@/lib/hooks/useSession";
+import { useSimulator } from "@/lib/hooks/useSimulator";
+import { getLessonBySlug } from "@/lib/lessons";
+import { TheoryCard } from "@/components/lesson/TheoryCard";
+import { TracePanel } from "@/components/lesson/TracePanel";
+import { LessonShell } from "@/components/lesson/LessonShell";
+import { LessonControls } from "@/components/lesson/LessonControls";
+import { RewardRegretSection } from "@/components/lesson/RewardRegretSection";
+import { ArmBar } from "@/components/charts/ArmBar";
+import { RewardChart } from "@/components/charts/RewardChart";
+import { RegretChart } from "@/components/charts/RegretChart";
+import { PullHistogram } from "@/components/charts/PullHistogram";
 
-export default function MyNewLessonPage() {
-  const [isRunning, setIsRunning] = useState(false);
+export default function MyNewAlgorithmLesson() {
+  const lesson = getLessonBySlug("my-new-algorithm")!;
+  const session = useSession(lesson);
+  const simulator = useSimulator(session, lesson.rewardFn);
+
+  const [showTheory, setShowTheory] = useState(false);
+
+  if (!session.isReady) return <div>Loading...</div>;
 
   return (
-    <PageShell>
-      <LessonHeader lessonNumber={9} />
-
-      {/* Your lesson content here */}
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Interactive Demo</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Button onClick={() => setIsRunning(!isRunning)}>
-              {isRunning ? "Stop" : "Start"} Demo
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-
-      <LessonNav lessonNumber={9} />
-    </PageShell>
+    <LessonShell
+      topSection={
+        <TheoryCard
+          title="Algorithm Name"
+          sections={[
+            {
+              heading: "The Problem",
+              content: "Plain English explanation of the challenge...",
+            },
+            {
+              heading: "The Intuition",
+              content: "How the algorithm solves it...",
+            },
+            {
+              heading: "The Math (Optional)",
+              content: "Formula and derivation (can be collapsed)...",
+            },
+          ]}
+          isOpen={showTheory}
+          onToggle={setShowTheory}
+        />
+      }
+      scoreCard={<ArmBar arms={simulator.trace[0]?.armScores || []} />}
+      pullsCard={<PullHistogram stats={session.stats} />}
+      rewardCard={
+        <RewardChart
+          data={simulator.trace.map((t, i) => ({
+            x: i,
+            y: t.reward,
+          }))}
+          label="Reward per Step"
+        />
+      }
+      regretCard={
+        <RegretChart
+          data={simulator.trace.map((t, i) => ({
+            x: i,
+            y: t.regret,
+          }))}
+          label="Cumulative Regret"
+        />
+      }
+      traceSection={<TracePanel entries={simulator.trace} compact />}
+      vizSection={
+        // Optional: lesson-specific visualization
+        // E.g., BetaDistribution, TreeDiagram, ConfidenceEllipse, etc.
+        undefined
+      }
+    />
   );
 }
 ```
 
-### 3. Add Glossary Tooltips
+### Component Imports Explained
 
-Wrap technical terms with `<GlossaryTip>`:
+- **`useSession(lesson)`** — Manages bandit session lifecycle (create, step, update, reset). Returns: `sessionId`, `nFeatures`, `step()`, `update()`, `stats`, `reset()`.
+- **`useSimulator(session, rewardFn)`** — Auto-stepping loop at configurable speed. Returns: `isRunning`, `speed`, `totalSteps`, `trace`, `start()`, `pause()`, `step()`, `setSpeed()`.
+- **`LessonShell`** — Layout wrapper. Props: `topSection`, `scoreCard`, `pullsCard`, `rewardCard`, `regretCard`, `traceSection`, `vizSection`.
+- **`TheoryCard`** — Collapsible theory explanation. Props: `title`, `sections[]`, `isOpen`, `onToggle`.
+- **`TracePanel`** — Decision log showing each step's context, arm, reward. Props: `entries`, `compact`.
+- **`LessonControls`** — Play/pause, speed buttons. (Auto-included in most lessons.)
+- **Charts** — `ArmBar`, `RewardChart`, `RegretChart`, `PullHistogram`. All are custom SVG components, not Recharts.
 
-```typescript
-import { GlossaryTip } from "@/components/education/GlossaryTip";
+---
 
-// In your JSX:
-<GlossaryTip term="Exploration">
-  exploring new options
-</GlossaryTip>
-```
+## Step 4: Register Component in Router
 
-Available terms (from `lib/glossary.ts`):
-- Reward, Regret, Exploration, Exploitation, Context, Cluster
-- Policy, UCB, Thompson Sampling, LinUCB, Propensity, IPS
-- Doubly Robust, Drift, Cold-Start
+**File:** `web/frontend/components/lesson/registry.tsx`
 
-### 4. Create Chart Insights
+Import your lesson and add to the registry:
 
-Add descriptions to `lib/chart-insights.ts`:
+```tsx
+import MyNewAlgorithmLesson from "./MyNewAlgorithmLesson";
 
-```typescript
-// lib/chart-insights.ts
-export const chartInsights = {
-  // ... existing insights
-  myNewLessonChart: "Your chart explanation here...",
+export const LESSON_COMPONENTS: Record<string, React.ComponentType<{}>> = {
+  // ... existing lessons
+  "my-new-algorithm": MyNewAlgorithmLesson,
 };
 ```
 
-### 5. Add Backend Demo Scenario (Optional)
+The dynamic route `app/lesson/[slug]/page.tsx` uses this registry to render the correct component.
 
-Update `routers/scenarios.py`:
+---
 
-```python
-# routers/scenarios.py
-DEMO_SCENARIOS = {
-    # ... existing scenarios
-    9: {
-        "name": "Your Scenario Name",
-        "description": "What the learner will see...",
-        "n_features": 3,
-        "n_arms": 4,
-        # ... other parameters
-    },
-}
-```
+## Step 5: Write Tests
 
-### 6. Write Tests
-
-Create `app/__tests__/my-new-lesson.test.tsx`:
+**Path:** `web/frontend/tests/unit/components/lesson/`
 
 ```typescript
+// MyNewAlgorithmLesson.test.tsx
 import { render, screen } from "@testing-library/react";
-import MyNewLessonPage from "@/app/my-new-lesson/page";
+import MyNewAlgorithmLesson from "@/components/lesson/MyNewAlgorithmLesson";
 
-describe("Lesson 9: My New Lesson", () => {
-  it("renders the lesson header", () => {
-    render(<MyNewLessonPage />);
-    expect(screen.getByText(/lesson.*9/i)).toBeInTheDocument();
+// Mock useSession and useSimulator
+jest.mock("@/lib/hooks/useSession");
+jest.mock("@/lib/hooks/useSimulator");
+
+describe("MyNewAlgorithmLesson", () => {
+  it("renders the theory card", () => {
+    render(<MyNewAlgorithmLesson />);
+    expect(screen.getByText(/Algorithm Name/i)).toBeInTheDocument();
   });
 
-  it("renders the interactive demo", () => {
-    render(<MyNewLessonPage />);
-    expect(screen.getByText(/start.*demo/i)).toBeInTheDocument();
-  });
-
-  it("renders the lesson navigation", () => {
-    render(<MyNewLessonPage />);
-    expect(screen.getByText(/lesson of 8/i)).toBeInTheDocument();
+  it("renders the shell with all 4 chart cards", () => {
+    render(<MyNewAlgorithmLesson />);
+    // Check for card titles or key elements
+    expect(screen.getByText(/Reward/i)).toBeInTheDocument();
+    expect(screen.getByText(/Regret/i)).toBeInTheDocument();
   });
 });
 ```
 
 Run tests:
 ```bash
-npm run test
+npm test
 ```
-
-### 7. Update Navigation Sidebar
-
-The sidebar is automatically updated by `NavSidebar.tsx` reading from `lib/lessons.ts`.
-
-No manual changes needed!
-
-## Best Practices
-
-### Problem Statement
-
-✅ **Good**: "How do you choose between options when rewards are random?"
-❌ **Bad**: "Implement contextual bandits"
-
-### Why It's Hard
-
-Explain the conflict or challenge:
-- "You can't learn everything instantly"
-- "Exploration costs immediate reward"
-- "The world changes over time"
-
-### Technique Explanation
-
-Start simple, then go deeper:
-1. **Plain English**: "The algorithm picks options with high uncertainty"
-2. **Example**: "A new ad gets tried even if old ads look better"
-3. **Math**: "Q(a) + c√(ln(t)/n_a)" (optional, expandable)
-
-### Charts
-
-- ✅ Use domain-agnostic labels ("Reward", not "CTR")
-- ✅ Include axis labels and units
-- ✅ Add insight text explaining what to look for
-- ✅ Show good/bad patterns (e.g., "flat line = bad learning")
-
-### Glossary Terms
-
-- Define every jargon word
-- Provide concrete examples
-- Link to related concepts
-- Use consistent terminology across all lessons
-
-## Example: Complete Lesson
-
-See `app/playground/page.tsx` for a full example of:
-- LessonHeader integration
-- Interactive demo with controls
-- Charts with insights
-- Step narrative
-- LessonNav integration
-- GlossaryTips on controls
-
-## Common Patterns
-
-### Running a Simulation
-
-```typescript
-const [steps, setSteps] = useState<number[]>([]);
-const [running, setRunning] = useState(false);
-
-async function runSimulation() {
-  setRunning(true);
-  const { session_id } = await api.simulate.start({
-    policy: "linucb",
-    n_features: 3,
-    n_arms: 4,
-  });
-  const source = new EventSource(api.simulate.streamUrl(sessionId));
-  source.onmessage = (msg) => {
-    const event = JSON.parse(msg.data);
-    setSteps((prev) => [...prev, event.step]);
-    // ... update other state
-    if (event.done) source.close();
-  };
-}
-```
-
-### Displaying Charts
-
-```typescript
-<ChartCard title="Your Chart Title" insight={chartInsights.yourKey}>
-  <PlotlyChart
-    data={[{ x: steps, y: rewards, type: "scatter", mode: "lines" }]}
-    layout={{ yaxis: { title: "Reward" } }}
-  />
-</ChartCard>
-```
-
-### Showing Step Narrative
-
-```typescript
-<StepNarrative step={currentStep} />
-```
-
-The narrative automatically explains each decision based on `lib/narrative.ts`.
-
-## Checklist for New Lessons
-
-- [ ] Add lesson metadata to `lib/lessons.ts` and backend
-- [ ] Create page at `app/my-lesson/page.tsx`
-- [ ] Add LessonHeader and LessonNav
-- [ ] Add GlossaryTips to all technical terms
-- [ ] Create chart insights in `lib/chart-insights.ts`
-- [ ] Add demo scenario to `routers/scenarios.py` (optional)
-- [ ] Write unit tests
-- [ ] Test on mobile (responsive)
-- [ ] Test in dark mode
-- [ ] Test keyboard navigation (Tab, Enter, Escape)
-- [ ] Add PR description explaining the lesson concept
-- [ ] Request review from @dmoreq
-
-## Curriculum Progression
-
-Lessons should build on each other:
-
-```
-Lesson 1: What are bandits?
-  ↓
-Lesson 2: Explore vs Exploit
-  ├→ Lesson 3: Compare strategies
-  ├→ Lesson 4: Learn from history
-  └→ Lesson 5: Adapt to changes
-  ├→ Lesson 6: Detect drift
-  ├→ Lesson 7: Continuous actions
-  └→ Lesson 8: Real-world constraints
-```
-
-Lessons with same prerequisites can be done in any order.
-
-## Questions?
-
-1. Check existing lessons (`app/playground/`, `app/policy-lab/`, etc.)
-2. Review `lib/glossary.ts` for terminology
-3. Ask in GitHub Discussions
-4. File an issue with your question
 
 ---
 
-**Thank you for extending COBA-Web's curriculum!**
+## Step 6: Test Locally
+
+1. **Start both servers:**
+   ```bash
+   # Terminal 1: Backend
+   cd web/backend
+   source venv/bin/activate
+   uvicorn app.main:app --reload
+
+   # Terminal 2: Frontend
+   cd web/frontend
+   npm run dev
+   ```
+
+2. **Open browser:** `http://localhost:3000`
+
+3. **Navigate to your lesson:** `/lesson/my-new-algorithm`
+
+4. **Test interactions:**
+   - Click Play → should step and show trace
+   - Adjust speed (1x/10x/100x) → should change stepping rate
+   - Observe reward/regret curves updating
+   - Try keyboard shortcuts (Space for play/pause, ← / → for step, 1/2/3 for speed)
+
+---
+
+## Step 7: Complete Checklist Before PR
+
+- [ ] Lesson metadata added to `lib/lessons.ts` with unique slug
+- [ ] Component created in `components/lesson/` and registered in `registry.tsx`
+- [ ] Component imports `LessonShell` and uses correct layout props
+- [ ] `rewardFn` is implemented and returns values in `[0, 1]`
+- [ ] Backend simulator added to appropriate `simulators/` file
+- [ ] Unit tests written for component (80%+ coverage)
+- [ ] Mobile responsive tested (375px, 768px, 1024px widths)
+- [ ] Dark mode works (toggle theme in top bar)
+- [ ] Keyboard shortcuts work (Space, ←/→, 1/2/3, ?)
+- [ ] All existing tests pass: `npm test`
+- [ ] Build succeeds: `npm run build`
+
+---
+
+## Example: Complete Minimal Lesson
+
+Here's a complete minimal lesson to copy from:
+
+**Lesson: `intro` (Explore vs Exploit)**
+- **File:** `web/frontend/components/lesson/ExploreExploitLesson.tsx`
+- **Slug:** `intro`
+- **Policy:** `epsilon_greedy`
+- **Args:** 3 arms, 1 feature (context-free), epsilon=0.1
+
+Check this lesson for:
+- Actual component structure
+- Real `useSession` + `useSimulator` usage
+- How to build charts from trace data
+- Theory card format
+
+---
+
+## Troubleshooting
+
+### "Session creation failed: 422 Validation Error"
+- Check `nFeatures` matches backend validation
+- Check `policy` exists in `PolicyType` enum
+- Check config fields are spelled correctly (snake_case in backend request)
+
+### "Cannot GET /lesson/my-new-algorithm"
+- Slug must match exactly in `lib/lessons.ts` and `registry.tsx`
+- Slug must be kebab-case (no underscores)
+
+### "Charts not updating"
+- Check `simulator.trace` is populating (breakpoint in console)
+- Check `rewardFn` is returning finite numbers (not NaN, not Infinity)
+- Check component is rendering with latest trace data
+
+### "Tests failing: useSession mock issues"
+- Ensure you're mocking with proper return type
+- Use the test helpers in `tests/unit/testUtils/sessionMocks.ts`
+
+---
+
+## API Contract Reference
+
+When you implement `rewardFn`, remember:
+- **Input:** `(arm: string, context: number[])` — the chosen arm and context vector
+- **Output:** `number` in `[0, 1]` — reward signal
+- **Timing:** Called immediately after `step()`, before `update()`
+
+Example from lesson registry:
+```typescript
+rewardFn: (arm: string, context: number[]) => {
+  const weights = {
+    "Option A": [0.3, 0.5, 0.1],
+    "Option B": [0.1, -0.2, 0.4],
+  };
+  const w = weights[arm] || [0, 0, 0];
+  const logit = w.reduce((sum, wi, i) => sum + wi * context[i], 0);
+  return 1 / (1 + Math.exp(-logit)); // sigmoid
+};
+```
+
+---
+
+## Questions?
+
+1. Check existing lessons in `components/lesson/` for working examples
+2. Review `lib/lessons.ts` for lesson metadata patterns
+3. See `web/backend/app/simulators/` for reward function examples
+4. Check `CONTRIBUTING.md` for code style guidelines
+5. Open a GitHub Discussion if something is unclear
+
+---
+
+**Happy building! Your lesson will teach thousands of learners about contextual bandits. 🚀**
