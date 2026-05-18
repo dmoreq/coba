@@ -8,7 +8,7 @@
 
 An interactive educational platform for teaching **17 contextual bandit algorithms** through hands-on, browser-based simulations.
 
-[🎮 Try it live](https://coba-web.vercel.app) | [📚 Reference](https://coba-web.vercel.app/reference) | [📖 Implementation Guide](./FINAL_STATUS.md)
+[🎮 Try it live](https://coba-web.vercel.app) | [📚 Reference](https://coba-web.vercel.app/reference) | [📖 Docs](./docs/index.md)
 
 ## Features
 
@@ -204,11 +204,14 @@ Status badges at top of README.
 
 ## Documentation
 
-- [Final Status Report](./FINAL_STATUS.md) — Project overview & timeline
-- [Progress Checkpoint](./PROGRESS_CHECKPOINT.md) — Detailed breakdown
-- [Implementation Guide](./NEXT_STEPS.md) — Phase-by-phase guide
-- [Quick Reference](./QUICK_START.md) — Commands cheatsheet
-- [Architecture](./PROJECT_OVERVIEW.md) — System design
+Full documentation available in [`docs/`](./docs/) including:
+
+- [Architecture Guide](./docs/ARCHITECTURE.md) — System design & component structure
+- [Deployment Guide](./docs/DEPLOYMENT.md) — Production deployment instructions
+- [Quick Start for Learners](./docs/QUICK_START_LEARNER.md) — Using the platform
+- [Adding New Lessons](./docs/ADDING_LESSONS.md) — Developer guide for new algorithms
+- [Algorithm Reference](./docs/algorithms/) — Deep dives (LinUCB, Neural Linear, GP-UCB, etc.)
+- [API Documentation](http://localhost:8000/docs) — Interactive API reference
 
 ## Contributing
 
@@ -251,10 +254,8 @@ If you use COBA Web in your research or teaching, please cite:
 
 ## Questions?
 
-See [FINAL_STATUS.md](./FINAL_STATUS.md) for comprehensive project overview, or open an issue!
+See [docs/](./docs/) for comprehensive documentation, or open an issue!
 
 ---
 
 **Status:** 🎉 Production-ready! All 17 lessons fully interactive.
-
-**Next:** Keyboard navigation, reference page, CI/CD pipeline — Phase 5 polish in progress.
