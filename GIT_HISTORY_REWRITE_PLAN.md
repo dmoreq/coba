@@ -5,7 +5,8 @@
 1. **Remove `Co-Authored-By: Claude`** from all 19 commits that contain it
 2. **Squash noise commits** — process logs, summaries, plans, phase reports, and quick-ref docs that were committed as files but should not exist as individual commits
 3. **Normalize commit messages** — consistent conventional-commit style, no "Step A/B/C", no "Phase N complete" titles, no em-dashes, no redundant prefixes
-4. **Result** — a clean linear history of ~30 meaningful commits that a new contributor can read to understand how the project was built
+4. **Remove deleted `coba-web/` history** — drop every commit whose changes only relate to the removed `coba-web` folder
+5. **Result** — a clean linear history of ~30 meaningful commits that a new contributor can read to understand how the project was built
 
 ---
 
@@ -24,6 +25,16 @@
 
 These commits added files that have since been deleted or are internal AI process artefacts.
 They should be squashed into the nearest meaningful commit or dropped outright.
+
+### Deleted `coba-web/` app history (drop entirely)
+
+Drop every commit returned by:
+
+```bash
+git log --reverse --oneline -- coba-web
+```
+
+This includes `81acdc4` through `3ca850b` and any documentation, frontend, backend, test, UI, theme, or cleanup commits that only touched the deleted `coba-web/` folder.
 
 ### Internal AI process docs (drop / squash)
 
@@ -187,6 +198,7 @@ git rebase -i --root
 ```
 
 In the editor:
+- Mark `pick` → `drop` for every commit returned by `git log --reverse --oneline -- coba-web`
 - Mark `pick` → `drop` for all noise doc commits listed above
 - Mark `pick` → `squash` / `fixup` for commits that belong together
 - Rewrite subjects following the normalization rules above
