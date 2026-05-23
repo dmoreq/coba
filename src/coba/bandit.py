@@ -214,6 +214,7 @@ class ClusterBandit:
                 raise ValueError(f"sum of min_pull_rates must be ≤ 1.0, got {total:.4f}")
         self._min_pull_rates: dict[Arm, float] | None = effective_min_pull_rates
         self._total_decisions: int = 0
+        self._drift_detected_last_step: bool = False
 
     # ------------------------------------------------------------------
     # Core Online API
@@ -462,6 +463,7 @@ class ClusterBandit:
         self._router.update(x, arm, reward, weight)
         self._update_arm_stats(arm, reward)
 
+        self._drift_detected_last_step = False
         if self._drift_detectors is not None and arm in self._drift_detectors:
             if self._drift_detectors[arm].update(reward):
                 logger.warning(
@@ -470,6 +472,7 @@ class ClusterBandit:
                 )
                 self._router.reset_arm(arm)
                 self._drift_detectors[arm].reset()
+                self._drift_detected_last_step = True
 
     def update_batch(
         self,

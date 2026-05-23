@@ -1,85 +1,94 @@
-# Systematic Fix & DRY/SOLID Refactoring of Bandit Lessons
+# Systematic Fix & Logic Review of Decision Trace Panel
 
-Resolve the React-side rendering error `TypeError: e.map is not a function` in the Dash Mantine Components (DMC) library, fix the system-wide Decision Trace arm extraction bug, and refactor the lesson files to eliminate ~1,400 lines of redundant, duplicated callbacks by applying **SOLID** and **DRY** design principles.
+Review the Decision Trace table logic to ensure all policy choices (UCB, Thompson, Softmax, Epsilon-Greedy) display accurate, mathematically correct selection reasons, fix the transient drift detection alarm logging bug, and implement a premium "explore vs. exploit" flag indicator.
 
 ---
 
 ## 1. Core Issues & Root Causes
 
-### Issue A: Invalid Slider Marks (DMC v2 Bug) — [COMPLETED]
-Under `dash-mantine-components>=2.0.0` (built on Mantine v7), the `marks` prop of `dmc.Slider` accepts a **list of dictionaries** (e.g. `[{"value": 0.0, "label": "0"}, ...]`) rather than a Python dictionary (e.g. `{0.0: "0", ...}`). A Python dictionary is serialized as a JSON object, causing the underlying React component's `.map()` operation to fail with:
-`TypeError: e.map is not a function`
-
-### Issue B: High Boilerplate & Code Duplication — [COMPLETED]
-Across the 8 core interactive bandit lessons, there is a massive amount of code duplication (~1,400 lines). Each lesson duplicates the exact same 9 callbacks for:
-1. `control_simulation` (stepping, running, pausing)
-2. `set_speed` (speed multipliers)
-3. `step_simulation` (stepping through simulation batches)
-4. `update_arm_bar` (rendering arm score figures)
-5. `update_pull_histogram` (rendering pull count figures)
-6. `update_reward_chart` (cumulative rewards)
-7. `update_regret_chart` (cumulative regret)
-8. `update_trace_table` (rendering trace history)
-9. `update_step_counter` (counter labels)
-
-### Issue C: No Arm Selection in Decision Trace & Lack of Learning [NEW]
-The simulator's `_extract_arm` helper expects the chosen arm to be under the attribute `"arm"`. However, the `BanditDecision` schema (from `src/coba/schemas.py`) stores the selected arm inside the attribute **`"chosen_arm"`**.
-This causes the extractor to always return `None`, meaning:
-* The decision trace table displays `"—"`.
-* The `bandit.update()` call is bypassed, stopping the model from learning.
-* Pull counts and arm scores remain stagnant at default levels.
-
----
-
-## 2. Refactoring Design (DRY, SOLID, OOP)
-
-To fix this systematically, we will apply the following design patterns:
-
-### Single Responsibility & Separation of Concerns (SOLID: SRP)
-* **Standard Boilerplate** -> Shared and encapsulated in `base_lesson.py`.
-* **Lesson Modules** -> Handle only their specific layout, parameters, slider config cards, and custom visualization callbacks (e.g., Thompson's `beta-grid` or Cluster Routing's `cluster-scatter`).
-
-### DRY (Don't Repeat Yourself)
-* We will decouple the core simulation loop callbacks from the policy session creation callback.
-* We will expose a new shared function `register_simulation_callbacks` in `base_lesson.py` that registers the 9 standard callbacks for any lesson module.
-
----
-
-## 3. Detailed Proposed Changes
-
-### [MODIFY] [simulator.py](file:///Users/quy.doan/Workspace/personal/coba/web/core/simulator.py)
-* Refactor `_extract_arm` to check both `"chosen_arm"` and `"arm"` attributes and dictionary keys.
-* This systematically fixes the decision trace and learning workflow across all 17 lessons.
-
+### Issue A: Hardcoded Decision Reasons
+Currently, `web/core/trace_builder.py` hardcodes the choice reason for any successful arm selection to `"highest_ucb"`:
 ```python
-def _extract_arm(decision: Any) -> str | None:
-    """Extract chosen arm from bandit decision, supporting both coba schemas and fallbacks."""
-    if decision is None:
-        return None
-    if hasattr(decision, "chosen_arm"):
-        return decision.chosen_arm
-    if hasattr(decision, "arm"):
-        return decision.arm
-    if isinstance(decision, dict):
-        return decision.get("chosen_arm") or decision.get("arm")
-    return None
+chosen_reason = "abstained" if abstained else ("highest_ucb" if chosen_arm else "none")
 ```
+This is mathematically incorrect for non-UCB policies:
+* **Thompson Sampling** (TS, LinTS, LogisticTS) chooses arms based on **posterior sample values**.
+* **Softmax** chooses arms by sampling from a **softmax probability distribution**.
+* **Epsilon-Greedy** either **explores randomly** (with probability epsilon) or **exploits greedily** (highest predicted mean).
+
+### Issue B: Stagnant "Flags" Column & Missed Drift Alarms
+The sequential drift detector (`PageHinkleyDetector`) triggers drift inside `bandit.update(reward)`. When drift is detected, it resets the arm's model and immediately calls `detector.reset()`, returning the drift state back to `False`.
+In `web/core/simulator.py`, the `do_one_step` function builds the step's trace entry **before** calling `bandit.update()`. Because the trace is generated before the update, and because the drift state is transiently reset during the update, **drift alarms are never captured in the Decision Trace table**, leaving the "Flags" column completely empty for drift events!
 
 ---
 
-## 4. Verification Plan
+## 2. Systematic Refactoring Plan
+
+### 1. Dynamic Selection Reason Mapping (SOLID & OOP)
+Expose the `policy_type` to `build_trace(...)` and map selection reasons dynamically based on the policy and score characteristics:
+* **Thompson Sampling & Neural Linear**: `"posterior_sampling"`
+* **Softmax**: `"softmax_sampling"`
+* **Epsilon-Greedy**:
+  * `"epsilon_exploration"` (when pulling an arm with a cold start/exploration score)
+  * `"greedy_exploitation"` (when pulling the best predicted mean arm)
+* **UCB Policies**: `"highest_ucb"`
+
+### 2. Transient Drift Capture & Loop Sequence Order
+* In `ClusterBandit.update(...)` (`src/coba/bandit.py`), record a transient boolean flag `self._drift_detected_last_step = True` whenever the Page-Hinkley detector signals drift.
+* In `do_one_step` (`web/core/simulator.py`), execute the `bandit.update()` call **before** generating the trace entry, read & clear the `_drift_detected_last_step` flag, and feed the correct drift outcome directly into `build_trace(...)`.
+
+### 3. Premium Explore/Exploit Indicators in Flags Column
+Dynamically classify every decision step in the trace panel:
+* Find the arm with the highest expected reward estimate (`mean` prediction).
+* If the chosen arm has the highest expected reward, flag the step as `"★ EXPLOIT"`.
+* If a different arm was pulled (due to UCB bonus, random sampling, or TS uncertainty), flag the step as `"✈ EXPLORE"`.
+* Combine this with `"⚠ DRIFT"` and `"✋ ABSTAIN"` alarms.
+* Style the rows in Dash DataTable conditionally to highlight exploration vs exploitation and drift warnings cleanly.
+
+---
+
+## User Review Required
+
+> [!IMPORTANT]
+> The loop reordering in `do_one_step` changes trace generation to execute post-update. All decision-time statistics (context, scores, chosen arm) are calculated *before* the update and preserved, guaranteeing that the logging metrics perfectly reflect the state of the model at the exact moment the decision was made.
+
+---
+
+## Proposed Changes
+
+### Core Library (Bandit Policy)
+
+#### [MODIFY] [bandit.py](file:///Users/quy.doan/Workspace/personal/coba/src/coba/bandit.py)
+* Initialize `self._drift_detected_last_step = False` in `__init__`.
+* Update `update` method to set `self._drift_detected_last_step = True` when Page-Hinkley triggers a drift event.
+
+---
+
+### Web App Simulator & Rendering
+
+#### [MODIFY] [trace_builder.py](file:///Users/quy.doan/Workspace/personal/coba/web/core/trace_builder.py)
+* Update `build_trace` signature to accept `policy_type: str | None = None`.
+* Construct policy-appropriate `chosen_reason` strings based on the active policy type and score details.
+
+#### [MODIFY] [simulator.py](file:///Users/quy.doan/Workspace/personal/coba/web/core/simulator.py)
+* Update `do_one_step` loop order to perform `bandit.update(...)` first, capture the transient `_drift_detected_last_step` flag from the bandit, and then build the step trace entry.
+
+#### [MODIFY] [trace_panel.py](file:///Users/quy.doan/Workspace/personal/coba/web/components/trace_panel.py)
+* Implement dynamic `Flags` population: `"★ EXPLOIT"` when chosen arm matches the best mean estimate arm, `"✈ EXPLORE"` otherwise.
+* Apply premium conditional styling in Dash DataTable to color-code exploit vs explore steps and highlight drift alarms.
+
+---
+
+## Verification Plan
 
 ### Automated Tests
-1. Run `pytest` to verify the codebase structure is intact and no unit/smoke tests fail.
-   ```bash
-   .venv/bin/pytest
-   ```
-2. Verify code coverage meets the high standard required by global rules.
-   ```bash
-   .venv/bin/pytest --cov=. --cov-report=term-missing --cov-fail-under=90
-   ```
+* Run the test suite:
+  ```bash
+  pytest tests/ -v -p no:asyncio
+  ```
 
 ### Manual Verification
-* Start the Dash web server and visually confirm:
-  * Decision Trace table displays correct chosen arms (e.g. "Variant A", "Variant B").
-  * Run simulation and verify that pull counts, regret charts, and arm scores update dynamically as the bandit learns.
+* Start the Dash server.
+* Select UCB1: Verify that steps are flagged with `"★ EXPLOIT"` or `"✈ EXPLORE"`, and the reason displays `"highest ucb"`.
+* Select Thompson Sampling: Verify that reasons display `"posterior sampling"`.
+* Select Drift Detection: Set a high drift rate, run the simulation, and verify that the row turns yellow with the `"⚠ DRIFT"` flag when drift occurs.
