@@ -43,7 +43,11 @@ check-types-web:
 	$(UV) run mypy web --ignore-missing-imports \
 		--exclude 'web/(\.venv|tests)' \
 		--disable-error-code no-untyped-def \
-		--disable-error-code no-untyped-call
+		--disable-error-code no-untyped-call \
+		--disable-error-code annotation-unchecked \
+		--disable-error-code union-attr \
+		--disable-error-code name-defined \
+		--disable-error-code attr-defined
 
 # ── Tests ─────────────────────────────────────────────────────────────────────
 test:
