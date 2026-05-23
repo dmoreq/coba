@@ -98,6 +98,17 @@ class LinUCBHybridArmModel(BaseArmModel):
         Returns:
             UCB score (higher → arm preferred).
         """
+        expected, ucb_width = self.score_decomposed(x)
+        return expected + ucb_width
+
+    def score_decomposed(self, x: np.ndarray) -> tuple[float, float]:
+        """Return (expected_reward, ucb_width) separately for hybrid UCB.
+
+        Args:
+            x: Full context vector, length n_shared + n_arm.
+        Returns:
+            Tuple of (expected_reward, ucb_width).
+        """
         z, x_arm = self._split(x)
 
         expected = 0.0
@@ -113,7 +124,7 @@ class LinUCBHybridArmModel(BaseArmModel):
             a_inv_x = self._arm_ridge.A_inv @ x_arm
             var += float(x_arm @ a_inv_x)
 
-        return expected + self.alpha * float(np.sqrt(max(var, 0.0)))
+        return expected, self.alpha * float(np.sqrt(max(var, 0.0)))
 
     def update(self, x: np.ndarray, reward: float, weight: float = 1.0) -> None:
         """Update shared and per-arm ridge models.

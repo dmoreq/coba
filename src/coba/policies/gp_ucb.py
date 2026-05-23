@@ -90,6 +90,20 @@ class GPUCBArmModel(BaseArmModel):
         if not self._X:
             return float("inf")
 
+        mu, ucb_width = self.score_decomposed(x)
+        return mu + ucb_width
+
+    def score_decomposed(self, x: np.ndarray) -> tuple[float, float]:
+        """Return posterior mean and exploration width separately.
+
+        Args:
+            x: Context vector.
+        Returns:
+            Tuple of (mu, ucb_width).
+        """
+        if not self._X:
+            return 0.0, float("inf")
+
         self._maybe_rebuild_cache()
 
         x_obs = np.array(self._X)  # (n, d)
@@ -104,7 +118,7 @@ class GPUCBArmModel(BaseArmModel):
         k_xx = 1.0  # RBF self-kernel is always 1
         var = max(k_xx - float(v @ v), 0.0)
 
-        return mu + self.beta * float(np.sqrt(var))
+        return mu, self.beta * float(np.sqrt(var))
 
     def update(self, x: np.ndarray, reward: float, weight: float = 1.0) -> None:
         """Add a new (context, reward) observation.

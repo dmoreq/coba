@@ -119,10 +119,23 @@ class LogisticUCBArmModel(_LogisticBackedArmModel):
 
     def score(self, x: np.ndarray) -> float:
         """Compute the Upper Confidence Bound for the probability."""
+        mean_est, exploration_bonus = self.score_decomposed(x)
+        return mean_est + exploration_bonus
+
+    def score_decomposed(self, x: np.ndarray) -> tuple[float, float]:
+        """Return (expected_probability, exploration_bonus) separately.
+
+        Args:
+            x: Context vector.
+        Returns:
+            Tuple of (expected_probability, exploration_bonus).
+        """
         logit_mu = float(x @ self.model.w)
         variance = float(x @ self.model.H_inv @ x)
         ucb_width = self.alpha * np.sqrt(max(variance, 0.0))
-        return sigmoid(logit_mu + ucb_width)
+        mean_est = sigmoid(logit_mu)
+        exploration_bonus = sigmoid(logit_mu + ucb_width) - mean_est
+        return mean_est, exploration_bonus
 
 
 class LogisticTSArmModel(_LogisticBackedArmModel):

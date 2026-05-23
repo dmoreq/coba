@@ -67,13 +67,29 @@ class UCB1ArmModel(BaseArmModel):
         """
         if self._n_pulls == 0:
             return _UNEXPLORED_SCORE
+        mu, exploration_bonus = self.score_decomposed(x, total_pulls=total_pulls)
+        return mu + exploration_bonus
+
+    def score_decomposed(
+        self, x: np.ndarray | None = None, total_pulls: int = 1
+    ) -> tuple[float, float]:
+        """Return empirical mean and UCB1 exploration bonus separately.
+
+        Args:
+            x: Context vector (ignored).
+            total_pulls: Total pulls across ALL arms.
+        Returns:
+            Tuple of (mu, exploration_bonus).
+        """
+        if self._n_pulls == 0:
+            return 0.0, _UNEXPLORED_SCORE
 
         mu = self._reward_sum / max(self._effective_pulls, 1e-12)
         # Standard UCB1 confidence width
         exploration_bonus = self.alpha * math.sqrt(
             (2.0 * math.log(max(total_pulls, 1))) / max(self._effective_pulls, 1e-12)
         )
-        return mu + exploration_bonus
+        return mu, exploration_bonus
 
     def update(self, x: np.ndarray | None, reward: float, weight: float = 1.0) -> None:
         """Update running statistics.

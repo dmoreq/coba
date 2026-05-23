@@ -82,10 +82,21 @@ class SlidingWindowLinUCBArmModel(BaseArmModel):
         Returns:
             UCB score.
         """
+        expected_reward, ucb_width = self.score_decomposed(x)
+        return expected_reward + ucb_width
+
+    def score_decomposed(self, x: np.ndarray) -> tuple[float, float]:
+        """Return (expected_reward, ucb_width) separately.
+
+        Args:
+            x: Context vector, shape (n_features,).
+        Returns:
+            Tuple of (expected_reward, ucb_width).
+        """
         a_inv_x = self._ridge.A_inv @ x
         expected_reward = float(x @ self._ridge.beta)
         ucb_width = self.alpha * float(np.sqrt(max(x @ a_inv_x, 0.0)))
-        return expected_reward + ucb_width
+        return expected_reward, ucb_width
 
     def update(self, x: np.ndarray, reward: float, weight: float = 1.0) -> None:
         """Add observation; if the buffer was full, evict the oldest and refit.
