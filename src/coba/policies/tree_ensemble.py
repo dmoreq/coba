@@ -12,7 +12,11 @@ import numpy as np
 from sklearn.ensemble import RandomForestRegressor
 
 from coba.policies.base import BaseArmModel
-from coba.policies.tree_ensemble_base import _COLD_START_SCORE, TreeEnsembleUncertaintyEstimator
+from coba.policies.tree_ensemble_base import (
+    _COLD_START_SCORE,
+    TreeEnsemblePrediction,
+    TreeEnsembleUncertaintyEstimator,
+)
 from coba.types import Arm
 
 
@@ -95,7 +99,7 @@ class _RandomForestBanditArmModel(BaseArmModel):
         )
         self.is_fitted = True
 
-    def _prediction(self, x: np.ndarray):
+    def _prediction(self, x: np.ndarray) -> TreeEnsemblePrediction | None:
         if not self.is_fitted:
             return None
         return self._uncertainty.predict(self.model, np.asarray(x, dtype=np.float64))
@@ -115,10 +119,28 @@ class _RandomForestBanditArmModel(BaseArmModel):
 class RandomForestUCBArmModel(_RandomForestBanditArmModel):
     """Random Forest arm model with UCB exploration from tree disagreement."""
 
-    def __init__(self, *args, alpha: float = 1.0, **kwargs) -> None:
+    def __init__(
+        self,
+        arm: Arm,
+        rng: np.random.Generator,
+        n_estimators: int = 50,
+        max_depth: int | None = 6,
+        min_samples_leaf: int = 1,
+        max_obs: int = 1000,
+        min_uncertainty: float = 1e-6,
+        alpha: float = 1.0,
+    ) -> None:
         if alpha < 0:
             raise ValueError(f"alpha must be non-negative, got {alpha}")
-        super().__init__(*args, **kwargs)
+        super().__init__(
+            arm=arm,
+            rng=rng,
+            n_estimators=n_estimators,
+            max_depth=max_depth,
+            min_samples_leaf=min_samples_leaf,
+            max_obs=max_obs,
+            min_uncertainty=min_uncertainty,
+        )
         self.alpha = float(alpha)
 
     def score(self, x: np.ndarray) -> float:

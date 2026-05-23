@@ -6,7 +6,6 @@ import pytest
 from coba import ClusterBandit, PageHinkleyDetector
 from coba.types import PolicyType
 
-
 # ---------------------------------------------------------------------------
 # PageHinkleyDetector unit tests
 # ---------------------------------------------------------------------------

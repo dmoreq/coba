@@ -114,7 +114,7 @@ class GPUCBArmModel(BaseArmModel):
 
         # Posterior variance: k(x,x) - k_vec @ (K + σ²I)^{-1} @ k_vec
         # Use Cholesky: v = L^{-1} k_vec → var = k(x,x) - ||v||²
-        v = np.linalg.solve(self._L, k_vec)
+        v = np.linalg.solve(self._L, k_vec)  # type: ignore[arg-type]  # _L is set before use
         k_xx = 1.0  # RBF self-kernel is always 1
         var = max(k_xx - float(v @ v), 0.0)
 

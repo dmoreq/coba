@@ -218,7 +218,8 @@ class CATSPolicy:
         weights = np.clip(1.0 / np.maximum(propensities_arr, 1e-4), 0.0, 10.0)
 
         # Assign each observation to its leaf and accumulate per-leaf batches
-        leaf_batches: dict[int, tuple[np.ndarray, np.ndarray, np.ndarray]] = {}
+        # Type is list[...] tuples at build time; np.array() converts before use.
+        leaf_batches: dict[int, tuple[list[float], list[float], list[float]]] = {}
         for i, (ctx, action, reward, weight) in enumerate(
             zip(contexts_arr, actions_arr, rewards_arr, weights)
         ):

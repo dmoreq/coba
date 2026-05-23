@@ -12,7 +12,6 @@ from typing import Any
 
 import numpy as np
 
-
 _COLD_START_SCORE: float = float("inf")
 
 

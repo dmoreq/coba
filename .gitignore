@@ -1,6 +1,8 @@
 .pi/
 
 # Generated artifacts
+*.egg-info/
+.egg-info/
 .venv/
 __pycache__/
 *.pyc

@@ -333,7 +333,7 @@ class ClusterRouter:
         if self.policy == PolicyType.UCB1:
             self._score_fn: Callable[[BaseArmModel, np.ndarray], float] = self._score_ucb1
         else:
-            self._score_fn: Callable[[BaseArmModel, np.ndarray], float] = self._score_default
+            self._score_fn = self._score_default
 
     # ------------------------------------------------------------------
     # Internal scoring helpers (named so joblib can pickle this object)
