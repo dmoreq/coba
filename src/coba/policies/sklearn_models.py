@@ -111,6 +111,7 @@ class _BootstrappedArmModelBase(BaseArmModel):
             raise ValueError("base_estimator must be provided for bootstrapped models")
 
         self.models = [copy.deepcopy(base_estimator) for _ in range(self.n_bootstraps)]
+        self.model_fitted = [False] * self.n_bootstraps
         self.is_fitted = False
 
     def update(self, x: np.ndarray, reward: float, weight: float = 1.0) -> None:
@@ -118,7 +119,7 @@ class _BootstrappedArmModelBase(BaseArmModel):
         x_2d = x.reshape(1, -1)
         y_1d = [reward]
 
-        for model in self.models:
+        for idx, model in enumerate(self.models):
             # Draw bootstrap weight
             if self.bootstrap_method == "poisson":
                 w = self.rng.poisson(1.0) * weight
@@ -127,8 +128,9 @@ class _BootstrappedArmModelBase(BaseArmModel):
 
             if w > 0:
                 model.partial_fit(x_2d, y_1d, sample_weight=[w])
+                self.model_fitted[idx] = True
 
-        self.is_fitted = True
+        self.is_fitted = any(self.model_fitted)
 
     def update_batch(
         self, x_batch: np.ndarray, y: np.ndarray, weights: np.ndarray | None = None
@@ -138,7 +140,7 @@ class _BootstrappedArmModelBase(BaseArmModel):
         if weights is None:
             weights = np.ones(n_samples)
 
-        for model in self.models:
+        for idx, model in enumerate(self.models):
             if self.bootstrap_method == "poisson":
                 boot_w = self.rng.poisson(1.0, size=n_samples) * weights
             else:
@@ -146,12 +148,14 @@ class _BootstrappedArmModelBase(BaseArmModel):
 
             # Filter out zero weights for efficiency if needed, but partial_fit handles it
             model.partial_fit(x_batch, y, sample_weight=boot_w)
+            self.model_fitted[idx] = True
 
-        self.is_fitted = True
+        self.is_fitted = any(self.model_fitted)
 
     def reset(self) -> None:
         """Reset all estimators in the ensemble."""
         self.models = [_clone_estimator(m) for m in self.models]
+        self.model_fitted = [False] * self.n_bootstraps
         self.is_fitted = False
 
     def _predict_all(self, x: np.ndarray) -> np.ndarray:
@@ -160,7 +164,13 @@ class _BootstrappedArmModelBase(BaseArmModel):
             return np.full(self.n_bootstraps, _COLD_START_SCORE)
 
         x_2d = x.reshape(1, -1)
-        preds = [model.predict(x_2d)[0] for model in self.models]
+        preds = []
+        for idx, model in enumerate(self.models):
+            if self.model_fitted[idx]:
+                pred = model.predict(x_2d)[0]
+                preds.append(float(pred))
+            else:
+                preds.append(_COLD_START_SCORE)
         return np.array(preds)
 
 
@@ -197,4 +207,6 @@ class BootstrappedUCBArmModel(_BootstrappedArmModelBase):
     def score(self, x: np.ndarray) -> float:
         """Return the p-th percentile of the ensemble's predictions."""
         preds = self._predict_all(x)
+        if np.any(preds == _COLD_START_SCORE):
+            return _COLD_START_SCORE
         return float(np.percentile(preds, self.percentile))
