@@ -1,7 +1,6 @@
 """Tests for coba.simulation.reward_fns."""
 
 import numpy as np
-import pytest
 
 from coba.simulation.reward_fns import (
     RewardFn,
@@ -24,7 +23,7 @@ class TestCategoricalReward:
         fn = categorical_reward({"A": 0.8, "B": 0.2})
         ctx = np.zeros(3)
         for _ in range(30):
-            assert categorical_reward({"A": 0.8})(  "A", ctx) in (0.0, 1.0)
+            assert fn("A", ctx) in (0.0, 1.0)
 
     def test_known_arms_receive_correct_rates(self) -> None:
         """With 100 trials, a p=1.0 arm always returns 1."""
