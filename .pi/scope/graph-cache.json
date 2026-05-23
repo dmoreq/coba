@@ -1,6 +1,7 @@
 {
   "version": 1,
-  "cachedAt": "2026-05-18T02:40:48.124Z",
+  "cachedAt": "2026-05-23T00:32:04.742Z",
+  "indexFingerprint": "files:46|symbols:428|deps:0",
   "nodes": [
     {
       "id": "file:.remember/tmp/last-ndc.ts",
@@ -13737,5 +13738,5 @@
     "cycleCount": 0,
     "bottleneckCount": 0
   },
-  "computedAt": 1779072048124
+  "computedAt": 1779496324742
 }
