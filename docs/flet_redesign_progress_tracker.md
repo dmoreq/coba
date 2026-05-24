@@ -24,9 +24,9 @@ Architecture reference: `docs/flet_redesign_plan.md`
 | Tech Lead | _TBD_ |
 | Start Date | _TBD_ |
 | Target End Date | _TBD_ |
-| Current Phase | Phase 3 |
+| Current Phase | Phase 4 |
 | Overall Status | IP |
-| Overall Completion | 32% |
+| Overall Completion | 40% |
 | Top Blocker | None |
 
 ---
@@ -38,8 +38,8 @@ Architecture reference: `docs/flet_redesign_plan.md`
 | Phase 0: Scaffold + Contracts | Day 1 | DN | 100% | _TBD_ | ☑ |
 | Phase 1: Discrete Engine + State | Days 2-4 | DN | 100% | _TBD_ | ☑ |
 | Phase 2: Core Worlds | Days 5-6 | DN | 100% | _TBD_ | ☑ |
-| Phase 3: UI Shell + Controls | Days 7-9 | IP | 0% | _TBD_ | ☐ |
-| Phase 4: Arena + Charts + Trace | Days 10-13 | NS | 0% | _TBD_ | ☐ |
+| Phase 3: UI Shell + Controls | Days 7-9 | DN | 100% | _TBD_ | ☑ |
+| Phase 4: Arena + Charts + Trace | Days 10-13 | IP | 0% | _TBD_ | ☐ |
 | Phase 5: Foundation Lessons | Days 14-18 | NS | 0% | _TBD_ | ☐ |
 | Phase 6: Contextual Lessons | Days 19-25 | NS | 0% | _TBD_ | ☐ |
 | Phase 7: Advanced Discrete + Ensembles | Days 26-36 | NS | 0% | _TBD_ | ☐ |
@@ -119,28 +119,29 @@ Evidence:
 
 ## Phase 3: UI Shell + Controls
 
-Status: `IP`
+Status: `DN`
 Owner: _TBD_
 Target Date: _TBD_
 
-- [ ] Three-pane layout implemented
-- [ ] `ScenePanel` component implemented
-- [ ] `TreatmentCard` component implemented
-- [ ] Run controls implemented (`step/play/pause/reset`)
-- [ ] Param controls rendered from `ParamControlSpec`
-- [ ] Tooltip component implemented with formula/intuition guidance
-- [ ] UI state persistence (local preferences)
-- [ ] Desktop layout sanity check passed
+- [x] Three-pane layout implemented
+- [x] `ScenePanel` component implemented
+- [x] `TreatmentCard` component implemented
+- [x] Run controls implemented (`step/play/pause/reset`)
+- [x] Param controls rendered from `ParamControlSpec`
+- [x] Tooltip component implemented with formula/intuition guidance
+- [x] UI state persistence (local preferences)
+- [x] Desktop layout sanity check passed
 
 Evidence:
-- PR(s): _TBD_
-- Test run: _TBD_
+- PR(s): local commit(s) on `main` (Phase 3 Step 1)
+- Test run: `pytest tests/flet_redesign -q -p no:asyncio` (60 passed)
+- Quality run: `uv run --with pre-commit pre-commit run --all-files` (all hooks passed)
 
 ---
 
 ## Phase 4: Arena + Charts + Trace
 
-Status: `NS`
+Status: `IP`
 Owner: _TBD_
 Target Date: _TBD_
 

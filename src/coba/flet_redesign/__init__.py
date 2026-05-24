@@ -26,6 +26,18 @@ from coba.flet_redesign.simulator import DiscreteSimulator
 from coba.flet_redesign.state_store import AppSelectionState, AppStateStore
 from coba.flet_redesign.state import ArmState, RunConfig, SimulationState
 from coba.flet_redesign.trace import TraceBuffer
+from coba.flet_redesign.ui import (
+    PaneSpec,
+    PreferencesStore,
+    RunControlState,
+    RunController,
+    ThreePaneLayoutSpec,
+    UserPreferences,
+    build_three_pane_layout,
+)
+from coba.flet_redesign.ui.param_controls import ParamControlSpec, default_policy_param_controls
+from coba.flet_redesign.ui.tooltips import ParamTooltip
+from coba.flet_redesign.ui.view_models import RouteUIModel, build_route_ui_model
 from coba.flet_redesign.worlds import (
     ArmDef,
     ConfigurableWorld,
@@ -48,20 +60,32 @@ __all__ = [
     "DebugSnapshotProvider",
     "EpsilonGreedyPolicy",
     "FeatureDef",
+    "PaneSpec",
+    "ParamControlSpec",
+    "ParamTooltip",
+    "PreferencesStore",
     "RandomPolicy",
+    "RouteUIModel",
     "RouteSpec",
+    "RunControlState",
+    "RunController",
     "RunConfig",
     "ShellView",
     "SimulationState",
     "SimulationStepResult",
     "SoftmaxPolicy",
+    "ThreePaneLayoutSpec",
     "TraceBuffer",
     "ThompsonSamplingPolicy",
     "UCB1Policy",
+    "UserPreferences",
     "WorldConfig",
     "World",
+    "build_route_ui_model",
     "build_shell_stack",
+    "build_three_pane_layout",
     "create_world",
+    "default_policy_param_controls",
     "get_world_config",
     "list_world_configs",
     "get_route_spec",

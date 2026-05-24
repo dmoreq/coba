@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from coba.flet_redesign.shell import build_shell_stack
+from coba.flet_redesign.ui.preferences import PreferencesStore, UserPreferences
+from coba.flet_redesign.ui.view_models import RouteUIModel, build_route_ui_model
 
 try:
     import flet as ft
@@ -12,10 +13,72 @@ except ModuleNotFoundError:  # pragma: no cover - exercised by tests via run()
     ft = None  # type: ignore[assignment]
 
 
-def _render_shell_view(view: Any) -> Any:
+def _render_shell_view(view: RouteUIModel) -> Any:
     """Render one shell view using Flet controls."""
     if ft is None:
         raise RuntimeError("Flet is not installed. Install it with `pip install flet`.")
+
+    content_controls: list[Any] = [
+        ft.Text(value=view.heading, size=28, weight=ft.FontWeight.BOLD),
+        ft.Text(value=view.description, size=14),
+    ]
+    if view.layout and view.scene_panel is not None:
+        left_panel = ft.Container(
+            expand=view.layout.left.width_ratio,
+            padding=12,
+            border=ft.border.all(1, "#D5D7DA"),
+            border_radius=8,
+            content=ft.Column(
+                controls=[
+                    ft.Text(value=view.layout.left.title, weight=ft.FontWeight.BOLD),
+                    ft.Text(value=view.scene_panel.world_title),
+                    ft.Text(value=view.scene_panel.world_description, size=12),
+                ]
+                + [
+                    ft.Text(value=f"{key}: {value}", size=11)
+                    for key, value in view.scene_panel.context_items.items()
+                    if key != "step"
+                ],
+                tight=True,
+                spacing=6,
+            ),
+        )
+        center_panel = ft.Container(
+            expand=view.layout.center.width_ratio,
+            padding=12,
+            border=ft.border.all(1, "#D5D7DA"),
+            border_radius=8,
+            content=ft.Column(
+                controls=[
+                    ft.Text(value=view.layout.center.title, weight=ft.FontWeight.BOLD),
+                    ft.Row(
+                        controls=[
+                            ft.ElevatedButton(text=label) for label in view.run_control_labels
+                        ],
+                        wrap=True,
+                    ),
+                ]
+                + [ft.ElevatedButton(text=card.label) for card in view.treatment_cards],
+                spacing=8,
+            ),
+        )
+        right_panel = ft.Container(
+            expand=view.layout.right.width_ratio,
+            padding=12,
+            border=ft.border.all(1, "#D5D7DA"),
+            border_radius=8,
+            content=ft.Column(
+                controls=[ft.Text(value=view.layout.right.title, weight=ft.FontWeight.BOLD)]
+                + [
+                    ft.Text(value=f"{spec.label}: {spec.default_value}", size=12)
+                    for spec in view.param_controls
+                ],
+                spacing=8,
+            ),
+        )
+        content_controls.append(
+            ft.Row(controls=[left_panel, center_panel, right_panel], spacing=10)
+        )
 
     return ft.View(
         route=view.route,
@@ -23,10 +86,7 @@ def _render_shell_view(view: Any) -> Any:
             ft.AppBar(title=ft.Text(f"COBA · {view.title}")),
             ft.Container(
                 content=ft.Column(
-                    controls=[
-                        ft.Text(value=view.heading, size=28, weight=ft.FontWeight.BOLD),
-                        ft.Text(value=view.description, size=14),
-                    ],
+                    controls=content_controls,
                     spacing=10,
                 ),
                 padding=24,
@@ -41,14 +101,25 @@ def main(page: Any) -> None:
         raise RuntimeError("Flet is not installed. Install it with `pip install flet`.")
 
     page.title = "COBA Flet"
+    pref_store = PreferencesStore()
+    prefs = pref_store.load()
+
+    def save_and_refresh(next_prefs: UserPreferences) -> None:
+        pref_store.save(next_prefs)
+        page.go(page.route or "/")
 
     def on_route_change(event: Any) -> None:
         page.views.clear()
-        for shell_view in build_shell_stack(event.route):
-            page.views.append(_render_shell_view(shell_view))
+        active = build_route_ui_model(event.route, prefs=prefs)
+        page.views.append(_render_shell_view(active))
         page.update()
 
+    def on_disconnect(event: Any) -> None:
+        _ = event
+        save_and_refresh(prefs)
+
     page.on_route_change = on_route_change
+    page.on_disconnect = on_disconnect
     page.go(page.route or "/")
 
 
