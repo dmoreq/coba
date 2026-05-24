@@ -8,8 +8,8 @@ from typing import Any, cast
 
 import pytest
 
-from coba.flet_redesign.state_store import AppStateStore
-from coba.flet_redesign.worlds import create_world, get_world_config, list_world_configs
+from web.state_store import AppStateStore
+from web.worlds import create_world, get_world_config, list_world_configs
 
 
 def _fixture_payload() -> dict[str, Any]:
@@ -30,7 +30,10 @@ def test_registered_worlds_match_fixture_metadata() -> None:
         assert len(config.arms) == n_arms
 
 
-@pytest.mark.parametrize("world_id", ["rural_clinic", "moviematch", "newsfeed"])
+@pytest.mark.parametrize(
+    "world_id",
+    ["rural_clinic", "moviematch", "newsfeed", "shopsmart", "ridepilot", "gamebot", "labtrial"],
+)
 def test_world_sampling_is_deterministic_for_same_seed(world_id: str) -> None:
     world_a = create_world(world_id)
     world_b = create_world(world_id)

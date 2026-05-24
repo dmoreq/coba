@@ -28,7 +28,7 @@ jobs:
         run: ruff check src tests
 
       - name: Type check
-        run: mypy src/coba
+        run: mypy src/coba src/web
 
       - name: Flet redesign tests
         run: pytest tests/flet_redesign -q -p no:asyncio

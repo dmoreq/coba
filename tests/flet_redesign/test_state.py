@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from coba.flet_redesign.contracts import SimulationStepResult
-from coba.flet_redesign.state import ArmState, RunConfig, SimulationState
+from web.contracts import SimulationStepResult
+from web.state import ArmState, RunConfig, SimulationState
 
 
 def test_arm_state_mean_reward_handles_zero_pulls() -> None:

@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import json
 
-from coba.flet_redesign.contracts import SimulationStepResult
-from coba.flet_redesign.trace import TraceBuffer
+from web.contracts import SimulationStepResult
+from web.trace import TraceBuffer
 
 
 def test_trace_buffer_collects_steps() -> None:

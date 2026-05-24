@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import json
 
-from coba.flet_redesign.contracts import SimulationStepResult
-from coba.flet_redesign.trace import TraceBuffer, filter_trace_records
+from web.contracts import SimulationStepResult
+from web.trace import TraceBuffer, filter_trace_records
 
 
 def _sample_buffer() -> TraceBuffer:

@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from coba.flet_redesign.ui.layout import build_three_pane_layout
-from coba.flet_redesign.ui.param_controls import ParamControlSpec, default_policy_param_controls
-from coba.flet_redesign.ui.run_controls import RunController
+from web.ui.layout import build_three_pane_layout
+from web.ui.param_controls import ParamControlSpec, default_policy_param_controls
+from web.ui.run_controls import RunController
 
 
 def test_three_pane_layout_ratios_sum_to_one() -> None:

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from coba.flet_redesign.ui.preferences import UserPreferences
-from coba.flet_redesign.ui.view_models import build_route_ui_model
+from web.ui.preferences import UserPreferences
+from web.ui.view_models import build_route_ui_model
 
 
 def test_home_route_model_has_no_three_pane_layout() -> None:

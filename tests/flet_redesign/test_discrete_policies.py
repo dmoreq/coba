@@ -7,7 +7,7 @@ from typing import Any
 
 import pytest
 
-from coba.flet_redesign.policies import (
+from web.policies import (
     EpsilonGreedyPolicy,
     SoftmaxPolicy,
     ThompsonSamplingPolicy,

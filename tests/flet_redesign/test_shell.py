@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from coba.flet_redesign.shell import build_shell_stack
+from web.shell import build_shell_stack
 
 
 def test_home_route_yields_single_home_view() -> None:

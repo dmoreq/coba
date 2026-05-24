@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from coba.flet_redesign.contracts import BanditPolicy, DebugSnapshotProvider, World
+from web.contracts import BanditPolicy, DebugSnapshotProvider, World
 
 
 class DummyPolicy:

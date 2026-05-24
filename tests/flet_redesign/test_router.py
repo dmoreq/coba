@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from coba.flet_redesign.router import AppRoute, get_route_spec, list_route_specs, normalize_route
+from web.router import AppRoute, get_route_spec, list_route_specs, normalize_route
 
 
 def test_normalize_route_defaults_to_home() -> None:
@@ -28,9 +28,10 @@ def test_get_route_spec_maps_to_titles() -> None:
 
 def test_list_route_specs_includes_all_routes() -> None:
     specs = list_route_specs()
-    assert [spec.route for spec in specs] == [
+    assert set(spec.route for spec in specs) == {
         AppRoute.HOME,
         AppRoute.LESSON,
         AppRoute.ARENA,
         AppRoute.SANDBOX,
-    ]
+        AppRoute.COMPARISON,
+    }

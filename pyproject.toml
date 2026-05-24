@@ -64,7 +64,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["coba"]
+known-first-party = ["coba", "web"]
 
 # ── Black ─────────────────────────────────────────────────────────────────────
 [tool.black]
@@ -74,8 +74,8 @@ target-version = ["py310", "py311", "py312"]
 # ── Mypy ─────────────────────────────────────────────────────────────────────
 [tool.mypy]
 python_version = "3.10"
-# Check production source code under src/coba.
-files = ["src/coba"]
+# Check production source code under src/coba and src/web.
+files = ["src/coba", "src/web"]
 exclude = [
     ".venv",
     "__pycache__",

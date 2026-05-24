@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from coba.flet_redesign.ui.preferences import PreferencesStore, UserPreferences
+from web.ui.preferences import PreferencesStore, UserPreferences
 
 
 def test_preferences_store_returns_defaults_when_missing(tmp_path: Path) -> None:

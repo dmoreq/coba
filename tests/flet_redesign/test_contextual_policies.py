@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from coba.flet_redesign.policy_factory import build_policy
-from coba.flet_redesign.policies import LinUCBSWPolicy, LinUCBPolicy, LogisticUCBPolicy
+from web.policy_factory import build_policy
+from web.policies import LinUCBSWPolicy, LinUCBPolicy, LogisticUCBPolicy
 
 FEATURES = ("x1", "x2", "x3")
 

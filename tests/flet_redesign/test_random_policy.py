@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from coba.flet_redesign.policies import RandomPolicy
+from web.policies import RandomPolicy
 
 
 def test_random_policy_same_seed_same_sequence() -> None:

@@ -4,14 +4,14 @@ from __future__ import annotations
 
 import random
 
-from coba.flet_redesign.continuous import (
+from web.continuous import (
     CATSLikePolicy,
     ContinuousActionSpace,
     ContinuousSimulator,
     ContinuousWorld,
 )
-from coba.flet_redesign.debug import build_continuous_debug_pane
-from coba.flet_redesign.policy_factory import build_policy
+from web.debug import build_continuous_debug_pane
+from web.policy_factory import build_policy
 
 
 class SimpleContinuousWorld(ContinuousWorld):

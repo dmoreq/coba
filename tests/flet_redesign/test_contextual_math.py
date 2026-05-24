@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from coba.flet_redesign.policies import LinUCBPolicy
+from web.policies import LinUCBPolicy
 
 
 def test_linucb_matrix_update_matches_outer_product_formula() -> None:

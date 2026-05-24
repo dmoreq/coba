@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from coba.flet_redesign.worlds.schema import ArmDef, FeatureDef, WorldConfig
+from web.worlds.schema import ArmDef, FeatureDef, WorldConfig
 
 
 def test_feature_def_validates_numeric_range() -> None:

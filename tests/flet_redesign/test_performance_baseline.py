@@ -6,10 +6,10 @@ import random
 import time
 from collections.abc import Sequence
 
-from coba.flet_redesign.contracts import World
-from coba.flet_redesign.policy_factory import build_policy
-from coba.flet_redesign.simulator import DiscreteSimulator
-from coba.flet_redesign.state import RunConfig
+from web.contracts import World
+from web.policy_factory import build_policy
+from web.simulator import DiscreteSimulator
+from web.state import RunConfig
 
 
 class PerfWorld(World[str, dict[str, float]]):

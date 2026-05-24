@@ -39,6 +39,7 @@ repos:
         # Point mypy at the core library package.
         args:
           - src/coba
+          - src/web
           - --ignore-missing-imports
           - --config-file=pyproject.toml
           - --disable-error-code=no-untyped-def

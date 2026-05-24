@@ -1,19 +1,11 @@
 {
   "worlds": [
-    {
-      "world_id": "rural_clinic",
-      "n_features": 3,
-      "n_arms": 3
-    },
-    {
-      "world_id": "moviematch",
-      "n_features": 3,
-      "n_arms": 3
-    },
-    {
-      "world_id": "newsfeed",
-      "n_features": 3,
-      "n_arms": 3
-    }
+    {"world_id": "rural_clinic", "n_features": 3, "n_arms": 3},
+    {"world_id": "moviematch", "n_features": 3, "n_arms": 3},
+    {"world_id": "newsfeed", "n_features": 3, "n_arms": 3},
+    {"world_id": "shopsmart", "n_features": 3, "n_arms": 3},
+    {"world_id": "ridepilot", "n_features": 3, "n_arms": 3},
+    {"world_id": "gamebot", "n_features": 3, "n_arms": 3},
+    {"world_id": "labtrial", "n_features": 3, "n_arms": 3}
   ]
 }

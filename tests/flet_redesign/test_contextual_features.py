@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from coba.flet_redesign.debug import build_linucb_debug_pane, build_logistic_debug_pane
-from coba.flet_redesign.ui.preferences import UserPreferences
-from coba.flet_redesign.ui.view_models import build_route_ui_model
-from coba.flet_redesign.worlds import list_contextual_presets
+from web.debug import build_linucb_debug_pane, build_logistic_debug_pane
+from web.ui.preferences import UserPreferences
+from web.ui.view_models import build_route_ui_model
+from web.worlds import list_contextual_presets
 
 
 def test_contextual_presets_available() -> None:

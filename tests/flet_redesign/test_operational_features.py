@@ -4,13 +4,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from coba.flet_redesign.checkpoint import (
+from web.checkpoint import (
     CheckpointPayload,
     load_checkpoint,
     save_checkpoint,
 )
-from coba.flet_redesign.drift_monitor import DriftTimeline
-from coba.flet_redesign.preset_manager import Preset, PresetManager
+from web.drift_monitor import DriftTimeline
+from web.preset_manager import Preset, PresetManager
 
 
 def test_drift_timeline_records_events() -> None:

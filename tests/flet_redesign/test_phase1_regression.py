@@ -7,16 +7,16 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from typing import Any
 
-from coba.flet_redesign.contracts import World
-from coba.flet_redesign.policies import (
+from web.contracts import World
+from web.policies import (
     EpsilonGreedyPolicy,
     RandomPolicy,
     SoftmaxPolicy,
     ThompsonSamplingPolicy,
     UCB1Policy,
 )
-from coba.flet_redesign.simulator import DiscreteSimulator
-from coba.flet_redesign.state import RunConfig
+from web.simulator import DiscreteSimulator
+from web.state import RunConfig
 
 
 @dataclass

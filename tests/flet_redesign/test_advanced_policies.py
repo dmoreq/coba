@@ -2,16 +2,16 @@
 
 from __future__ import annotations
 
-from coba.flet_redesign.arena import compute_comparison_diagnostics
-from coba.flet_redesign.debug import (
+from web.arena import compute_comparison_diagnostics
+from web.debug import (
     build_ensemble_debug_pane,
     build_gp_debug_pane,
     build_hybrid_debug_pane,
     build_tree_debug_pane,
 )
-from coba.flet_redesign.policy_capabilities import get_policy_capability
-from coba.flet_redesign.policy_factory import build_policy
-from coba.flet_redesign.policies import (
+from web.policy_capabilities import get_policy_capability
+from web.policy_factory import build_policy
+from web.policies import (
     BootstrappedEnsemblePolicy,
     GPUCBPolicy,
     LinUCBHybridPolicy,

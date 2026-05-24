@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from coba.flet_redesign.curriculum import (
+from web.curriculum import (
     LESSON_REGISTRY,
     LessonProgressState,
     evaluate_lesson_objective,

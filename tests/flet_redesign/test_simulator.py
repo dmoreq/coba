@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from coba.flet_redesign.contracts import BanditPolicy, World
-from coba.flet_redesign.simulator import DiscreteSimulator
-from coba.flet_redesign.state import RunConfig
+from web.contracts import BanditPolicy, World
+from web.simulator import DiscreteSimulator
+from web.state import RunConfig
 
 
 class GreedyStubPolicy(BanditPolicy[str, dict[str, int]]):

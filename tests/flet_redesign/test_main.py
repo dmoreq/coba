@@ -6,7 +6,7 @@ import importlib
 
 import pytest
 
-flet_main_module = importlib.import_module("coba.flet_redesign.main")
+flet_main_module = importlib.import_module("web.main")
 
 
 def test_run_raises_when_flet_missing() -> None:
