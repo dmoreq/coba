@@ -16,7 +16,7 @@ def test_home_route_model_has_no_three_pane_layout() -> None:
 def test_lesson_route_model_includes_three_panes_and_cards() -> None:
     model = build_route_ui_model(
         "/lesson",
-        prefs=UserPreferences(world_id="rural_clinic", policy_id="ucb1", speed="1x"),
+        prefs=UserPreferences(world_id="rural_clinic", policy_id="linucb", speed="1x"),
     )
     assert model.layout is not None
     assert model.scene_panel is not None
@@ -24,6 +24,7 @@ def test_lesson_route_model_includes_three_panes_and_cards() -> None:
     assert len(model.param_controls) >= 1
     assert model.lesson_panel is not None
     assert model.lesson_panel.stage_index == 1
+    assert "linucb_debug" in model.capability_debug_views
 
 
 def test_route_model_uses_selected_world_from_preferences() -> None:

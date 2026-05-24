@@ -13,6 +13,7 @@ from coba.flet_redesign.curriculum import (
     locked_control_keys_for_stage,
     render_theory_stage_markdown,
 )
+from coba.flet_redesign.policy_capabilities import get_policy_capability
 from coba.flet_redesign.policies.contextual_utils import context_to_vector
 from coba.flet_redesign.router import get_route_spec
 from coba.flet_redesign.trace import TraceBuffer
@@ -44,6 +45,7 @@ class RouteUIModel:
     arena_metrics: ArenaMetrics | None = None
     lesson_panel: LessonPanelModel | None = None
     context_inspection: ContextInspectionModel | None = None
+    capability_debug_views: tuple[str, ...] = ()
 
 
 def build_route_ui_model(route: str | None, prefs: UserPreferences) -> RouteUIModel:
@@ -85,6 +87,7 @@ def build_route_ui_model(route: str | None, prefs: UserPreferences) -> RouteUIMo
         ),
         notes="Feature vector preview for contextual policies.",
     )
+    capability = get_policy_capability(prefs.policy_id)
     lesson_panel = None
     if spec.route.value == "/lesson":
         lesson = get_lesson_by_policy(prefs.policy_id)
@@ -128,4 +131,5 @@ def build_route_ui_model(route: str | None, prefs: UserPreferences) -> RouteUIMo
         arena_metrics=arena_metrics,
         lesson_panel=lesson_panel,
         context_inspection=contextual_inspection,
+        capability_debug_views=capability.debug_views,
     )

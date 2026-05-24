@@ -24,9 +24,9 @@ Architecture reference: `docs/flet_redesign_plan.md`
 | Tech Lead | _TBD_ |
 | Start Date | _TBD_ |
 | Target End Date | _TBD_ |
-| Current Phase | Phase 7 |
+| Current Phase | Phase 8 |
 | Overall Status | IP |
-| Overall Completion | 64% |
+| Overall Completion | 72% |
 | Top Blocker | None |
 
 ---
@@ -42,8 +42,8 @@ Architecture reference: `docs/flet_redesign_plan.md`
 | Phase 4: Arena + Charts + Trace | Days 10-13 | DN | 100% | _TBD_ | ☑ |
 | Phase 5: Foundation Lessons | Days 14-18 | DN | 100% | _TBD_ | ☑ |
 | Phase 6: Contextual Lessons | Days 19-25 | DN | 100% | _TBD_ | ☑ |
-| Phase 7: Advanced Discrete + Ensembles | Days 26-36 | IP | 0% | _TBD_ | ☐ |
-| Phase 8: Continuous + Production Features | Days 37-45 | NS | 0% | _TBD_ | ☐ |
+| Phase 7: Advanced Discrete + Ensembles | Days 26-36 | DN | 100% | _TBD_ | ☑ |
+| Phase 8: Continuous + Production Features | Days 37-45 | IP | 0% | _TBD_ | ☐ |
 | Phase 9: Comparison + Sandbox | Days 46-50 | NS | 0% | _TBD_ | ☐ |
 | Phase 10: Polish + Release | Days 51-55 | NS | 0% | _TBD_ | ☐ |
 
@@ -205,28 +205,29 @@ Evidence:
 
 ## Phase 7: Advanced Discrete + Ensembles
 
-Status: `IP`
+Status: `DN`
 Owner: _TBD_
 Target Date: _TBD_
 
-- [ ] GP-UCB implemented
-- [ ] Bootstrapped ensemble implemented
-- [ ] Tree UCB/TS variants implemented
-- [ ] LinUCB Hybrid implemented
-- [ ] Capability flag system integrated
-- [ ] Advanced debugger panes integrated
-- [ ] Comparative diagnostics added
-- [ ] Performance baseline re-validated
+- [x] GP-UCB implemented
+- [x] Bootstrapped ensemble implemented
+- [x] Tree UCB/TS variants implemented
+- [x] LinUCB Hybrid implemented
+- [x] Capability flag system integrated
+- [x] Advanced debugger panes integrated
+- [x] Comparative diagnostics added
+- [x] Performance baseline re-validated
 
 Evidence:
-- PR(s): _TBD_
-- Test run: _TBD_
+- PR(s): local commit(s) on `main` (Phase 7 Step 1)
+- Test run: `pytest tests/flet_redesign -q -p no:asyncio` (86 passed)
+- Quality run: `uv run --with pre-commit pre-commit run --all-files` (all hooks passed)
 
 ---
 
 ## Phase 8: Continuous + Production Features
 
-Status: `NS`
+Status: `IP`
 Owner: _TBD_
 Target Date: _TBD_
 
@@ -295,11 +296,11 @@ Evidence:
 | LinUCB-SW | Linear | DN | ☑ | ☑ | Phase-6 contextual implementation |
 | LinTS | Linear/Bayesian | NS | ☐ | ☐ | |
 | Logistic Bandit Variant | Logistic | DN | ☑ | ☑ | Phase-6 contextual implementation |
-| GP-UCB | Kernel/Bayesian | NS | ☐ | ☐ | |
-| Bootstrapped Ensemble | Ensemble | NS | ☐ | ☐ | |
-| LinUCB Hybrid | Hybrid | NS | ☐ | ☐ | |
-| RF-UCB | Tree Ensemble | NS | ☐ | ☐ | |
-| RF-TS | Tree Ensemble | NS | ☐ | ☐ | |
+| GP-UCB | Kernel/Bayesian | DN | ☑ | ☑ | Phase-7 implementation |
+| Bootstrapped Ensemble | Ensemble | DN | ☑ | ☑ | Phase-7 implementation |
+| LinUCB Hybrid | Hybrid | DN | ☑ | ☑ | Phase-7 implementation |
+| RF-UCB | Tree Ensemble | DN | ☑ | ☑ | Implemented as `tree_ucb` bucketized variant |
+| RF-TS | Tree Ensemble | DN | ☑ | ☑ | Implemented as `tree_ts` bucketized variant |
 | CATS | Continuous | NS | ☐ | ☐ | |
 | Drift Detector A | Drift-Aware | NS | ☐ | ☐ | |
 | Drift Detector B | Drift-Aware | NS | ☐ | ☐ | |
@@ -330,7 +331,7 @@ Evidence:
 | Integration tests | NS | _TBD_ | _TBD_ | |
 | UI smoke tests | NS | _TBD_ | _TBD_ | |
 | Deterministic replay check | DN | 2026-05-24 | _TBD_ | `test_replay_payload_*` in `tests/flet_redesign/test_phase1_regression.py` |
-| Performance baseline | NS | _TBD_ | _TBD_ | |
+| Performance baseline | DN | 2026-05-24 | _TBD_ | `tests/flet_redesign/test_performance_baseline.py` |
 
 ---
 

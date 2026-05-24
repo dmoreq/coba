@@ -119,6 +119,12 @@ def _render_shell_view(view: RouteUIModel) -> Any:
                     else []
                 )
                 + [
+                    ft.Text(
+                        value=f"Debug Views: {', '.join(view.capability_debug_views) or 'summary'}",
+                        size=11,
+                    )
+                ]
+                + [
                     ft.Text(value=f"{spec.label}: {spec.default_value}", size=12)
                     for spec in view.param_controls
                 ],

@@ -3,9 +3,11 @@
 from coba.flet_redesign.arena import (
     ArenaMetrics,
     ArenaRunStore,
+    ComparisonDiagnostics,
     RunSnapshot,
     SeriesPoint,
     build_arena_metrics,
+    compute_comparison_diagnostics,
 )
 from coba.flet_redesign.contracts import (
     BanditPolicy,
@@ -14,9 +16,14 @@ from coba.flet_redesign.contracts import (
     World,
 )
 from coba.flet_redesign.debug import (
+    AdvancedDebugPane,
     ContextualDebugPane,
+    build_ensemble_debug_pane,
+    build_gp_debug_pane,
+    build_hybrid_debug_pane,
     build_linucb_debug_pane,
     build_logistic_debug_pane,
+    build_tree_debug_pane,
 )
 from coba.flet_redesign.curriculum import (
     LESSON_REGISTRY,
@@ -32,15 +39,25 @@ from coba.flet_redesign.curriculum import (
     render_theory_stage_markdown,
 )
 from coba.flet_redesign.main import main, run
+from coba.flet_redesign.policy_capabilities import (
+    POLICY_CAPABILITIES,
+    PolicyCapability,
+    get_policy_capability,
+)
 from coba.flet_redesign.policy_factory import build_policy
 from coba.flet_redesign.policies import (
+    BootstrappedEnsemblePolicy,
     EpsilonGreedyPolicy,
+    GPUCBPolicy,
+    LinUCBHybridPolicy,
     LinUCBSWPolicy,
     LinUCBPolicy,
     LogisticUCBPolicy,
     RandomPolicy,
     SoftmaxPolicy,
     ThompsonSamplingPolicy,
+    TreeTSPolicy,
+    TreeUCBPolicy,
     UCB1Policy,
 )
 from coba.flet_redesign.router import (
@@ -84,6 +101,7 @@ from coba.flet_redesign.worlds import (
 __all__ = [
     "ArenaMetrics",
     "ArenaRunStore",
+    "AdvancedDebugPane",
     "LESSON_REGISTRY",
     "ArmState",
     "AppRoute",
@@ -91,7 +109,9 @@ __all__ = [
     "AppStateStore",
     "ArmDef",
     "BanditPolicy",
+    "BootstrappedEnsemblePolicy",
     "CONTEXTUAL_PRESETS",
+    "ComparisonDiagnostics",
     "ConfigurableWorld",
     "ContextualDebugPane",
     "ContextualPreset",
@@ -99,17 +119,21 @@ __all__ = [
     "DebugSnapshotProvider",
     "EpsilonGreedyPolicy",
     "FeatureDef",
+    "GPUCBPolicy",
     "LessonConfig",
     "LessonObjective",
     "LessonPanelModel",
     "LessonProgressState",
     "LinUCBSWPolicy",
     "LinUCBPolicy",
+    "LinUCBHybridPolicy",
     "LogisticUCBPolicy",
     "PaneSpec",
     "ParamControlSpec",
     "ParamTooltip",
+    "POLICY_CAPABILITIES",
     "PreferencesStore",
+    "PolicyCapability",
     "RandomPolicy",
     "RunSnapshot",
     "RouteUIModel",
@@ -126,14 +150,21 @@ __all__ = [
     "ThreePaneLayoutSpec",
     "TraceBuffer",
     "ThompsonSamplingPolicy",
+    "TreeTSPolicy",
+    "TreeUCBPolicy",
     "UCB1Policy",
     "UserPreferences",
     "WorldConfig",
     "World",
     "build_arena_metrics",
+    "build_ensemble_debug_pane",
+    "build_gp_debug_pane",
+    "build_hybrid_debug_pane",
     "build_policy",
     "build_linucb_debug_pane",
     "build_logistic_debug_pane",
+    "build_tree_debug_pane",
+    "compute_comparison_diagnostics",
     "build_route_ui_model",
     "build_shell_stack",
     "build_three_pane_layout",
@@ -144,6 +175,7 @@ __all__ = [
     "filter_trace_records",
     "get_lesson",
     "get_lesson_by_policy",
+    "get_policy_capability",
     "get_world_config",
     "list_world_configs",
     "list_contextual_presets",

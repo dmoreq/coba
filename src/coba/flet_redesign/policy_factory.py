@@ -7,13 +7,18 @@ from typing import Any
 
 from coba.flet_redesign.contracts import BanditPolicy
 from coba.flet_redesign.policies import (
+    BootstrappedEnsemblePolicy,
     EpsilonGreedyPolicy,
+    GPUCBPolicy,
+    LinUCBHybridPolicy,
     LinUCBSWPolicy,
     LinUCBPolicy,
     LogisticUCBPolicy,
     RandomPolicy,
     SoftmaxPolicy,
     ThompsonSamplingPolicy,
+    TreeTSPolicy,
+    TreeUCBPolicy,
     UCB1Policy,
 )
 
@@ -60,6 +65,33 @@ def build_policy(
             feature_order=feature_order,
             alpha=float(params.get("alpha", 0.5)),
             learning_rate=float(params.get("learning_rate", 0.1)),
+        )
+    if policy_id == "gp_ucb":
+        return GPUCBPolicy(beta=float(params.get("beta", 1.5)))
+    if policy_id == "bootstrapped_ensemble":
+        return BootstrappedEnsemblePolicy(
+            n_heads=int(params.get("n_heads", 8)),
+            seed=seed,
+        )
+    if policy_id == "linucb_hybrid":
+        return LinUCBHybridPolicy(
+            feature_order=feature_order,
+            n_shared=int(params.get("n_shared", 1)),
+            alpha=float(params.get("alpha", 1.0)),
+        )
+    if policy_id == "tree_ucb":
+        return TreeUCBPolicy(
+            context_key=str(
+                params.get("context_key", feature_order[0] if feature_order else "step")
+            ),
+            alpha=float(params.get("alpha", 0.8)),
+        )
+    if policy_id == "tree_ts":
+        return TreeTSPolicy(
+            context_key=str(
+                params.get("context_key", feature_order[0] if feature_order else "step")
+            ),
+            seed=seed,
         )
 
     raise ValueError(f"Unsupported policy_id '{policy_id}'")
