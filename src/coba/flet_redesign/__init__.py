@@ -13,6 +13,18 @@ from coba.flet_redesign.contracts import (
     SimulationStepResult,
     World,
 )
+from coba.flet_redesign.curriculum import (
+    LESSON_REGISTRY,
+    LessonConfig,
+    LessonObjective,
+    LessonProgressState,
+    TheoryStageCard,
+    evaluate_lesson_objective,
+    explain_step_delta,
+    get_lesson,
+    locked_control_keys_for_stage,
+    render_theory_stage_markdown,
+)
 from coba.flet_redesign.main import main, run
 from coba.flet_redesign.policies import (
     EpsilonGreedyPolicy,
@@ -34,6 +46,7 @@ from coba.flet_redesign.state_store import AppSelectionState, AppStateStore
 from coba.flet_redesign.state import ArmState, RunConfig, SimulationState
 from coba.flet_redesign.trace import TraceBuffer, filter_trace_records
 from coba.flet_redesign.ui import (
+    LessonPanelModel,
     PaneSpec,
     PreferencesStore,
     RunControlState,
@@ -58,6 +71,7 @@ from coba.flet_redesign.worlds import (
 __all__ = [
     "ArenaMetrics",
     "ArenaRunStore",
+    "LESSON_REGISTRY",
     "ArmState",
     "AppRoute",
     "AppSelectionState",
@@ -69,6 +83,10 @@ __all__ = [
     "DebugSnapshotProvider",
     "EpsilonGreedyPolicy",
     "FeatureDef",
+    "LessonConfig",
+    "LessonObjective",
+    "LessonPanelModel",
+    "LessonProgressState",
     "PaneSpec",
     "ParamControlSpec",
     "ParamTooltip",
@@ -85,6 +103,7 @@ __all__ = [
     "SimulationState",
     "SimulationStepResult",
     "SoftmaxPolicy",
+    "TheoryStageCard",
     "ThreePaneLayoutSpec",
     "TraceBuffer",
     "ThompsonSamplingPolicy",
@@ -98,12 +117,17 @@ __all__ = [
     "build_three_pane_layout",
     "create_world",
     "default_policy_param_controls",
+    "evaluate_lesson_objective",
+    "explain_step_delta",
     "filter_trace_records",
+    "get_lesson",
     "get_world_config",
     "list_world_configs",
     "get_route_spec",
     "list_route_specs",
+    "locked_control_keys_for_stage",
     "main",
     "normalize_route",
+    "render_theory_stage_markdown",
     "run",
 ]

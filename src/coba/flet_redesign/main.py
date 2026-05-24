@@ -87,6 +87,20 @@ def _render_shell_view(view: RouteUIModel) -> Any:
                     if view.arena_metrics is not None
                     else []
                 )
+                + (
+                    [
+                        ft.Text(
+                            value=f"Lesson: {view.lesson_panel.lesson_title}",
+                            size=12,
+                            weight=ft.FontWeight.BOLD,
+                        ),
+                        ft.Text(value=f"Stage: {view.lesson_panel.stage_index}", size=12),
+                        ft.Text(value=view.lesson_panel.objective_text, size=12),
+                        ft.Text(value=view.lesson_panel.step_explanation, size=11),
+                    ]
+                    if view.lesson_panel is not None
+                    else []
+                )
                 + [
                     ft.Text(value=f"{spec.label}: {spec.default_value}", size=12)
                     for spec in view.param_controls

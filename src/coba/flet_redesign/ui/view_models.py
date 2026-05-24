@@ -6,10 +6,18 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from coba.flet_redesign.arena import ArenaMetrics, build_arena_metrics
+from coba.flet_redesign.curriculum import (
+    evaluate_lesson_objective,
+    explain_step_delta,
+    get_lesson,
+    locked_control_keys_for_stage,
+    render_theory_stage_markdown,
+)
 from coba.flet_redesign.router import get_route_spec
 from coba.flet_redesign.trace import TraceBuffer
 from coba.flet_redesign.ui.components import ScenePanelModel, TreatmentCardModel
 from coba.flet_redesign.ui.layout import ThreePaneLayoutSpec, build_three_pane_layout
+from coba.flet_redesign.ui.lesson_models import LessonPanelModel
 from coba.flet_redesign.ui.param_controls import ParamControlSpec, default_policy_param_controls
 from coba.flet_redesign.ui.preferences import UserPreferences
 from coba.flet_redesign.worlds import create_world, get_world_config
@@ -32,6 +40,7 @@ class RouteUIModel:
     )
     trace_records: tuple[dict[str, Any], ...] = ()
     arena_metrics: ArenaMetrics | None = None
+    lesson_panel: LessonPanelModel | None = None
 
 
 def build_route_ui_model(route: str | None, prefs: UserPreferences) -> RouteUIModel:
@@ -63,6 +72,35 @@ def build_route_ui_model(route: str | None, prefs: UserPreferences) -> RouteUIMo
     arena_metrics = (
         build_arena_metrics(list(trace_records)) if spec.route.value == "/arena" else None
     )
+    lesson_panel = None
+    if spec.route.value == "/lesson":
+        lesson = get_lesson("lesson_ucb1")
+        stage = lesson.stages[0]
+        lesson_panel = LessonPanelModel(
+            lesson_id=lesson.lesson_id,
+            lesson_title=lesson.title,
+            stage_index=stage.stage_index,
+            theory_markdown=render_theory_stage_markdown(stage),
+            locked_controls=locked_control_keys_for_stage(lesson, stage=stage.stage_index),
+            objective_text=(
+                "Objective complete."
+                if evaluate_lesson_objective(
+                    objective=lesson.objective,
+                    steps_executed=0,
+                    cumulative_reward=0.0,
+                    cumulative_regret=0.0,
+                )
+                else "Objective pending: run more steps."
+            ),
+            step_explanation=explain_step_delta(
+                previous=None,
+                current={
+                    "chosen_arm": cards[0].arm_id,
+                    "cumulative_reward": 0.0,
+                    "cumulative_regret": 0.0,
+                },
+            ),
+        )
 
     return RouteUIModel(
         route=spec.route.value,
@@ -75,4 +113,5 @@ def build_route_ui_model(route: str | None, prefs: UserPreferences) -> RouteUIMo
         param_controls=default_policy_param_controls(prefs.policy_id),
         trace_records=trace_records,
         arena_metrics=arena_metrics,
+        lesson_panel=lesson_panel,
     )

@@ -22,6 +22,8 @@ def test_lesson_route_model_includes_three_panes_and_cards() -> None:
     assert model.scene_panel is not None
     assert len(model.treatment_cards) == 3
     assert len(model.param_controls) >= 1
+    assert model.lesson_panel is not None
+    assert model.lesson_panel.stage_index == 1
 
 
 def test_route_model_uses_selected_world_from_preferences() -> None:

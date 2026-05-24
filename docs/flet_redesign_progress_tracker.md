@@ -24,9 +24,9 @@ Architecture reference: `docs/flet_redesign_plan.md`
 | Tech Lead | _TBD_ |
 | Start Date | _TBD_ |
 | Target End Date | _TBD_ |
-| Current Phase | Phase 5 |
+| Current Phase | Phase 6 |
 | Overall Status | IP |
-| Overall Completion | 48% |
+| Overall Completion | 56% |
 | Top Blocker | None |
 
 ---
@@ -40,8 +40,8 @@ Architecture reference: `docs/flet_redesign_plan.md`
 | Phase 2: Core Worlds | Days 5-6 | DN | 100% | _TBD_ | ☑ |
 | Phase 3: UI Shell + Controls | Days 7-9 | DN | 100% | _TBD_ | ☑ |
 | Phase 4: Arena + Charts + Trace | Days 10-13 | DN | 100% | _TBD_ | ☑ |
-| Phase 5: Foundation Lessons | Days 14-18 | IP | 0% | _TBD_ | ☐ |
-| Phase 6: Contextual Lessons | Days 19-25 | NS | 0% | _TBD_ | ☐ |
+| Phase 5: Foundation Lessons | Days 14-18 | DN | 100% | _TBD_ | ☑ |
+| Phase 6: Contextual Lessons | Days 19-25 | IP | 0% | _TBD_ | ☐ |
 | Phase 7: Advanced Discrete + Ensembles | Days 26-36 | NS | 0% | _TBD_ | ☐ |
 | Phase 8: Continuous + Production Features | Days 37-45 | NS | 0% | _TBD_ | ☐ |
 | Phase 9: Comparison + Sandbox | Days 46-50 | NS | 0% | _TBD_ | ☐ |
@@ -163,27 +163,28 @@ Evidence:
 
 ## Phase 5: Foundation Lessons
 
-Status: `IP`
+Status: `DN`
 Owner: _TBD_
 Target Date: _TBD_
 
-- [ ] Lesson metadata schema implemented
-- [ ] First five lessons configured
-- [ ] 5-stage theory card renderer implemented
-- [ ] Lesson objective evaluator implemented
-- [ ] Guided control locking implemented
-- [ ] Step explanation panel integrated
-- [ ] Lesson completion flow validated
+- [x] Lesson metadata schema implemented
+- [x] First five lessons configured
+- [x] 5-stage theory card renderer implemented
+- [x] Lesson objective evaluator implemented
+- [x] Guided control locking implemented
+- [x] Step explanation panel integrated
+- [x] Lesson completion flow validated
 
 Evidence:
-- PR(s): _TBD_
-- Test run: _TBD_
+- PR(s): local commit(s) on `main` (Phase 5 Step 1)
+- Test run: `pytest tests/flet_redesign -q -p no:asyncio` (71 passed)
+- Quality run: `uv run --with pre-commit pre-commit run --all-files` (all hooks passed)
 
 ---
 
 ## Phase 6: Contextual Lessons
 
-Status: `NS`
+Status: `IP`
 Owner: _TBD_
 Target Date: _TBD_
 
@@ -308,9 +309,9 @@ Evidence:
 
 | World | Status | Presets | Lesson Coverage | Notes |
 |---|---|---|---|---|
-| Rural Clinic | DN | 1 | 0 | Phase-2 core world integrated |
-| MovieMatch | DN | 1 | 0 | Phase-2 core world integrated |
-| NewsFeed | DN | 1 | 0 | Phase-2 core world integrated |
+| Rural Clinic | DN | 1 | 2 | Used in `lesson_random_baseline`, `lesson_ucb1` |
+| MovieMatch | DN | 1 | 2 | Used in `lesson_epsilon_greedy`, `lesson_softmax` |
+| NewsFeed | DN | 1 | 1 | Used in `lesson_thompson_sampling` |
 | ShopSmart | NS | 0 | 0 | |
 | RidePilot | NS | 0 | 0 | |
 | GameBot | NS | 0 | 0 | |
