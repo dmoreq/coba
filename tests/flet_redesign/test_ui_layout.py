@@ -54,3 +54,8 @@ def test_default_policy_controls_include_tooltip_payload() -> None:
     assert len(controls) == 1
     assert controls[0].tooltip is not None
     assert "sqrt" in controls[0].tooltip.formula
+
+
+def test_contextual_policy_controls_available() -> None:
+    linucb_controls = default_policy_param_controls("linucb")
+    assert {control.key for control in linucb_controls} == {"alpha", "l2_lambda"}

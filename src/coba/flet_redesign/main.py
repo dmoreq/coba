@@ -101,6 +101,23 @@ def _render_shell_view(view: RouteUIModel) -> Any:
                     if view.lesson_panel is not None
                     else []
                 )
+                + (
+                    [
+                        ft.Text(value="Context Vector", size=12, weight=ft.FontWeight.BOLD),
+                        ft.Text(
+                            value=", ".join(
+                                f"{name}={value:.3f}"
+                                for name, value in zip(
+                                    view.context_inspection.feature_order,
+                                    view.context_inspection.feature_values,
+                                )
+                            ),
+                            size=11,
+                        ),
+                    ]
+                    if view.context_inspection is not None
+                    else []
+                )
                 + [
                     ft.Text(value=f"{spec.label}: {spec.default_value}", size=12)
                     for spec in view.param_controls

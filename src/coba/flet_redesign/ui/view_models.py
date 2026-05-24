@@ -9,13 +9,15 @@ from coba.flet_redesign.arena import ArenaMetrics, build_arena_metrics
 from coba.flet_redesign.curriculum import (
     evaluate_lesson_objective,
     explain_step_delta,
-    get_lesson,
+    get_lesson_by_policy,
     locked_control_keys_for_stage,
     render_theory_stage_markdown,
 )
+from coba.flet_redesign.policies.contextual_utils import context_to_vector
 from coba.flet_redesign.router import get_route_spec
 from coba.flet_redesign.trace import TraceBuffer
 from coba.flet_redesign.ui.components import ScenePanelModel, TreatmentCardModel
+from coba.flet_redesign.ui.context_inspection import ContextInspectionModel
 from coba.flet_redesign.ui.layout import ThreePaneLayoutSpec, build_three_pane_layout
 from coba.flet_redesign.ui.lesson_models import LessonPanelModel
 from coba.flet_redesign.ui.param_controls import ParamControlSpec, default_policy_param_controls
@@ -41,6 +43,7 @@ class RouteUIModel:
     trace_records: tuple[dict[str, Any], ...] = ()
     arena_metrics: ArenaMetrics | None = None
     lesson_panel: LessonPanelModel | None = None
+    context_inspection: ContextInspectionModel | None = None
 
 
 def build_route_ui_model(route: str | None, prefs: UserPreferences) -> RouteUIModel:
@@ -72,9 +75,19 @@ def build_route_ui_model(route: str | None, prefs: UserPreferences) -> RouteUIMo
     arena_metrics = (
         build_arena_metrics(list(trace_records)) if spec.route.value == "/arena" else None
     )
+    contextual_inspection = ContextInspectionModel(
+        feature_order=tuple(feature.name for feature in config.features),
+        feature_values=tuple(
+            context_to_vector(
+                context,
+                feature_order=tuple(feature.name for feature in config.features),
+            )
+        ),
+        notes="Feature vector preview for contextual policies.",
+    )
     lesson_panel = None
     if spec.route.value == "/lesson":
-        lesson = get_lesson("lesson_ucb1")
+        lesson = get_lesson_by_policy(prefs.policy_id)
         stage = lesson.stages[0]
         lesson_panel = LessonPanelModel(
             lesson_id=lesson.lesson_id,
@@ -114,4 +127,5 @@ def build_route_ui_model(route: str | None, prefs: UserPreferences) -> RouteUIMo
         trace_records=trace_records,
         arena_metrics=arena_metrics,
         lesson_panel=lesson_panel,
+        context_inspection=contextual_inspection,
     )

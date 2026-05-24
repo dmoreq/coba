@@ -9,6 +9,7 @@ from coba.flet_redesign.curriculum.lessons import (
     evaluate_lesson_objective,
     explain_step_delta,
     get_lesson,
+    get_lesson_by_policy,
     locked_control_keys_for_stage,
     render_theory_stage_markdown,
 )
@@ -22,6 +23,7 @@ __all__ = [
     "evaluate_lesson_objective",
     "explain_step_delta",
     "get_lesson",
+    "get_lesson_by_policy",
     "locked_control_keys_for_stage",
     "render_theory_stage_markdown",
 ]

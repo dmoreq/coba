@@ -92,4 +92,88 @@ def default_policy_param_controls(policy_id: str) -> tuple[ParamControlSpec, ...
                 ),
             ),
         )
+    if policy_id == "linucb":
+        return (
+            ParamControlSpec(
+                key="alpha",
+                label="Alpha",
+                control_type="slider",
+                default_value=1.0,
+                min_value=0.1,
+                max_value=3.0,
+                step=0.1,
+                tooltip=ParamTooltip(
+                    title="LinUCB Alpha",
+                    intuition="Scales contextual exploration bonus.",
+                    formula="score = theta^T x + alpha * sqrt(x^T A^-1 x)",
+                    tuning_hint="Increase alpha for sparse contextual coverage.",
+                ),
+            ),
+            ParamControlSpec(
+                key="l2_lambda",
+                label="L2 Lambda",
+                control_type="slider",
+                default_value=1.0,
+                min_value=0.1,
+                max_value=5.0,
+                step=0.1,
+                tooltip=ParamTooltip(
+                    title="L2 Regularization",
+                    intuition="Stabilizes early updates in high-dimensional contexts.",
+                    formula="A_0 = lambda * I",
+                    tuning_hint="Increase when features are noisy or collinear.",
+                ),
+            ),
+        )
+    if policy_id == "linucb_sw":
+        return (
+            ParamControlSpec(
+                key="window_size",
+                label="Window Size",
+                control_type="slider",
+                default_value=200,
+                min_value=20,
+                max_value=500,
+                step=10,
+                tooltip=ParamTooltip(
+                    title="Sliding Window",
+                    intuition="Smaller windows adapt faster to drift.",
+                    formula="fit on last W updates",
+                    tuning_hint="Reduce W when reward dynamics change quickly.",
+                ),
+            ),
+        )
+    if policy_id == "logistic_ucb":
+        return (
+            ParamControlSpec(
+                key="learning_rate",
+                label="Learning Rate",
+                control_type="slider",
+                default_value=0.1,
+                min_value=0.01,
+                max_value=0.5,
+                step=0.01,
+                tooltip=ParamTooltip(
+                    title="Learning Rate",
+                    intuition="Controls step size in logistic updates.",
+                    formula="theta <- theta + eta * gradient",
+                    tuning_hint="Lower eta when updates oscillate.",
+                ),
+            ),
+            ParamControlSpec(
+                key="alpha",
+                label="Alpha",
+                control_type="slider",
+                default_value=0.5,
+                min_value=0.1,
+                max_value=2.0,
+                step=0.1,
+                tooltip=ParamTooltip(
+                    title="Exploration Bonus",
+                    intuition="Compensates low-confidence contextual regions.",
+                    formula="score = p_hat + alpha / sqrt(n+1)",
+                    tuning_hint="Increase alpha if model over-exploits early.",
+                ),
+            ),
+        )
     return ()

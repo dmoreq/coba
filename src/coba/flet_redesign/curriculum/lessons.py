@@ -198,6 +198,60 @@ LESSON_REGISTRY: dict[str, LessonConfig] = {
             5: (),
         },
     ),
+    "lesson_linucb": LessonConfig(
+        lesson_id="lesson_linucb",
+        title="LinUCB (Contextual)",
+        policy_id="linucb",
+        world_id="rural_clinic",
+        stages=_stages_for("LinUCB", "score = theta^T x + alpha * sqrt(x^T A^-1 x)"),
+        objective=LessonObjective(
+            min_steps=120, min_cumulative_reward=55.0, max_cumulative_regret=50.0
+        ),
+        stage_locked_controls={
+            1: ("alpha", "l2_lambda"),
+            2: ("seed",),
+            3: ("seed",),
+            4: ("seed",),
+            5: (),
+        },
+    ),
+    "lesson_linucb_sw": LessonConfig(
+        lesson_id="lesson_linucb_sw",
+        title="LinUCB Sliding Window",
+        policy_id="linucb_sw",
+        world_id="newsfeed",
+        stages=_stages_for(
+            "LinUCB-SW",
+            "A_t,b_t from last W samples; score = theta^T x + alpha*sqrt(x^T A^-1 x)",
+        ),
+        objective=LessonObjective(
+            min_steps=120, min_cumulative_reward=52.0, max_cumulative_regret=56.0
+        ),
+        stage_locked_controls={
+            1: ("window_size", "alpha"),
+            2: ("seed",),
+            3: ("seed",),
+            4: ("seed",),
+            5: (),
+        },
+    ),
+    "lesson_logistic_ucb": LessonConfig(
+        lesson_id="lesson_logistic_ucb",
+        title="Logistic UCB",
+        policy_id="logistic_ucb",
+        world_id="moviematch",
+        stages=_stages_for("Logistic UCB", "score = sigmoid(theta^T x) + alpha/sqrt(n+1)"),
+        objective=LessonObjective(
+            min_steps=120, min_cumulative_reward=50.0, max_cumulative_regret=58.0
+        ),
+        stage_locked_controls={
+            1: ("alpha", "learning_rate"),
+            2: ("seed",),
+            3: ("seed",),
+            4: ("seed",),
+            5: (),
+        },
+    ),
 }
 
 
@@ -206,6 +260,14 @@ def get_lesson(lesson_id: str) -> LessonConfig:
         return LESSON_REGISTRY[lesson_id]
     except KeyError as exc:
         raise KeyError(f"Unknown lesson_id '{lesson_id}'") from exc
+
+
+def get_lesson_by_policy(policy_id: str) -> LessonConfig:
+    """Return first lesson mapped to a policy id."""
+    for lesson in LESSON_REGISTRY.values():
+        if lesson.policy_id == policy_id:
+            return lesson
+    return LESSON_REGISTRY["lesson_random_baseline"]
 
 
 def render_theory_stage_markdown(stage: TheoryStageCard) -> str:

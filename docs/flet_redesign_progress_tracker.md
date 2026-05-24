@@ -24,9 +24,9 @@ Architecture reference: `docs/flet_redesign_plan.md`
 | Tech Lead | _TBD_ |
 | Start Date | _TBD_ |
 | Target End Date | _TBD_ |
-| Current Phase | Phase 6 |
+| Current Phase | Phase 7 |
 | Overall Status | IP |
-| Overall Completion | 56% |
+| Overall Completion | 64% |
 | Top Blocker | None |
 
 ---
@@ -41,8 +41,8 @@ Architecture reference: `docs/flet_redesign_plan.md`
 | Phase 3: UI Shell + Controls | Days 7-9 | DN | 100% | _TBD_ | ☑ |
 | Phase 4: Arena + Charts + Trace | Days 10-13 | DN | 100% | _TBD_ | ☑ |
 | Phase 5: Foundation Lessons | Days 14-18 | DN | 100% | _TBD_ | ☑ |
-| Phase 6: Contextual Lessons | Days 19-25 | IP | 0% | _TBD_ | ☐ |
-| Phase 7: Advanced Discrete + Ensembles | Days 26-36 | NS | 0% | _TBD_ | ☐ |
+| Phase 6: Contextual Lessons | Days 19-25 | DN | 100% | _TBD_ | ☑ |
+| Phase 7: Advanced Discrete + Ensembles | Days 26-36 | IP | 0% | _TBD_ | ☐ |
 | Phase 8: Continuous + Production Features | Days 37-45 | NS | 0% | _TBD_ | ☐ |
 | Phase 9: Comparison + Sandbox | Days 46-50 | NS | 0% | _TBD_ | ☐ |
 | Phase 10: Polish + Release | Days 51-55 | NS | 0% | _TBD_ | ☐ |
@@ -184,27 +184,28 @@ Evidence:
 
 ## Phase 6: Contextual Lessons
 
-Status: `IP`
+Status: `DN`
 Owner: _TBD_
 Target Date: _TBD_
 
-- [ ] LinUCB implemented
-- [ ] LinUCB-SW implemented
-- [ ] Logistic bandit variant implemented
-- [ ] Feature context inspection panel integrated
-- [ ] Contextual presets integrated
-- [ ] Contextual debugger panes integrated
-- [ ] Formula/regression tests passing
+- [x] LinUCB implemented
+- [x] LinUCB-SW implemented
+- [x] Logistic bandit variant implemented
+- [x] Feature context inspection panel integrated
+- [x] Contextual presets integrated
+- [x] Contextual debugger panes integrated
+- [x] Formula/regression tests passing
 
 Evidence:
-- PR(s): _TBD_
-- Test run: _TBD_
+- PR(s): local commit(s) on `main` (Phase 6 Step 1)
+- Test run: `pytest tests/flet_redesign -q -p no:asyncio` (81 passed)
+- Quality run: `uv run --with pre-commit pre-commit run --all-files` (all hooks passed)
 
 ---
 
 ## Phase 7: Advanced Discrete + Ensembles
 
-Status: `NS`
+Status: `IP`
 Owner: _TBD_
 Target Date: _TBD_
 
@@ -290,10 +291,10 @@ Evidence:
 | UCB1 | Context-Free | DN | ☐ | ☑ | Phase-1 baseline implementation |
 | Thompson (Bernoulli) | Context-Free | DN | ☐ | ☑ | Phase-1 baseline implementation |
 | Softmax | Context-Free | DN | ☐ | ☑ | Phase-1 baseline implementation |
-| LinUCB | Linear | NS | ☐ | ☐ | |
-| LinUCB-SW | Linear | NS | ☐ | ☐ | |
+| LinUCB | Linear | DN | ☑ | ☑ | Phase-6 contextual implementation |
+| LinUCB-SW | Linear | DN | ☑ | ☑ | Phase-6 contextual implementation |
 | LinTS | Linear/Bayesian | NS | ☐ | ☐ | |
-| Logistic Bandit Variant | Logistic | NS | ☐ | ☐ | |
+| Logistic Bandit Variant | Logistic | DN | ☑ | ☑ | Phase-6 contextual implementation |
 | GP-UCB | Kernel/Bayesian | NS | ☐ | ☐ | |
 | Bootstrapped Ensemble | Ensemble | NS | ☐ | ☐ | |
 | LinUCB Hybrid | Hybrid | NS | ☐ | ☐ | |
@@ -309,9 +310,9 @@ Evidence:
 
 | World | Status | Presets | Lesson Coverage | Notes |
 |---|---|---|---|---|
-| Rural Clinic | DN | 1 | 2 | Used in `lesson_random_baseline`, `lesson_ucb1` |
-| MovieMatch | DN | 1 | 2 | Used in `lesson_epsilon_greedy`, `lesson_softmax` |
-| NewsFeed | DN | 1 | 1 | Used in `lesson_thompson_sampling` |
+| Rural Clinic | DN | 1 | 3 | + `lesson_linucb` |
+| MovieMatch | DN | 1 | 3 | + `lesson_logistic_ucb` |
+| NewsFeed | DN | 1 | 2 | + `lesson_linucb_sw` |
 | ShopSmart | NS | 0 | 0 | |
 | RidePilot | NS | 0 | 0 | |
 | GameBot | NS | 0 | 0 | |

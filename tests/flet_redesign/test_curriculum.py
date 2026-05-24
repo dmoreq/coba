@@ -8,6 +8,7 @@ from coba.flet_redesign.curriculum import (
     evaluate_lesson_objective,
     explain_step_delta,
     get_lesson,
+    get_lesson_by_policy,
     locked_control_keys_for_stage,
     render_theory_stage_markdown,
 )
@@ -23,6 +24,12 @@ def test_foundation_registry_contains_first_five_lessons() -> None:
         "lesson_softmax",
     }
     assert expected_ids.issubset(set(LESSON_REGISTRY.keys()))
+
+
+def test_contextual_lessons_registered() -> None:
+    expected_ids = {"lesson_linucb", "lesson_linucb_sw", "lesson_logistic_ucb"}
+    assert expected_ids.issubset(set(LESSON_REGISTRY.keys()))
+    assert get_lesson_by_policy("linucb").lesson_id == "lesson_linucb"
 
 
 def test_all_lessons_have_five_theory_stages() -> None:

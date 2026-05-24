@@ -13,6 +13,11 @@ from coba.flet_redesign.contracts import (
     SimulationStepResult,
     World,
 )
+from coba.flet_redesign.debug import (
+    ContextualDebugPane,
+    build_linucb_debug_pane,
+    build_logistic_debug_pane,
+)
 from coba.flet_redesign.curriculum import (
     LESSON_REGISTRY,
     LessonConfig,
@@ -22,12 +27,17 @@ from coba.flet_redesign.curriculum import (
     evaluate_lesson_objective,
     explain_step_delta,
     get_lesson,
+    get_lesson_by_policy,
     locked_control_keys_for_stage,
     render_theory_stage_markdown,
 )
 from coba.flet_redesign.main import main, run
+from coba.flet_redesign.policy_factory import build_policy
 from coba.flet_redesign.policies import (
     EpsilonGreedyPolicy,
+    LinUCBSWPolicy,
+    LinUCBPolicy,
+    LogisticUCBPolicy,
     RandomPolicy,
     SoftmaxPolicy,
     ThompsonSamplingPolicy,
@@ -60,11 +70,14 @@ from coba.flet_redesign.ui.tooltips import ParamTooltip
 from coba.flet_redesign.ui.view_models import RouteUIModel, build_route_ui_model
 from coba.flet_redesign.worlds import (
     ArmDef,
+    CONTEXTUAL_PRESETS,
     ConfigurableWorld,
+    ContextualPreset,
     FeatureDef,
     WorldConfig,
     create_world,
     get_world_config,
+    list_contextual_presets,
     list_world_configs,
 )
 
@@ -78,7 +91,10 @@ __all__ = [
     "AppStateStore",
     "ArmDef",
     "BanditPolicy",
+    "CONTEXTUAL_PRESETS",
     "ConfigurableWorld",
+    "ContextualDebugPane",
+    "ContextualPreset",
     "DiscreteSimulator",
     "DebugSnapshotProvider",
     "EpsilonGreedyPolicy",
@@ -87,6 +103,9 @@ __all__ = [
     "LessonObjective",
     "LessonPanelModel",
     "LessonProgressState",
+    "LinUCBSWPolicy",
+    "LinUCBPolicy",
+    "LogisticUCBPolicy",
     "PaneSpec",
     "ParamControlSpec",
     "ParamTooltip",
@@ -112,6 +131,9 @@ __all__ = [
     "WorldConfig",
     "World",
     "build_arena_metrics",
+    "build_policy",
+    "build_linucb_debug_pane",
+    "build_logistic_debug_pane",
     "build_route_ui_model",
     "build_shell_stack",
     "build_three_pane_layout",
@@ -121,8 +143,10 @@ __all__ = [
     "explain_step_delta",
     "filter_trace_records",
     "get_lesson",
+    "get_lesson_by_policy",
     "get_world_config",
     "list_world_configs",
+    "list_contextual_presets",
     "get_route_spec",
     "list_route_specs",
     "locked_control_keys_for_stage",
