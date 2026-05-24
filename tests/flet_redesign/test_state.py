@@ -35,7 +35,9 @@ def test_simulation_state_append_step_updates_aggregates() -> None:
 
 def test_simulation_state_reset_preserves_config() -> None:
     config = RunConfig(seed=99, horizon=300)
-    state = SimulationState(config=config, current_step=20, cumulative_reward=7.1, cumulative_regret=2.4)
+    state = SimulationState(
+        config=config, current_step=20, cumulative_reward=7.1, cumulative_regret=2.4
+    )
     state.trace.append(
         SimulationStepResult(
             step_index=20,

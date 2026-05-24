@@ -12,37 +12,33 @@ repos:
       - id: check-added-large-files
         args: ["--maxkb=1000"]
 
-  # ── Ruff: lint + auto-fix (covers src/ and web/) ─────────────────────────
+  # ── Ruff: lint + auto-fix (covers src/ and tests/) ───────────────────────
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.4.10
     hooks:
       - id: ruff
         args: [--fix]
-        # Explicitly pass all Python files in src/ and web/ (excludes .venv)
-        files: ^(src|web)/.*\.py$
-        exclude: ^web/\.venv/
+        # Explicitly pass all Python files in src/ and tests/ (excludes .venv)
+        files: ^(src|tests)/.*\.py$
       - id: ruff-format
-        files: ^(src|web)/.*\.py$
-        exclude: ^web/\.venv/
+        files: ^(src|tests)/.*\.py$
 
-  # ── Black: code formatting (covers src/ and web/) ────────────────────────
+  # ── Black: code formatting (covers src/ and tests/) ──────────────────────
   - repo: https://github.com/psf/black
     rev: 24.4.2
     hooks:
       - id: black
-        files: ^(src|web)/.*\.py$
-        exclude: ^web/\.venv/
+        files: ^(src|tests)/.*\.py$
 
-  # ── Mypy: static type checking (workspace-wide) ──────────────────────────
+  # ── Mypy: static type checking (core library) ────────────────────────────
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.10.0
     hooks:
       - id: mypy
         pass_filenames: false
-        # Point mypy at both the library and the web application
+        # Point mypy at the core library package.
         args:
           - src/coba
-          - web
           - --ignore-missing-imports
           - --config-file=pyproject.toml
           - --disable-error-code=no-untyped-def
@@ -53,5 +49,4 @@ repos:
         additional_dependencies:
           - "pydantic>=2.0"
           - "loguru>=0.7"
-        files: ^(src|web)/.*\.py$
-        exclude: ^web/\.venv/
+        files: ^(src|tests)/.*\.py$

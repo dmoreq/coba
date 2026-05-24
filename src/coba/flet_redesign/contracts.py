@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Any, Protocol, TypeVar, runtime_checkable
-from collections.abc import Sequence
 
 ArmT = TypeVar("ArmT")
 ContextT = TypeVar("ContextT")
+ContextTContra = TypeVar("ContextTContra", contravariant=True)
 
 
 @dataclass(frozen=True)
@@ -32,16 +33,16 @@ class DebugSnapshotProvider(Protocol):
 
 
 @runtime_checkable
-class BanditPolicy(Protocol[ArmT, ContextT]):
+class BanditPolicy(Protocol[ArmT, ContextTContra]):
     """Policy contract used by the simulation loop."""
 
     def reset(self) -> None:
         """Reset policy state for a new run."""
 
-    def select_arm(self, context: ContextT, arms: Sequence[ArmT]) -> ArmT:
+    def select_arm(self, context: ContextTContra, arms: Sequence[ArmT]) -> ArmT:
         """Choose one arm for the provided context."""
 
-    def update(self, context: ContextT, arm: ArmT, reward: float) -> None:
+    def update(self, context: ContextTContra, arm: ArmT, reward: float) -> None:
         """Update policy state after observing a reward."""
 
 

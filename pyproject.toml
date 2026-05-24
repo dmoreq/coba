@@ -48,11 +48,8 @@ pythonpath = ["src", "."]
 [tool.ruff]
 target-version = "py310"
 line-length = 100
-# Cover both the library and the web application in one pass
-extend-include = ["web/**/*.py"]
 exclude = [
     ".venv",
-    "web/.venv",
     "__pycache__",
     ".git",
     ".pytest_cache",
@@ -77,14 +74,11 @@ target-version = ["py310", "py311", "py312"]
 # ── Mypy ─────────────────────────────────────────────────────────────────────
 [tool.mypy]
 python_version = "3.10"
-# Check only production source code — tests are excluded below
-files = ["src/coba", "web"]
+# Check production source code under src/coba.
+files = ["src/coba"]
 exclude = [
-    "web/.venv",
     ".venv",
     "__pycache__",
-    # Test files: allow unannotated test functions without failures
-    "web/tests",
     "tests",
 ]
 # Practical strictness: ignore missing stubs for third-party libs
@@ -100,16 +94,8 @@ no_implicit_optional = false
 # ── Third-party overrides: relax strict checking for untyped packages ────────
 [[tool.mypy.overrides]]
 module = [
-    "dash.*",
-    "dash_mantine_components.*",
-    "dash_table.*",
-    "plotly.*",
-    "flask.*",
-    "flask_caching.*",
     "scipy.*",
     "sklearn.*",
-    "gevent.*",
-    "gunicorn.*",
     "loguru.*",
 ]
 ignore_missing_imports = true

@@ -26,7 +26,7 @@ Architecture reference: `docs/flet_redesign_plan.md`
 | Target End Date | _TBD_ |
 | Current Phase | Phase 0 |
 | Overall Status | IP |
-| Overall Completion | 6% |
+| Overall Completion | 9% |
 | Top Blocker | None |
 
 ---
@@ -35,7 +35,7 @@ Architecture reference: `docs/flet_redesign_plan.md`
 
 | Phase | Window | Status | Completion | Owner | Gate |
 |---|---|---|---:|---|---|
-| Phase 0: Scaffold + Contracts | Day 1 | IP | 50% | _TBD_ | ☐ |
+| Phase 0: Scaffold + Contracts | Day 1 | IP | 83% | _TBD_ | ☐ |
 | Phase 1: Discrete Engine + State | Days 2-4 | NS | 0% | _TBD_ | ☐ |
 | Phase 2: Core Worlds | Days 5-6 | NS | 0% | _TBD_ | ☐ |
 | Phase 3: UI Shell + Controls | Days 7-9 | NS | 0% | _TBD_ | ☐ |
@@ -60,13 +60,14 @@ Target Date: _TBD_
 - [x] Package structure scaffolded
 - [x] App shell routes (`Home`, `Lesson`, `Arena`, `Sandbox`)
 - [x] Core interfaces defined (`BanditPolicy`, `World`, `SimulationStepResult`)
-- [ ] Tooling configured (`ruff`, `mypy`, `pytest`, pre-commit)
+- [x] Tooling configured (`ruff`, `mypy`, `pytest`, pre-commit)
 - [ ] CI baseline pipeline passing
-- [ ] Smoke test for app startup
+- [x] Smoke test for app startup
 
 Evidence:
-- PR(s): local commit(s) on `main` (Phase 0 Steps 1-2)
+- PR(s): local commit(s) on `main` (Phase 0 Steps 1-3)
 - Test run: `pytest tests/flet_redesign -q` (16 passed)
+- Quality run: `uv run --with pre-commit pre-commit run --all-files` (all hooks passed)
 
 ---
 
@@ -316,9 +317,9 @@ Evidence:
 
 | Gate | Current | Last Run | Owner | Evidence |
 |---|---|---|---|---|
-| Lint (`ruff`) | NS | _TBD_ | _TBD_ | |
-| Type checks (`mypy`) | NS | _TBD_ | _TBD_ | |
-| Unit tests (`pytest`) | NS | _TBD_ | _TBD_ | |
+| Lint (`ruff`) | DN | 2026-05-24 | _TBD_ | `pre-commit` hook passed |
+| Type checks (`mypy`) | DN | 2026-05-24 | _TBD_ | `pre-commit` hook passed |
+| Unit tests (`pytest`) | DN | 2026-05-24 | _TBD_ | `pytest tests/flet_redesign -q` |
 | Integration tests | NS | _TBD_ | _TBD_ | |
 | UI smoke tests | NS | _TBD_ | _TBD_ | |
 | Deterministic replay check | NS | _TBD_ | _TBD_ | |
