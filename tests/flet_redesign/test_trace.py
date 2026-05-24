@@ -40,4 +40,8 @@ def test_trace_buffer_json_serialization_handles_non_json_objects() -> None:
     payload = json.loads(buffer.to_json())
     assert payload[0]["context"] == "{1, 2, 3}"
     assert payload[0]["chosen_arm"] == ["arm", 1]
-    assert "{'a', 'b'}" == payload[0]["metadata"]["debug"]
+    debug_repr = payload[0]["metadata"]["debug"]
+    assert debug_repr.startswith("{")
+    assert debug_repr.endswith("}")
+    assert "'a'" in debug_repr
+    assert "'b'" in debug_repr

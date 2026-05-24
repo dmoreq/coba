@@ -24,9 +24,9 @@ Architecture reference: `docs/flet_redesign_plan.md`
 | Tech Lead | _TBD_ |
 | Start Date | _TBD_ |
 | Target End Date | _TBD_ |
-| Current Phase | Phase 2 |
+| Current Phase | Phase 3 |
 | Overall Status | IP |
-| Overall Completion | 24% |
+| Overall Completion | 32% |
 | Top Blocker | None |
 
 ---
@@ -37,8 +37,8 @@ Architecture reference: `docs/flet_redesign_plan.md`
 |---|---|---|---:|---|---|
 | Phase 0: Scaffold + Contracts | Day 1 | DN | 100% | _TBD_ | ☑ |
 | Phase 1: Discrete Engine + State | Days 2-4 | DN | 100% | _TBD_ | ☑ |
-| Phase 2: Core Worlds | Days 5-6 | IP | 0% | _TBD_ | ☐ |
-| Phase 3: UI Shell + Controls | Days 7-9 | NS | 0% | _TBD_ | ☐ |
+| Phase 2: Core Worlds | Days 5-6 | DN | 100% | _TBD_ | ☑ |
+| Phase 3: UI Shell + Controls | Days 7-9 | IP | 0% | _TBD_ | ☐ |
 | Phase 4: Arena + Charts + Trace | Days 10-13 | NS | 0% | _TBD_ | ☐ |
 | Phase 5: Foundation Lessons | Days 14-18 | NS | 0% | _TBD_ | ☐ |
 | Phase 6: Contextual Lessons | Days 19-25 | NS | 0% | _TBD_ | ☐ |
@@ -97,28 +97,29 @@ Evidence:
 
 ## Phase 2: Core Worlds (Clinic, MovieMatch, NewsFeed)
 
-Status: `NS`
+Status: `DN`
 Owner: _TBD_
 Target Date: _TBD_
 
-- [ ] World schema (`WorldConfig`, `FeatureDef`, `ArmDef`) implemented
-- [ ] Validator + parser implemented
-- [ ] Rural Clinic world integrated
-- [ ] MovieMatch world integrated
-- [ ] NewsFeed world integrated
-- [ ] Difficulty presets per world
-- [ ] World switching UI/API connected
-- [ ] World fixtures committed
+- [x] World schema (`WorldConfig`, `FeatureDef`, `ArmDef`) implemented
+- [x] Validator + parser implemented
+- [x] Rural Clinic world integrated
+- [x] MovieMatch world integrated
+- [x] NewsFeed world integrated
+- [x] Difficulty presets per world
+- [x] World switching UI/API connected
+- [x] World fixtures committed
 
 Evidence:
-- PR(s): _TBD_
-- Test run: _TBD_
+- PR(s): local commit(s) on `main` (Phase 2 Step 1)
+- Test run: `pytest tests/flet_redesign -q -p no:asyncio` (51 passed)
+- World fixtures: `tests/flet_redesign/fixtures/core_world_fixtures.json`
 
 ---
 
 ## Phase 3: UI Shell + Controls
 
-Status: `NS`
+Status: `IP`
 Owner: _TBD_
 Target Date: _TBD_
 
@@ -305,9 +306,9 @@ Evidence:
 
 | World | Status | Presets | Lesson Coverage | Notes |
 |---|---|---|---|---|
-| Rural Clinic | NS | 0 | 0 | |
-| MovieMatch | NS | 0 | 0 | |
-| NewsFeed | NS | 0 | 0 | |
+| Rural Clinic | DN | 1 | 0 | Phase-2 core world integrated |
+| MovieMatch | DN | 1 | 0 | Phase-2 core world integrated |
+| NewsFeed | DN | 1 | 0 | Phase-2 core world integrated |
 | ShopSmart | NS | 0 | 0 | |
 | RidePilot | NS | 0 | 0 | |
 | GameBot | NS | 0 | 0 | |

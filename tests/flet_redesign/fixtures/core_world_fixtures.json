@@ -1,0 +1,19 @@
+{
+  "worlds": [
+    {
+      "world_id": "rural_clinic",
+      "n_features": 3,
+      "n_arms": 3
+    },
+    {
+      "world_id": "moviematch",
+      "n_features": 3,
+      "n_arms": 3
+    },
+    {
+      "world_id": "newsfeed",
+      "n_features": 3,
+      "n_arms": 3
+    }
+  ]
+}
