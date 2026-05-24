@@ -26,7 +26,7 @@ Architecture reference: `docs/flet_redesign_plan.md`
 | Target End Date | _TBD_ |
 | Current Phase | Phase 0 |
 | Overall Status | IP |
-| Overall Completion | 3% |
+| Overall Completion | 6% |
 | Top Blocker | None |
 
 ---
@@ -35,7 +35,7 @@ Architecture reference: `docs/flet_redesign_plan.md`
 
 | Phase | Window | Status | Completion | Owner | Gate |
 |---|---|---|---:|---|---|
-| Phase 0: Scaffold + Contracts | Day 1 | IP | 33% | _TBD_ | ☐ |
+| Phase 0: Scaffold + Contracts | Day 1 | IP | 50% | _TBD_ | ☐ |
 | Phase 1: Discrete Engine + State | Days 2-4 | NS | 0% | _TBD_ | ☐ |
 | Phase 2: Core Worlds | Days 5-6 | NS | 0% | _TBD_ | ☐ |
 | Phase 3: UI Shell + Controls | Days 7-9 | NS | 0% | _TBD_ | ☐ |
@@ -58,15 +58,15 @@ Owner: _TBD_
 Target Date: _TBD_
 
 - [x] Package structure scaffolded
-- [ ] App shell routes (`Home`, `Lesson`, `Arena`, `Sandbox`)
+- [x] App shell routes (`Home`, `Lesson`, `Arena`, `Sandbox`)
 - [x] Core interfaces defined (`BanditPolicy`, `World`, `SimulationStepResult`)
 - [ ] Tooling configured (`ruff`, `mypy`, `pytest`, pre-commit)
 - [ ] CI baseline pipeline passing
 - [ ] Smoke test for app startup
 
 Evidence:
-- PR(s): local commit(s) on `main` (Phase 0 Step 1)
-- Test run: `pytest tests/flet_redesign -q` (7 passed)
+- PR(s): local commit(s) on `main` (Phase 0 Steps 1-2)
+- Test run: `pytest tests/flet_redesign -q` (16 passed)
 
 ---
 
