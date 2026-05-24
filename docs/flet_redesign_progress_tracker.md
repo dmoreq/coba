@@ -24,9 +24,9 @@ Architecture reference: `docs/flet_redesign_plan.md`
 | Tech Lead | _TBD_ |
 | Start Date | _TBD_ |
 | Target End Date | _TBD_ |
-| Current Phase | Phase 8 |
+| Current Phase | Phase 9 |
 | Overall Status | IP |
-| Overall Completion | 72% |
+| Overall Completion | 80% |
 | Top Blocker | None |
 
 ---
@@ -43,8 +43,8 @@ Architecture reference: `docs/flet_redesign_plan.md`
 | Phase 5: Foundation Lessons | Days 14-18 | DN | 100% | _TBD_ | ☑ |
 | Phase 6: Contextual Lessons | Days 19-25 | DN | 100% | _TBD_ | ☑ |
 | Phase 7: Advanced Discrete + Ensembles | Days 26-36 | DN | 100% | _TBD_ | ☑ |
-| Phase 8: Continuous + Production Features | Days 37-45 | IP | 0% | _TBD_ | ☐ |
-| Phase 9: Comparison + Sandbox | Days 46-50 | NS | 0% | _TBD_ | ☐ |
+| Phase 8: Continuous + Production Features | Days 37-45 | DN | 100% | _TBD_ | ☑ |
+| Phase 9: Comparison + Sandbox | Days 46-50 | IP | 0% | _TBD_ | ☐ |
 | Phase 10: Polish + Release | Days 51-55 | NS | 0% | _TBD_ | ☐ |
 
 ---
@@ -227,27 +227,28 @@ Evidence:
 
 ## Phase 8: Continuous + Production Features
 
-Status: `IP`
+Status: `DN`
 Owner: _TBD_
 Target Date: _TBD_
 
-- [ ] CATS policy implemented
-- [ ] Continuous action controls integrated
-- [ ] Continuous debugger panes integrated
-- [ ] Drift detection integrated
-- [ ] Drift event timeline/indicators integrated
-- [ ] Checkpoint save/load implemented
-- [ ] Preset management implemented
+- [x] CATS policy implemented
+- [x] Continuous action controls integrated
+- [x] Continuous debugger panes integrated
+- [x] Drift detection integrated
+- [x] Drift event timeline/indicators integrated
+- [x] Checkpoint save/load implemented
+- [x] Preset management implemented
 
 Evidence:
-- PR(s): _TBD_
-- Test run: _TBD_
+- PR(s): local commit(s) on `main` (Phase 8 Step 1)
+- Test run: `pytest tests/flet_redesign -q -p no:asyncio` (92 passed)
+- Quality run: `uv run --with pre-commit pre-commit run --all-files` (all hooks passed)
 
 ---
 
 ## Phase 9: Comparison + Sandbox
 
-Status: `NS`
+Status: `IP`
 Owner: _TBD_
 Target Date: _TBD_
 
@@ -301,7 +302,7 @@ Evidence:
 | LinUCB Hybrid | Hybrid | DN | ☑ | ☑ | Phase-7 implementation |
 | RF-UCB | Tree Ensemble | DN | ☑ | ☑ | Implemented as `tree_ucb` bucketized variant |
 | RF-TS | Tree Ensemble | DN | ☑ | ☑ | Implemented as `tree_ts` bucketized variant |
-| CATS | Continuous | NS | ☐ | ☐ | |
+| CATS | Continuous | DN | ☑ | ☑ | Phase-8 continuous action implementation |
 | Drift Detector A | Drift-Aware | NS | ☐ | ☐ | |
 | Drift Detector B | Drift-Aware | NS | ☐ | ☐ | |
 

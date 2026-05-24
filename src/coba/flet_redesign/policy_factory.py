@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import Any
 
-from coba.flet_redesign.contracts import BanditPolicy
+from coba.flet_redesign.continuous import CATSLikePolicy, ContinuousActionSpace
 from coba.flet_redesign.policies import (
     BootstrappedEnsemblePolicy,
     EpsilonGreedyPolicy,
@@ -29,7 +29,7 @@ def build_policy(
     feature_order: Sequence[str] = (),
     seed: int = 0,
     params: dict[str, Any] | None = None,
-) -> BanditPolicy[Any, Any]:
+) -> Any:
     """Instantiate one policy by id."""
     params = params or {}
 
@@ -91,6 +91,14 @@ def build_policy(
             context_key=str(
                 params.get("context_key", feature_order[0] if feature_order else "step")
             ),
+            seed=seed,
+        )
+    if policy_id == "cats":
+        action_min = float(params.get("action_min", 0.0))
+        action_max = float(params.get("action_max", 1.0))
+        return CATSLikePolicy(
+            action_space=ContinuousActionSpace(action_min, action_max),
+            exploration=float(params.get("exploration", 0.25)),
             seed=seed,
         )
 

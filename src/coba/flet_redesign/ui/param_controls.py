@@ -176,4 +176,52 @@ def default_policy_param_controls(policy_id: str) -> tuple[ParamControlSpec, ...
                 ),
             ),
         )
+    if policy_id == "cats":
+        return (
+            ParamControlSpec(
+                key="action_min",
+                label="Action Min",
+                control_type="slider",
+                default_value=0.0,
+                min_value=0.0,
+                max_value=1.0,
+                step=0.01,
+                tooltip=ParamTooltip(
+                    title="Action Lower Bound",
+                    intuition="Lower bound for continuous action sampling.",
+                    formula="a_t ∈ [min, max]",
+                    tuning_hint="Use domain-safe lower bounds for production runs.",
+                ),
+            ),
+            ParamControlSpec(
+                key="action_max",
+                label="Action Max",
+                control_type="slider",
+                default_value=1.0,
+                min_value=0.1,
+                max_value=2.0,
+                step=0.01,
+                tooltip=ParamTooltip(
+                    title="Action Upper Bound",
+                    intuition="Upper bound for continuous action sampling.",
+                    formula="a_t ∈ [min, max]",
+                    tuning_hint="Keep range narrow when reward landscape is smooth.",
+                ),
+            ),
+            ParamControlSpec(
+                key="exploration",
+                label="Exploration",
+                control_type="slider",
+                default_value=0.25,
+                min_value=0.05,
+                max_value=1.0,
+                step=0.05,
+                tooltip=ParamTooltip(
+                    title="CATS Exploration",
+                    intuition="Controls sampling spread around the current best action.",
+                    formula="a_t ~ N(best, exploration * range)",
+                    tuning_hint="Increase exploration in non-stationary settings.",
+                ),
+            ),
+        )
     return ()

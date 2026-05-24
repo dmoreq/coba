@@ -59,3 +59,12 @@ def test_default_policy_controls_include_tooltip_payload() -> None:
 def test_contextual_policy_controls_available() -> None:
     linucb_controls = default_policy_param_controls("linucb")
     assert {control.key for control in linucb_controls} == {"alpha", "l2_lambda"}
+
+
+def test_continuous_policy_controls_available() -> None:
+    cats_controls = default_policy_param_controls("cats")
+    assert {control.key for control in cats_controls} == {
+        "action_min",
+        "action_max",
+        "exploration",
+    }

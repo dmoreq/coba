@@ -34,6 +34,7 @@ POLICY_CAPABILITIES: dict[str, PolicyCapability] = {
     "linucb_hybrid": PolicyCapability("linucb_hybrid", "hybrid", True, ("hybrid_debug",)),
     "tree_ucb": PolicyCapability("tree_ucb", "tree_ensemble", True, ("tree_debug",)),
     "tree_ts": PolicyCapability("tree_ts", "tree_ensemble", True, ("tree_debug",)),
+    "cats": PolicyCapability("cats", "continuous", True, ("continuous_debug",)),
 }
 
 
