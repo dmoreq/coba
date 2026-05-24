@@ -24,9 +24,9 @@ Architecture reference: `docs/flet_redesign_plan.md`
 | Tech Lead | _TBD_ |
 | Start Date | _TBD_ |
 | Target End Date | _TBD_ |
-| Current Phase | Phase 0 |
+| Current Phase | Phase 1 |
 | Overall Status | IP |
-| Overall Completion | 9% |
+| Overall Completion | 12% |
 | Top Blocker | None |
 
 ---
@@ -35,8 +35,8 @@ Architecture reference: `docs/flet_redesign_plan.md`
 
 | Phase | Window | Status | Completion | Owner | Gate |
 |---|---|---|---:|---|---|
-| Phase 0: Scaffold + Contracts | Day 1 | IP | 83% | _TBD_ | ☐ |
-| Phase 1: Discrete Engine + State | Days 2-4 | NS | 0% | _TBD_ | ☐ |
+| Phase 0: Scaffold + Contracts | Day 1 | DN | 100% | _TBD_ | ☑ |
+| Phase 1: Discrete Engine + State | Days 2-4 | IP | 0% | _TBD_ | ☐ |
 | Phase 2: Core Worlds | Days 5-6 | NS | 0% | _TBD_ | ☐ |
 | Phase 3: UI Shell + Controls | Days 7-9 | NS | 0% | _TBD_ | ☐ |
 | Phase 4: Arena + Charts + Trace | Days 10-13 | NS | 0% | _TBD_ | ☐ |
@@ -53,7 +53,7 @@ Architecture reference: `docs/flet_redesign_plan.md`
 
 ## Phase 0: Scaffold + Contracts
 
-Status: `IP`
+Status: `DN`
 Owner: _TBD_
 Target Date: _TBD_
 
@@ -61,19 +61,20 @@ Target Date: _TBD_
 - [x] App shell routes (`Home`, `Lesson`, `Arena`, `Sandbox`)
 - [x] Core interfaces defined (`BanditPolicy`, `World`, `SimulationStepResult`)
 - [x] Tooling configured (`ruff`, `mypy`, `pytest`, pre-commit)
-- [ ] CI baseline pipeline passing
+- [x] CI baseline pipeline passing
 - [x] Smoke test for app startup
 
 Evidence:
-- PR(s): local commit(s) on `main` (Phase 0 Steps 1-3)
+- PR(s): local commit(s) on `main` (Phase 0 Steps 1-4)
 - Test run: `pytest tests/flet_redesign -q` (16 passed)
 - Quality run: `uv run --with pre-commit pre-commit run --all-files` (all hooks passed)
+- CI workflow: `.github/workflows/flet-redesign-ci.yml`
 
 ---
 
 ## Phase 1: Discrete Engine + State
 
-Status: `NS`
+Status: `IP`
 Owner: _TBD_
 Target Date: _TBD_
 
@@ -317,8 +318,8 @@ Evidence:
 
 | Gate | Current | Last Run | Owner | Evidence |
 |---|---|---|---|---|
-| Lint (`ruff`) | DN | 2026-05-24 | _TBD_ | `pre-commit` hook passed |
-| Type checks (`mypy`) | DN | 2026-05-24 | _TBD_ | `pre-commit` hook passed |
+| Lint (`ruff`) | DN | 2026-05-24 | _TBD_ | `ruff check src tests` |
+| Type checks (`mypy`) | DN | 2026-05-24 | _TBD_ | `uv run --extra dev mypy src/coba` |
 | Unit tests (`pytest`) | DN | 2026-05-24 | _TBD_ | `pytest tests/flet_redesign -q` |
 | Integration tests | NS | _TBD_ | _TBD_ | |
 | UI smoke tests | NS | _TBD_ | _TBD_ | |
