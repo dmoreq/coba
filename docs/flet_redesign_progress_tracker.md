@@ -26,7 +26,7 @@ Architecture reference: `docs/flet_redesign_plan.md`
 | Target End Date | _TBD_ |
 | Current Phase | Phase 1 |
 | Overall Status | IP |
-| Overall Completion | 12% |
+| Overall Completion | 16% |
 | Top Blocker | None |
 
 ---
@@ -36,7 +36,7 @@ Architecture reference: `docs/flet_redesign_plan.md`
 | Phase | Window | Status | Completion | Owner | Gate |
 |---|---|---|---:|---|---|
 | Phase 0: Scaffold + Contracts | Day 1 | DN | 100% | _TBD_ | ☑ |
-| Phase 1: Discrete Engine + State | Days 2-4 | IP | 0% | _TBD_ | ☐ |
+| Phase 1: Discrete Engine + State | Days 2-4 | IP | 33% | _TBD_ | ☐ |
 | Phase 2: Core Worlds | Days 5-6 | NS | 0% | _TBD_ | ☐ |
 | Phase 3: UI Shell + Controls | Days 7-9 | NS | 0% | _TBD_ | ☐ |
 | Phase 4: Arena + Charts + Trace | Days 10-13 | NS | 0% | _TBD_ | ☐ |
@@ -78,9 +78,9 @@ Status: `IP`
 Owner: _TBD_
 Target Date: _TBD_
 
-- [ ] `SimulationState`, `ArmState`, `RunConfig` implemented
-- [ ] Trace buffer and serialization implemented
-- [ ] Random policy integrated
+- [x] `SimulationState`, `ArmState`, `RunConfig` implemented
+- [x] Trace buffer and serialization implemented
+- [x] Random policy integrated
 - [ ] Epsilon-Greedy policy integrated
 - [ ] UCB1 policy integrated
 - [ ] Thompson Sampling (Beta-Bernoulli) integrated
@@ -89,8 +89,8 @@ Target Date: _TBD_
 - [ ] Baseline regret tests passing
 
 Evidence:
-- PR(s): _TBD_
-- Test run: _TBD_
+- PR(s): local commit(s) on `main` (Phase 1 Step 1)
+- Test run: `pytest tests/flet_redesign -q -p no:asyncio` (24 passed)
 
 ---
 
@@ -280,7 +280,7 @@ Evidence:
 
 | Algorithm | Group | Status | Debugger | Tests | Notes |
 |---|---|---|---|---|---|
-| Random | Context-Free | NS | ☐ | ☐ | |
+| Random | Context-Free | DN | ☐ | ☑ | Flet redesign baseline policy + tests |
 | Epsilon-Greedy | Context-Free | NS | ☐ | ☐ | |
 | UCB1 | Context-Free | NS | ☐ | ☐ | |
 | Thompson (Bernoulli) | Context-Free | NS | ☐ | ☐ | |
