@@ -69,6 +69,24 @@ def _render_shell_view(view: RouteUIModel) -> Any:
             border_radius=8,
             content=ft.Column(
                 controls=[ft.Text(value=view.layout.right.title, weight=ft.FontWeight.BOLD)]
+                + (
+                    [
+                        ft.Text(
+                            value=f"Trace rows: {len(view.trace_records)}",
+                            size=12,
+                        ),
+                        ft.Text(
+                            value=f"Reward points: {len(view.arena_metrics.reward_series)}",
+                            size=12,
+                        ),
+                        ft.Text(
+                            value=f"Regret points: {len(view.arena_metrics.regret_series)}",
+                            size=12,
+                        ),
+                    ]
+                    if view.arena_metrics is not None
+                    else []
+                )
                 + [
                     ft.Text(value=f"{spec.label}: {spec.default_value}", size=12)
                     for spec in view.param_controls

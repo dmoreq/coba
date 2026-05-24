@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import json
+from csv import DictWriter
 from dataclasses import asdict
+from io import StringIO
 from typing import Any
 
 from coba.flet_redesign.contracts import SimulationStepResult
@@ -42,6 +44,68 @@ class TraceBuffer:
     def to_json(self) -> str:
         """Serialize trace as formatted JSON."""
         return json.dumps(self.to_records(), ensure_ascii=True, indent=2, sort_keys=True)
+
+    def to_csv(self) -> str:
+        """Serialize trace as CSV."""
+        records = self.to_records()
+        if not records:
+            return ""
+        fieldnames = [
+            "step_index",
+            "context",
+            "chosen_arm",
+            "reward",
+            "cumulative_reward",
+            "cumulative_regret",
+            "metadata",
+        ]
+        stream = StringIO()
+        writer = DictWriter(stream, fieldnames=fieldnames)
+        writer.writeheader()
+        for record in records:
+            csv_record = {
+                **record,
+                "context": json.dumps(record["context"], ensure_ascii=True, sort_keys=True),
+                "metadata": json.dumps(record["metadata"], ensure_ascii=True, sort_keys=True),
+            }
+            writer.writerow(csv_record)
+        return stream.getvalue()
+
+    @classmethod
+    def from_records(cls, records: list[dict[str, Any]]) -> TraceBuffer:
+        """Build a trace buffer from serialized step records."""
+        instance = cls()
+        for record in records:
+            instance.append(
+                SimulationStepResult(
+                    step_index=int(record["step_index"]),
+                    context=record["context"],
+                    chosen_arm=record["chosen_arm"],
+                    reward=float(record["reward"]),
+                    cumulative_reward=float(record["cumulative_reward"]),
+                    cumulative_regret=float(record["cumulative_regret"]),
+                    metadata=dict(record.get("metadata", {})),
+                )
+            )
+        return instance
+
+    @classmethod
+    def from_json(cls, payload: str) -> TraceBuffer:
+        """Deserialize trace buffer from JSON payload."""
+        return cls.from_records(list(json.loads(payload)))
+
+
+def filter_trace_records(records: list[dict[str, Any]], query: str) -> list[dict[str, Any]]:
+    """Filter trace records by case-insensitive token search."""
+    cleaned = query.strip().lower()
+    if not cleaned:
+        return records
+    result: list[dict[str, Any]] = []
+    for record in records:
+        haystack = json.dumps(record, ensure_ascii=True, sort_keys=True).lower()
+        if cleaned in haystack:
+            result.append(record)
+    return result
 
 
 def _to_json_value(value: Any) -> Any:

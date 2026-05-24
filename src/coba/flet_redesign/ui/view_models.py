@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Any
 
+from coba.flet_redesign.arena import ArenaMetrics, build_arena_metrics
 from coba.flet_redesign.router import get_route_spec
+from coba.flet_redesign.trace import TraceBuffer
 from coba.flet_redesign.ui.components import ScenePanelModel, TreatmentCardModel
 from coba.flet_redesign.ui.layout import ThreePaneLayoutSpec, build_three_pane_layout
 from coba.flet_redesign.ui.param_controls import ParamControlSpec, default_policy_param_controls
@@ -27,6 +30,8 @@ class RouteUIModel:
     run_control_labels: tuple[str, ...] = field(
         default_factory=lambda: ("Step", "Play", "Pause", "Reset")
     )
+    trace_records: tuple[dict[str, Any], ...] = ()
+    arena_metrics: ArenaMetrics | None = None
 
 
 def build_route_ui_model(route: str | None, prefs: UserPreferences) -> RouteUIModel:
@@ -54,6 +59,10 @@ def build_route_ui_model(route: str | None, prefs: UserPreferences) -> RouteUIMo
         TreatmentCardModel(arm_id=arm.arm_id, label=arm.label, predicted_score=None, selected=False)
         for arm in config.arms
     )
+    trace_records = tuple(TraceBuffer().to_records())
+    arena_metrics = (
+        build_arena_metrics(list(trace_records)) if spec.route.value == "/arena" else None
+    )
 
     return RouteUIModel(
         route=spec.route.value,
@@ -64,4 +73,6 @@ def build_route_ui_model(route: str | None, prefs: UserPreferences) -> RouteUIMo
         scene_panel=scene_panel,
         treatment_cards=cards,
         param_controls=default_policy_param_controls(prefs.policy_id),
+        trace_records=trace_records,
+        arena_metrics=arena_metrics,
     )

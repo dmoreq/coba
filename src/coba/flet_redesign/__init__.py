@@ -1,5 +1,12 @@
 """Flet redesign scaffolding for COBA."""
 
+from coba.flet_redesign.arena import (
+    ArenaMetrics,
+    ArenaRunStore,
+    RunSnapshot,
+    SeriesPoint,
+    build_arena_metrics,
+)
 from coba.flet_redesign.contracts import (
     BanditPolicy,
     DebugSnapshotProvider,
@@ -25,7 +32,7 @@ from coba.flet_redesign.shell import ShellView, build_shell_stack
 from coba.flet_redesign.simulator import DiscreteSimulator
 from coba.flet_redesign.state_store import AppSelectionState, AppStateStore
 from coba.flet_redesign.state import ArmState, RunConfig, SimulationState
-from coba.flet_redesign.trace import TraceBuffer
+from coba.flet_redesign.trace import TraceBuffer, filter_trace_records
 from coba.flet_redesign.ui import (
     PaneSpec,
     PreferencesStore,
@@ -49,6 +56,8 @@ from coba.flet_redesign.worlds import (
 )
 
 __all__ = [
+    "ArenaMetrics",
+    "ArenaRunStore",
     "ArmState",
     "AppRoute",
     "AppSelectionState",
@@ -65,12 +74,14 @@ __all__ = [
     "ParamTooltip",
     "PreferencesStore",
     "RandomPolicy",
+    "RunSnapshot",
     "RouteUIModel",
     "RouteSpec",
     "RunControlState",
     "RunController",
     "RunConfig",
     "ShellView",
+    "SeriesPoint",
     "SimulationState",
     "SimulationStepResult",
     "SoftmaxPolicy",
@@ -81,11 +92,13 @@ __all__ = [
     "UserPreferences",
     "WorldConfig",
     "World",
+    "build_arena_metrics",
     "build_route_ui_model",
     "build_shell_stack",
     "build_three_pane_layout",
     "create_world",
     "default_policy_param_controls",
+    "filter_trace_records",
     "get_world_config",
     "list_world_configs",
     "get_route_spec",

@@ -31,3 +31,4 @@ def test_route_model_uses_selected_world_from_preferences() -> None:
     )
     assert model.scene_panel is not None
     assert model.scene_panel.world_title == "NewsFeed"
+    assert model.arena_metrics is not None

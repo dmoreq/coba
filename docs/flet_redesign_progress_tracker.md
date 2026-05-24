@@ -24,9 +24,9 @@ Architecture reference: `docs/flet_redesign_plan.md`
 | Tech Lead | _TBD_ |
 | Start Date | _TBD_ |
 | Target End Date | _TBD_ |
-| Current Phase | Phase 4 |
+| Current Phase | Phase 5 |
 | Overall Status | IP |
-| Overall Completion | 40% |
+| Overall Completion | 48% |
 | Top Blocker | None |
 
 ---
@@ -39,8 +39,8 @@ Architecture reference: `docs/flet_redesign_plan.md`
 | Phase 1: Discrete Engine + State | Days 2-4 | DN | 100% | _TBD_ | ☑ |
 | Phase 2: Core Worlds | Days 5-6 | DN | 100% | _TBD_ | ☑ |
 | Phase 3: UI Shell + Controls | Days 7-9 | DN | 100% | _TBD_ | ☑ |
-| Phase 4: Arena + Charts + Trace | Days 10-13 | IP | 0% | _TBD_ | ☐ |
-| Phase 5: Foundation Lessons | Days 14-18 | NS | 0% | _TBD_ | ☐ |
+| Phase 4: Arena + Charts + Trace | Days 10-13 | DN | 100% | _TBD_ | ☑ |
+| Phase 5: Foundation Lessons | Days 14-18 | IP | 0% | _TBD_ | ☐ |
 | Phase 6: Contextual Lessons | Days 19-25 | NS | 0% | _TBD_ | ☐ |
 | Phase 7: Advanced Discrete + Ensembles | Days 26-36 | NS | 0% | _TBD_ | ☐ |
 | Phase 8: Continuous + Production Features | Days 37-45 | NS | 0% | _TBD_ | ☐ |
@@ -141,28 +141,29 @@ Evidence:
 
 ## Phase 4: Arena + Charts + Trace
 
-Status: `IP`
+Status: `DN`
 Owner: _TBD_
 Target Date: _TBD_
 
-- [ ] Arena page integrated
-- [ ] Reward chart integrated
-- [ ] Regret chart integrated
-- [ ] Arm pull distribution chart integrated
-- [ ] Uncertainty/probability view integrated
-- [ ] Trace table implemented
-- [ ] Trace export (`json/csv`) implemented
-- [ ] Replay import validated
+- [x] Arena page integrated
+- [x] Reward chart integrated
+- [x] Regret chart integrated
+- [x] Arm pull distribution chart integrated
+- [x] Uncertainty/probability view integrated
+- [x] Trace table implemented
+- [x] Trace export (`json/csv`) implemented
+- [x] Replay import validated
 
 Evidence:
-- PR(s): _TBD_
-- Test run: _TBD_
+- PR(s): local commit(s) on `main` (Phase 4 Step 1)
+- Test run: `pytest tests/flet_redesign -q -p no:asyncio` (66 passed)
+- Quality run: `uv run --with pre-commit pre-commit run --all-files` (all hooks passed)
 
 ---
 
 ## Phase 5: Foundation Lessons
 
-Status: `NS`
+Status: `IP`
 Owner: _TBD_
 Target Date: _TBD_
 
