@@ -27,7 +27,7 @@ Architecture reference: `docs/flet_redesign_plan.md`
 | Current Phase | Phase 9 |
 | Overall Status | IP |
 | Overall Completion | 80% |
-| Top Blocker | None |
+| Top Blocker | Phase 9 has no UI pages or tests — backend modules exist but are disconnected from Flet shell |
 
 ---
 
@@ -44,7 +44,8 @@ Architecture reference: `docs/flet_redesign_plan.md`
 | Phase 6: Contextual Lessons | Days 19-25 | DN | 100% | _TBD_ | ☑ |
 | Phase 7: Advanced Discrete + Ensembles | Days 26-36 | DN | 100% | _TBD_ | ☑ |
 | Phase 8: Continuous + Production Features | Days 37-45 | DN | 100% | _TBD_ | ☑ |
-| Phase 9: Comparison + Sandbox | Days 46-50 | IP | 0% | _TBD_ | ☐ |
+| Phase 9: Comparison + Sandbox (Backend) | Days 46-48 | IP | 70% | _TBD_ | ☐ |
+| Phase 9.5: Comparison + Sandbox (UI + Tests) | Days 49-50 | NS | 0% | _TBD_ | ☐ |
 | Phase 10: Polish + Release | Days 51-55 | NS | 0% | _TBD_ | ☐ |
 
 ---
@@ -248,20 +249,78 @@ Evidence:
 
 ## Phase 9: Comparison + Sandbox
 
-Status: `IP`
+Status: `IP` (backend partial, UI not started)
 Owner: _TBD_
 Target Date: _TBD_
 
-- [ ] Multi-policy orchestrator implemented
-- [ ] Side-by-side comparison UI integrated
-- [ ] Batch repeated-seed execution integrated
-- [ ] Summary stats with variance/confidence integrated
-- [ ] Sandbox editor integrated
-- [ ] Snapshot diff for trace/debugger integrated
+### Backend Modules (Existing)
+
+- [x] Multi-policy orchestrator (`comparison/orchestrator.py` — `run_policy_comparison`, `run_batch_comparison`)
+- [x] Summary stats (`comparison/stats.py` — `summarize_comparison_runs` with mean/std/CI95)
+- [x] Snapshot diff for trace/debugger (`comparison/snapshot_diff.py` — `diff_trace_records`, `diff_debug_snapshots`)
+- [x] Sandbox editor (`sandbox.py` — `SandboxEditor` with validation + `build_world_override`)
+- [x] Comparison packages (`comparison/__init__.py` — public API)
+
+### UI Pages Required (Not Started)
+
+- [ ] Side-by-side comparison UI page (no file exists)
+- [ ] Sandbox editor UI page (no file exists)
+- [ ] Snapshot diff viewer component (no file exists)
+- [ ] Batch summary stats display (no file exists)
+
+### Integration Required (Not Started)
+
+- [ ] Wire comparison orchestrator into Flet shell
+- [ ] Wire sandbox editor into Flet shell
+- [ ] Add Comparison route if needed (router has only `/sandbox`)
+- [ ] End-to-end flow: select policies → run comparison → display results
+
+### Tests Required (Not Started)
+
+- [ ] Orchestrator deterministic equality tests
+- [ ] Stats correctness tests (mean, std, CI95 against known fixtures)
+- [ ] Snapshot diff correctness tests
+- [ ] Sandbox editor validation tests
+- [ ] Comparison + sandbox E2E tests
 
 Evidence:
 - PR(s): _TBD_
-- Test run: _TBD_
+- Test run: `pytest tests/flet_redesign -q -p no:asyncio` (92 passed, 0 Phase 9 tests exist)
+
+---
+
+## Phase 9.5: Comparison + Sandbox (UI + Tests)
+
+Status: `NS`
+Owner: _TBD_
+Target Date: _TBD_
+
+This phase was split from Phase 9 after backend modules were discovered to be complete but disconnected from the Flet shell with zero UI integration.
+
+### Deliverables
+
+- [ ] `ui/pages/comparison_page.py` — side-by-side policy comparison page
+- [ ] `ui/pages/sandbox_page.py` — open-ended sandbox editor page
+- [ ] `ui/components/snapshot_diff_view.py` — diff renderer for trace/debugger snapshots
+- [ ] `ui/components/batch_summary_panel.py` — mean/variance/CI95 summary panel
+- [ ] Wire comparison orchestrator into shell via `view_models.py` + `main.py`
+- [ ] Wire sandbox editor into shell via `view_models.py` + `main.py`
+- [ ] Full test suite for Phase 9 + 9.5 modules
+
+### Key Tasks
+
+1. Create `ui/pages/` directory and page modules
+2. Build comparison page: policy picker → run → results (charts + table + diff viewer)
+3. Build sandbox page: world/param editor → validate → run → results
+4. Add `view_models.py` support for comparison/sandbox route models
+5. Add `main.py` rendering branches for comparison/sandbox views
+6. Add route support (Comparison route) if needed
+
+### Exit Criteria
+
+- Side-by-side comparisons are reproducible and exportable
+- Sandbox can create and run custom scenarios without crashes
+- All Phase 9 + 9.5 tests pass (target: ~105 total tests)
 
 ---
 
@@ -271,12 +330,45 @@ Status: `NS`
 Owner: _TBD_
 Target Date: _TBD_
 
-- [ ] UX polish pass complete
-- [ ] Performance profile + fixes complete
-- [ ] Accessibility/interaction sanity pass complete
-- [ ] Contributor extension docs complete
-- [ ] Full regression suite green
-- [ ] Release candidate tag prepared
+### UX Polish
+
+- [ ] Spacing and typographic hierarchy pass
+- [ ] Interaction transition animations
+- [ ] Keyboard navigation support
+- [ ] Responsive resize handling
+- [ ] Dark mode theme support
+
+### Performance + Reliability
+
+- [ ] Steps/sec benchmark per algorithm class
+- [ ] UI update latency profiling
+- [ ] Memory baseline for 10k+ step runs
+- [ ] Checkpoint integrity under concurrent runs
+
+### Gaps from Earlier Phases
+
+- [ ] Context-free policy debuggers (Random, Epsilon-Greedy, UCB1, Thompson, Softmax — all marked ☐ in algorithm tracker)
+- [ ] LinTS policy implementation
+- [ ] Drift Detector A implementation
+- [ ] Drift Detector B implementation
+- [ ] Remaining worlds: ShopSmart, RidePilot, GameBot, LabTrial
+- [ ] Integration test suite
+- [ ] UI smoke test suite
+
+### Documentation
+
+- [ ] Contributor guide: adding a world
+- [ ] Contributor guide: adding a policy
+- [ ] Contributor guide: adding a lesson
+- [ ] Architecture overview doc
+- [ ] Release checklist
+- [ ] RC tag
+
+### Exit Criteria
+
+- All release gates pass (see Section 7)
+- RC demo scenario succeeds on all target worlds/lessons
+- No blocker/high defects open
 
 Evidence:
 - PR(s): _TBD_
@@ -295,7 +387,7 @@ Evidence:
 | Softmax | Context-Free | DN | ☐ | ☑ | Phase-1 baseline implementation |
 | LinUCB | Linear | DN | ☑ | ☑ | Phase-6 contextual implementation |
 | LinUCB-SW | Linear | DN | ☑ | ☑ | Phase-6 contextual implementation |
-| LinTS | Linear/Bayesian | NS | ☐ | ☐ | |
+| LinTS | Linear/Bayesian | NS | ☐ | ☐ | Planned for Phase 10 gap closure |
 | Logistic Bandit Variant | Logistic | DN | ☑ | ☑ | Phase-6 contextual implementation |
 | GP-UCB | Kernel/Bayesian | DN | ☑ | ☑ | Phase-7 implementation |
 | Bootstrapped Ensemble | Ensemble | DN | ☑ | ☑ | Phase-7 implementation |
@@ -303,8 +395,8 @@ Evidence:
 | RF-UCB | Tree Ensemble | DN | ☑ | ☑ | Implemented as `tree_ucb` bucketized variant |
 | RF-TS | Tree Ensemble | DN | ☑ | ☑ | Implemented as `tree_ts` bucketized variant |
 | CATS | Continuous | DN | ☑ | ☑ | Phase-8 continuous action implementation |
-| Drift Detector A | Drift-Aware | NS | ☐ | ☐ | |
-| Drift Detector B | Drift-Aware | NS | ☐ | ☐ | |
+| Drift Detector A | Drift-Aware | NS | ☐ | ☐ | Planned for Phase 10 gap closure |
+| Drift Detector B | Drift-Aware | NS | ☐ | ☐ | Planned for Phase 10 gap closure |
 
 ---
 
@@ -328,11 +420,15 @@ Evidence:
 |---|---|---|---|---|
 | Lint (`ruff`) | DN | 2026-05-24 | _TBD_ | `ruff check src tests` |
 | Type checks (`mypy`) | DN | 2026-05-24 | _TBD_ | `uv run --extra dev mypy src/coba` |
-| Unit tests (`pytest`) | DN | 2026-05-24 | _TBD_ | `pytest tests/flet_redesign -q` |
-| Integration tests | NS | _TBD_ | _TBD_ | |
-| UI smoke tests | NS | _TBD_ | _TBD_ | |
+| Unit tests (`pytest`) | DN | 2026-05-24 | _TBD_ | `pytest tests/flet_redesign -q` (92 passed, 0 Phase 9 tests) |
+| Integration tests | NS | _TBD_ | _TBD_ | No integration test suite exists |
+| UI smoke tests | NS | _TBD_ | _TBD_ | No UI smoke test suite exists |
 | Deterministic replay check | DN | 2026-05-24 | _TBD_ | `test_replay_payload_*` in `tests/flet_redesign/test_phase1_regression.py` |
 | Performance baseline | DN | 2026-05-24 | _TBD_ | `tests/flet_redesign/test_performance_baseline.py` |
+| Context-free debugger coverage | NS | _TBD_ | _TBD_ | Random, Epsilon-Greedy, UCB1, Thompson, Softmax — all ☐ |
+| World completion (7/7) | 3/7 | _TBD_ | _TBD_ | ShopSmart, RidePilot, GameBot, LabTrial not started |
+| Algorithm completion (target 17) | 13/17 | _TBD_ | _TBD_ | LinTS, Drift Detector A/B not started |
+| Lesson coverage across worlds | 8/17 | _TBD_ | _TBD_ | 8 lessons configured, 9 remaining (see lesson registry) |
 
 ---
 
@@ -340,7 +436,11 @@ Evidence:
 
 | ID | Date | Type | Severity | Status | Owner | Description | Mitigation |
 |---|---|---|---|---|---|---|---|
-| R-001 | _TBD_ | Risk | Medium | Open | _TBD_ | Example: debugger complexity growth | Use capability flag + renderer registry |
+| R-001 | 2026-05-24 | Risk | High | Open | _TBD_ | Phase 9 backend is built but disconnected from Flet shell — no UI pages, no tests, no routing integration | Split Phase 9 into backend (done) + UI/tests (Phase 9.5); prioritize UI page scaffolding |
+| R-002 | 2026-05-24 | Risk | Medium | Open | _TBD_ | 4 of 7 worlds not implemented (ShopSmart, RidePilot, GameBot, LabTrial) — 57% world completion | Move remaining worlds to Phase 10 gap closure; not blockers for comparison/sandbox release |
+| R-003 | 2026-05-24 | Risk | Medium | Open | _TBD_ | 3 algorithms not implemented (LinTS, Drift Detector A/B) — 76% algorithm completion | Move to Phase 10 gap closure; LinTS is a curriculum dependency, drift detectors are advanced features |
+| R-004 | 2026-05-24 | Risk | Medium | Open | _TBD_ | Context-free policies (5 of 13 implemented policies) have no debugger support — violates debugger parity principle | Add debugger renderers in Phase 10 gap closure; low UI impact since debugger is capability-flagged |
+| R-005 | 2026-05-24 | Risk | High | Open | _TBD_ | No integration or UI smoke test suites exist — release gate cannot pass without these | Build integration test harness in Phase 9.5; add UI smoke tests in Phase 10 |
 
 ---
 
@@ -374,10 +474,14 @@ Evidence:
 
 ## 11) Release Readiness Checklist
 
-- [ ] All milestone gates checked
-- [ ] All required algorithms implemented with debugger + tests
-- [ ] All seven worlds integrated and validated
-- [ ] Curriculum path executable end-to-end
+- [ ] All milestone gates checked (Phases 0-8: ☑, Phases 9-10: ☐)
+- [ ] Phase 9.5 UI + tests complete
+- [ ] Phase 10 polish and gap closure complete
+- [ ] 13 of 17 target algorithms implemented with debugger + tests (+4 remaining: LinTS, Drift A, Drift B, + context-free debuggers)
+- [ ] 3 of 7 worlds integrated and validated (+4 remaining: ShopSmart, RidePilot, GameBot, LabTrial)
+- [ ] Curriculum path executable end-to-end (all 8 configured lessons)
+- [ ] Integration test suite green
+- [ ] UI smoke test suite green
 - [ ] Zero open blocker defects
 - [ ] Performance baseline within target
 - [ ] Final docs updated
