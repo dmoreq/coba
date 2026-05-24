@@ -7,7 +7,13 @@ from coba.flet_redesign.contracts import (
     World,
 )
 from coba.flet_redesign.main import main, run
-from coba.flet_redesign.policies import RandomPolicy
+from coba.flet_redesign.policies import (
+    EpsilonGreedyPolicy,
+    RandomPolicy,
+    SoftmaxPolicy,
+    ThompsonSamplingPolicy,
+    UCB1Policy,
+)
 from coba.flet_redesign.router import (
     AppRoute,
     RouteSpec,
@@ -26,13 +32,17 @@ __all__ = [
     "BanditPolicy",
     "DiscreteSimulator",
     "DebugSnapshotProvider",
+    "EpsilonGreedyPolicy",
     "RandomPolicy",
     "RouteSpec",
     "RunConfig",
     "ShellView",
     "SimulationState",
     "SimulationStepResult",
+    "SoftmaxPolicy",
     "TraceBuffer",
+    "ThompsonSamplingPolicy",
+    "UCB1Policy",
     "World",
     "build_shell_stack",
     "get_route_spec",

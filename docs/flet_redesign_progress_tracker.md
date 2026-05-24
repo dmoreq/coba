@@ -24,9 +24,9 @@ Architecture reference: `docs/flet_redesign_plan.md`
 | Tech Lead | _TBD_ |
 | Start Date | _TBD_ |
 | Target End Date | _TBD_ |
-| Current Phase | Phase 1 |
+| Current Phase | Phase 2 |
 | Overall Status | IP |
-| Overall Completion | 16% |
+| Overall Completion | 24% |
 | Top Blocker | None |
 
 ---
@@ -36,8 +36,8 @@ Architecture reference: `docs/flet_redesign_plan.md`
 | Phase | Window | Status | Completion | Owner | Gate |
 |---|---|---|---:|---|---|
 | Phase 0: Scaffold + Contracts | Day 1 | DN | 100% | _TBD_ | ☑ |
-| Phase 1: Discrete Engine + State | Days 2-4 | IP | 33% | _TBD_ | ☐ |
-| Phase 2: Core Worlds | Days 5-6 | NS | 0% | _TBD_ | ☐ |
+| Phase 1: Discrete Engine + State | Days 2-4 | DN | 100% | _TBD_ | ☑ |
+| Phase 2: Core Worlds | Days 5-6 | IP | 0% | _TBD_ | ☐ |
 | Phase 3: UI Shell + Controls | Days 7-9 | NS | 0% | _TBD_ | ☐ |
 | Phase 4: Arena + Charts + Trace | Days 10-13 | NS | 0% | _TBD_ | ☐ |
 | Phase 5: Foundation Lessons | Days 14-18 | NS | 0% | _TBD_ | ☐ |
@@ -74,23 +74,24 @@ Evidence:
 
 ## Phase 1: Discrete Engine + State
 
-Status: `IP`
+Status: `DN`
 Owner: _TBD_
 Target Date: _TBD_
 
 - [x] `SimulationState`, `ArmState`, `RunConfig` implemented
 - [x] Trace buffer and serialization implemented
 - [x] Random policy integrated
-- [ ] Epsilon-Greedy policy integrated
-- [ ] UCB1 policy integrated
-- [ ] Thompson Sampling (Beta-Bernoulli) integrated
-- [ ] Softmax policy integrated
-- [ ] Deterministic seed replay verified
-- [ ] Baseline regret tests passing
+- [x] Epsilon-Greedy policy integrated
+- [x] UCB1 policy integrated
+- [x] Thompson Sampling (Beta-Bernoulli) integrated
+- [x] Softmax policy integrated
+- [x] Deterministic seed replay verified
+- [x] Baseline regret tests passing
 
 Evidence:
-- PR(s): local commit(s) on `main` (Phase 1 Step 1)
-- Test run: `pytest tests/flet_redesign -q -p no:asyncio` (24 passed)
+- PR(s): local commit(s) on `main` (Phase 1 Steps 1-2)
+- Test run: `pytest tests/flet_redesign -q -p no:asyncio` (40 passed)
+- Quality run: `uv run --with pre-commit pre-commit run --all-files` (all hooks passed)
 
 ---
 
@@ -281,10 +282,10 @@ Evidence:
 | Algorithm | Group | Status | Debugger | Tests | Notes |
 |---|---|---|---|---|---|
 | Random | Context-Free | DN | ☐ | ☑ | Flet redesign baseline policy + tests |
-| Epsilon-Greedy | Context-Free | NS | ☐ | ☐ | |
-| UCB1 | Context-Free | NS | ☐ | ☐ | |
-| Thompson (Bernoulli) | Context-Free | NS | ☐ | ☐ | |
-| Softmax | Context-Free | NS | ☐ | ☐ | |
+| Epsilon-Greedy | Context-Free | DN | ☐ | ☑ | Phase-1 baseline implementation |
+| UCB1 | Context-Free | DN | ☐ | ☑ | Phase-1 baseline implementation |
+| Thompson (Bernoulli) | Context-Free | DN | ☐ | ☑ | Phase-1 baseline implementation |
+| Softmax | Context-Free | DN | ☐ | ☑ | Phase-1 baseline implementation |
 | LinUCB | Linear | NS | ☐ | ☐ | |
 | LinUCB-SW | Linear | NS | ☐ | ☐ | |
 | LinTS | Linear/Bayesian | NS | ☐ | ☐ | |
@@ -323,7 +324,7 @@ Evidence:
 | Unit tests (`pytest`) | DN | 2026-05-24 | _TBD_ | `pytest tests/flet_redesign -q` |
 | Integration tests | NS | _TBD_ | _TBD_ | |
 | UI smoke tests | NS | _TBD_ | _TBD_ | |
-| Deterministic replay check | NS | _TBD_ | _TBD_ | |
+| Deterministic replay check | DN | 2026-05-24 | _TBD_ | `test_replay_payload_*` in `tests/flet_redesign/test_phase1_regression.py` |
 | Performance baseline | NS | _TBD_ | _TBD_ | |
 
 ---

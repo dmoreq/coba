@@ -59,3 +59,20 @@ class DiscreteSimulator:
         self.state.append_step(step_result)
         self.trace_buffer.append(step_result)
         return step_result
+
+    def run_steps(self, n_steps: int) -> list[SimulationStepResult]:
+        """Advance the simulator by ``n_steps`` and return emitted steps."""
+        if n_steps < 0:
+            raise ValueError("n_steps must be >= 0")
+        return [self.step() for _ in range(n_steps)]
+
+    def replay_payload(self) -> dict[str, Any]:
+        """Return deterministic replay payload for export/verification."""
+        return {
+            "config": {
+                "seed": self.config.seed,
+                "horizon": self.config.horizon,
+                "autoplay_interval_ms": self.config.autoplay_interval_ms,
+            },
+            "steps": self.trace_buffer.to_records(),
+        }
