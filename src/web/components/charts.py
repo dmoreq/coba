@@ -1,9 +1,14 @@
-"""Chart rendering components — cumulative regret, arm histogram, reward timeline."""
+"""Chart rendering components — cumulative regret, arm histogram, reward timeline.
+
+Flet 0.85.1 does not include ft.LineChart/ft.BarChart. Charts are built
+from styled ft.Container bars and text-based sparklines instead.
+"""
 
 from __future__ import annotations
 
 from typing import Any
 
+from web.theme import FontScale, SpacingScale
 from web.theme.theme_manager import ThemeManager
 
 try:
@@ -12,52 +17,57 @@ except ModuleNotFoundError:  # pragma: no cover
     ft = None  # type: ignore[assignment]
 
 
-def _get_chart_data(points: list[tuple[int, float]]) -> list[Any]:
-    """Convert (step, value) tuples to Flet LineChartDataPoint objects."""
-    return [ft.LineChartDataPoint(x=s, y=v) for s, v in points]
-
-
 def build_regret_chart(
     page: Any,
     points: list[tuple[int, float]] | None = None,
     max_points: int = 100,
 ) -> Any:
-    """Build a cumulative regret LineChart."""
+    """Build a cumulative regret display using a horizontal bar chart of containers."""
     if ft is None:
         return None
     tokens = ThemeManager.get_tokens(page)
     points = points or []
 
-    series = ft.LineChartData(
-        data_points=_get_chart_data(points[-max_points:]),
+    if not points:
+        return ft.Text(
+            value="No regret data yet", size=FontScale.SMALL, color=tokens.text_muted, italic=True
+        )
+
+    displayed = points[-max_points:]
+    max_val = max(v for _, v in displayed) if displayed else 1.0
+
+    bars: list[Any] = []
+    for step, value in displayed[-20:]:  # show last 20 as mini-bars
+        pct = value / max_val if max_val > 0 else 0
+        bars.append(
+            ft.Row(
+                controls=[
+                    ft.Text(value=str(step), size=8, color=tokens.text_muted, width=30),
+                    ft.Container(
+                        width=int(120 * pct),
+                        height=8,
+                        bgcolor=tokens.chart_line_primary,
+                        border_radius=1,
+                    ),
+                    ft.Text(value=f"{value:.2f}", size=8, color=tokens.text_primary, width=50),
+                ],
+                spacing=SpacingScale.XS,
+                tight=True,
+            )
+        )
+
+    last = points[-1][1] if points else 0
+    summary = ft.Text(
+        value=f"Cumulative Regret: {last:.3f} (after {len(points)} steps)",
+        size=FontScale.SMALL,
+        weight=ft.FontWeight.W_600,
         color=tokens.chart_line_primary,
-        stroke_width=2,
-        curved=True,
-        prevent_curve_over_shooting=True,
     )
 
-    return ft.LineChart(
-        data_series=[series],
-        border=ft.Border(bottom=ft.BorderSide(1, tokens.chart_grid)),
-        left_axis=ft.ChartAxis(
-            labels_size=30,
-            labels=(
-                [
-                    ft.ChartAxisLabel(value=v, label=ft.Text(str(int(v)), size=9))
-                    for v in range(0, int(max([v for _, v in points] or [10])))
-                    if points
-                ]
-                if points
-                else None
-            ),
-        ),
-        bottom_axis=ft.ChartAxis(labels_size=20),
-        tooltip_bgcolor=tokens.bg_tertiary,
-        bgcolor=tokens.chart_bg,
-        min_y=0,
-        animate=True,
-        animation_duration=300,
-        expand=True,
+    return ft.Container(
+        content=ft.Column(controls=[summary] + bars, spacing=2, tight=True),
+        border=ft.border.only(bottom=ft.BorderSide(1, tokens.chart_grid)),
+        padding=SpacingScale.SM,
     )
 
 
@@ -66,42 +76,65 @@ def build_arm_histogram(
     labels: list[str] | None = None,
     values: list[int] | None = None,
 ) -> Any:
-    """Build an arm selection histogram BarChart."""
+    """Build an arm selection histogram from colored containers."""
     if ft is None:
         return None
     tokens = ThemeManager.get_tokens(page)
     labels = labels or []
     values = values or []
 
-    groups = [
-        ft.BarChartGroup(
-            x=i,
-            bar_roster=[
-                ft.BarChartRod(
-                    from_y=0,
-                    to_y=values[i] if i < len(values) else 0,
-                    color=tokens.agent_accent,
-                    tooltip=f"{labels[i]}: {values[i]} pulls" if i < len(labels) else "",
-                )
-            ],
+    if not labels:
+        return ft.Text(
+            value="No arm data yet", size=FontScale.SMALL, color=tokens.text_muted, italic=True
         )
-        for i in range(len(labels))
-    ]
 
-    return ft.BarChart(
-        bar_groups=groups,
-        border=ft.Border(bottom=ft.BorderSide(1, tokens.chart_grid)),
-        left_axis=ft.ChartAxis(labels_size=20),
-        bottom_axis=ft.ChartAxis(
-            labels=[
-                ft.ChartAxisLabel(value=i, label=ft.Text(labels[i], size=9))
-                for i in range(len(labels))
-            ],
-        ),
-        bgcolor=tokens.chart_bg,
-        animate=True,
-        animation_duration=300,
-        expand=True,
+    max_count = max(values) if values else 0
+    if max_count == 0:
+        return ft.Text(
+            value="No pulls recorded yet",
+            size=FontScale.SMALL,
+            color=tokens.text_muted,
+            italic=True,
+        )
+
+    bars: list[Any] = []
+    for label, count in zip(labels, values):
+        pct = count / max_count if max_count > 0 else 0
+        tooltip = f"{label}: {count} pulls"
+        bars.append(
+            ft.Row(
+                controls=[
+                    ft.Text(
+                        value=label, size=FontScale.CAPTION, color=tokens.text_secondary, width=80
+                    ),
+                    ft.Container(
+                        width=int(140 * pct),
+                        height=14,
+                        bgcolor=tokens.agent_accent,
+                        border_radius=2,
+                        tooltip=tooltip,
+                    ),
+                    ft.Text(
+                        value=str(count), size=FontScale.CAPTION, color=tokens.text_muted, width=30
+                    ),
+                ],
+                spacing=SpacingScale.XS,
+                tight=True,
+            )
+        )
+
+    total = sum(values)
+    summary = ft.Text(
+        value=f"Arm Pulls (total: {total})",
+        size=FontScale.SMALL,
+        weight=ft.FontWeight.W_600,
+        color=tokens.agent_accent,
+    )
+
+    return ft.Container(
+        content=ft.Column(controls=[summary] + bars, spacing=SpacingScale.XS, tight=True),
+        border=ft.border.only(bottom=ft.BorderSide(1, tokens.chart_grid)),
+        padding=SpacingScale.SM,
     )
 
 
@@ -110,30 +143,46 @@ def build_reward_timeline(
     rewards: list[float] | None = None,
     max_points: int = 20,
 ) -> Any:
-    """Build a compact reward sparkline."""
+    """Build a compact reward sparkline from colored dot indicators."""
     if ft is None:
         return None
     tokens = ThemeManager.get_tokens(page)
     rewards = rewards or []
 
-    points = [ft.LineChartDataPoint(x=i, y=r) for i, r in enumerate(rewards[-max_points:])]
-    points_list = list(points)
+    if not rewards:
+        return ft.Text(
+            value="No rewards yet", size=FontScale.SMALL, color=tokens.text_muted, italic=True
+        )
 
-    series = ft.LineChartData(
-        data_points=points_list,
+    displayed = rewards[-max_points:]
+    dots: list[Any] = []
+    for r in displayed:
+        is_success = r > 0
+        dots.append(
+            ft.Container(
+                width=8,
+                height=8,
+                border_radius=4,
+                bgcolor=tokens.success_feedback if is_success else tokens.regret_feedback,
+                tooltip=f"Reward: {r:.1f}",
+            )
+        )
+
+    success_count = sum(1 for r in displayed if r > 0)
+    summary = ft.Text(
+        value=f"Recent: {success_count}/{len(displayed)} successes",
+        size=FontScale.CAPTION,
         color=tokens.success_feedback,
-        stroke_width=1.5,
-        curved=False,
     )
 
-    return ft.LineChart(
-        data_series=[series],
-        height=60,
-        border=ft.Border(bottom=ft.BorderSide(1, tokens.chart_grid)),
-        bgcolor=tokens.chart_bg,
-        min_y=0,
-        max_y=1,
-        animate=True,
-        animation_duration=300,
-        expand=True,
+    return ft.Container(
+        content=ft.Column(
+            controls=[
+                summary,
+                ft.Row(controls=dots, spacing=2, tight=True),
+            ],
+            spacing=SpacingScale.XS,
+            tight=True,
+        ),
+        padding=SpacingScale.SM,
     )

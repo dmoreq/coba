@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
+from web.statemgmt.interaction_state import InteractionPhase
 from web.theme import FontScale, SpacingScale
 from web.theme.theme_manager import ThemeManager
-from web.statemgmt.interaction_state import InteractionPhase
 
 try:
     import flet as ft
@@ -48,7 +48,6 @@ def build_arm_cards(
                 border_radius=6,
                 bgcolor=tokens.selected_glow if is_selected else tokens.bg_tertiary,
                 border=ft.border.all(2, tokens.agent_accent if is_selected else "transparent"),
-                animate=ft.animation.Animation(300, ft.AnimationCurve.EASE_OUT),
                 width=160,
             )
         )
@@ -86,7 +85,6 @@ def build_reward_feedback(page: Any, reward: float | None = None) -> Any:
             tight=True,
         ),
         padding=SpacingScale.SM,
-        animate=ft.animation.Animation(600, ft.AnimationCurve.EASE_OUT),
     )
 
 
@@ -106,9 +104,9 @@ def build_loop_visualizer(page: Any, phase: InteractionPhase = InteractionPhase.
     dots: list[Any] = []
     for num, label, ph, color in phases:
         is_active = phase == ph
-        is_completed = phase.value > ph.value if hasattr(phase, "value") else False
+        is_completed = phase is not InteractionPhase.IDLE and ph.value < phase.value
         dot_color = (
-            color if is_active else (tokens.text_muted if is_completed else tokens.text_muted)
+            color if is_active else (tokens.text_secondary if is_completed else tokens.text_muted)
         )
 
         dots.append(
@@ -126,7 +124,6 @@ def build_loop_visualizer(page: Any, phase: InteractionPhase = InteractionPhase.
                         border_radius=18,
                         bgcolor=dot_color if is_active or is_completed else tokens.bg_tertiary,
                         alignment=ft.alignment.center,
-                        animate=ft.animation.Animation(300, ft.AnimationCurve.EASE_OUT),
                     ),
                     ft.Text(
                         label,

@@ -129,12 +129,14 @@ class SplitWorkspaceLayout:
 
         charts_expandable = ft.ExpansionTile(
             title=ft.Text("Charts", size=FontScale.SMALL, weight=ft.FontWeight.BOLD),
-            initially_expanded=len(charts) > 0,
-            collapsed_icon=ft.Icons.EXPAND_MORE,
-            expanded_icon=ft.Icons.EXPAND_LESS,
-            controls=[
-                ft.Row(controls=charts, spacing=SpacingScale.SM, expand=True),
-            ],
+            expanded=len(charts) > 0,
+            controls=(
+                [
+                    ft.Row(controls=charts, spacing=SpacingScale.SM, expand=True),
+                ]
+                if charts
+                else []
+            ),
         )
 
         return ft.Column(
