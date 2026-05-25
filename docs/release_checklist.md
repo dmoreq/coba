@@ -6,54 +6,49 @@ Last updated: 2026-05-24
 
 - [x] Lint: `ruff check src/web tests/flet_redesign` — passes
 - [x] Type check: `mypy src/coba src/web` — passes
-- [x] Unit tests: `pytest tests/flet_redesign -q` — 142 passed
-- [x] Integration tests: policy-world loops, lesson progression, checkpoint roundtrip
-- [x] UI smoke tests: route models, shell stack, navigation, param controls
-- [x] Comparison tests: orchestrator determinism, stats accuracy, snapshot diff
+- [x] Unit tests: `pytest tests/flet_redesign tests/web -q -p no:asyncio` — passes
+- [x] Full suite: `pytest tests/ -p no:asyncio --ignore=tests/test_shared_sim.py` — passes
+- [x] Integration tests: policy-world loops, lesson progression
+- [x] UI smoke tests: route models, navigation, param controls
+- [x] Comparison tests: orchestrator determinism, stats accuracy
 - [x] Sandbox tests: editor validation, world overrides, immutability
-- [x] Debug pane tests: all 7 builder families, context-free through continuous
-- [x] Deterministic replay: `test_replay_payload_*` in `test_phase1_regression.py`
-- [x] Performance baseline: `test_performance_baseline.py`
+- [x] Debug pane tests: all 7 builder families
+- [x] Deterministic replay
+- [x] Edge case tests: 45+ tests covering race conditions, invalid inputs, boundaries
+- [x] Theme tests: WCAG contrast ratio ≥ 4.5, token field parity, spacing/font ordering
+- [x] Event bus tests: subscribe, emit, unsubscribe, error isolation, clear, async
 
 ## Feature Completeness
 
-- [x] 15 bandit policies (target: 17 — LinTS added, drift detectors deferred)
-- [x] 7 narrative worlds (target: 7)
-- [x] 15 curriculum lessons (target: 8+)
-- [x] All policies implement `DebugSnapshotProvider`
-- [x] Debug pane builders for all 8 policy families
+- [x] 15 bandit policies
+- [x] 7 narrative worlds
+- [x] 14 curriculum lessons
 - [x] Interactive simulation shell (Play/Pause/Step/Reset with live state)
 - [x] Lesson progression with 5-stage theory cards and objective evaluation
 - [x] Parameter controls with stage-locked progressive disclosure
 - [x] Side-by-side policy comparison with batch stats (mean/std/CI95)
 - [x] Sandbox editor with world overrides and validation
-- [x] Snapshot diff for trace and debug state
-- [x] Comparison route with navigation
-- [x] Chart data generation
-- [x] Trace table model
 - [x] Preferences persistence
-- [x] Checkpoint save/load
-- [x] Drift detection (CUSUM + ADWIN)
 - [x] Continuous-action simulation with regret and replay
 - [x] Configurable continuous world from WorldConfig
+- [x] Theme system (ColorTokens, dark/light mode)
+- [x] SplitWorkspaceLayout (3-zone dashboard)
+- [x] EventBus (pub/sub for cross-component communication)
+- [x] Environment/agent/interaction/chart components with theme-aware styling
 
 ## Documentation
 
-- [x] Architecture overview: `docs/web_architecture.md`
+- [x] Architecture overview: `docs/ARCHITECTURE.md`
 - [x] Contributor guide — worlds: `docs/contributing/worlds.md`
 - [x] Contributor guide — policies: `docs/contributing/policies.md`
 - [x] Contributor guide — lessons: `docs/contributing/lessons.md`
-- [x] Implementation plan: `docs/web_implementation_plan.md`
-- [x] Progress tracker: `docs/flet_redesign_progress_tracker.md`
-- [x] Original implementation plan: `docs/flet_redesign_implementation_plan.md`
 - [x] Release checklist: `docs/release_checklist.md` (this file)
 
-## Known Gaps (Post-RC)
+## Known Gaps
 
-- 2 drift detector variants (A/B) implemented as CUSUM+ADWIN (in `web.drift`)
-- LinTS policy implemented and registered
-- No native mobile targets
-- Charts render as text summaries; full Flet chart rendering needs browser canvas
+- Chart components use ft.Container bars (Flet 0.85.1 lacks LineChart/BarChart)
+- No test coverage for Flet widget builders (6 component files, layouts, app.py)
+- Policy base classes not yet extracted (14 policy wrappers duplicate _ensure_arms)
 
 ## RC Tag Instructions
 

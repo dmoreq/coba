@@ -2,7 +2,7 @@
 
 This guide covers six features added to `ClusterBandit` beyond the core decide/update loop: ranked arm selection, confidence-based abstention, minimum pull-rate floors, per-arm gamma overrides, running reward normalization, and reward drift detection.
 
-> **Web Platform Note:** COBA Web implements many of these features as interactive lesson examples. See [Lesson 14 (Offline Evaluation)](../web/frontend/components/lesson/OfflineEvaluationLesson.tsx) for IPS/DR/NCIS, [Lesson 13 (Drift Detection)](../web/frontend/components/lesson/DriftDetectionLesson.tsx) for PageHinkley in action, and [Lesson 12 (Sliding-Window LinUCB)](../web/frontend/components/lesson/SlidingWindowLinUCBLesson.tsx) for adaptive exploration under drift.
+> **Web Platform Note:** COBA Web demonstrates many of these features through interactive simulations in the Lesson and Sandbox modes. See `src/web/curriculum/lessons.py` for the lesson registry.
 
 ---
 

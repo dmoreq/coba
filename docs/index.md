@@ -6,7 +6,7 @@ Welcome to COBA Web — an **interactive educational platform** for learning **1
 
 ---
 
-## 📚 Documentation Structure
+## Documentation Structure
 
 ### Getting Started
 - **[Quick Start for Learners](./QUICK_START_LEARNER.md)** — How to use the platform
@@ -18,36 +18,30 @@ Welcome to COBA Web — an **interactive educational platform** for learning **1
 - **[Contributing Guide](../CONTRIBUTING.md)** — Code standards, testing, accessibility
 
 ### Reference
-- **[Algorithm Library](./algorithms/)** — Deep dives: LinUCB, Neural Linear, GP-UCB, etc.
-  - [Context-Free Policies](./algorithms/context_free.md) (UCB1, Thompson Sampling)
-  - [Linear Contextual](./algorithms/linucb.md), [LinTS](./algorithms/lin_ts.md), [Logistic](./algorithms/logistic.md)
-  - [Cluster Routing](./algorithms/cluster_router.md), [LinUCB-Hybrid](./algorithms/lin_ucb_hybrid.md)
-  - [Advanced](./algorithms/neural_linear.md), [GP-UCB](./algorithms/gp_ucb.md), [Sklearn Meta](./algorithms/sklearn_meta.md)
-  - [Offline Evaluation](./algorithms/offpolicy_ips.md)
-
+- **[Algorithm Library](./algorithms/)** — Deep dives on all algorithms
 - **[Evaluation Methods](./evaluation.md)** — Offline policy evaluation (IPS, DR, NCIS)
 - **[Policy Reference](./policies.md)** — Algorithm comparisons & complexity analysis
 - **[Advanced Features](./advanced_features.md)** — Drift detection, arm management, CATS
 
 ### Deployment
-- **[Deployment Guide](./DEPLOYMENT.md)** — Production setup (Vercel, Railway, Render)
+- **[Deployment Guide](./DEPLOYMENT.md)** — Local dev and production setup
 
 ### Contributing
-- **[CONTRIBUTING.md](../CONTRIBUTING.md)** — Code standards, PR process, development workflow
+- **[CONTRIBUTING.md](../CONTRIBUTING.md)** — Code standards, PR process
 
 ---
 
-## 🎯 Quick Navigation by Role
+## Quick Navigation by Role
 
-### 👤 Learner / Student
-1. Go to [coba-web.vercel.app](https://coba-web.vercel.app)
-2. Pick a lesson (or start with "Intro")
-3. Adjust sliders and watch algorithms in real-time
-4. See [Quick Start for Learners](./QUICK_START_LEARNER.md) for keyboard shortcuts
+### Learner / Student
+1. Run the app: `uv run python -c "from web.main import run; run()"`
+2. Open http://localhost:8550
+3. Start with a lesson or free-play in the Arena
+4. See [Quick Start for Learners](./QUICK_START_LEARNER.md) for details
 
-### 👨‍🏫 Instructor
+### Instructor
 1. Read [Quick Start for Learners](./QUICK_START_LEARNER.md) to understand the platform
-2. See [Adding New Lessons](./ADDING_LESSONS.md) if you want to customize
+2. See [Adding New Lessons](./ADDING_LESSONS.md) to create custom algorithms
 3. Review [Roadmap](./ROADMAP.md) for planned classroom features
 
 ### 👨‍💻 Developer
@@ -89,21 +83,19 @@ For full COBA library docs, see the [main README](../README.md).
 
 ---
 
-## 📊 Project Stats
+## Project Stats
 
 | Metric | Value |
 |--------|-------|
-| Frontend Tests | 294/294 ✅ |
-| Backend Tests | 79+ (Pytest) ✅ |
-| TypeScript Errors | 0 ✅ |
-| Lessons | 17 |
-| Components | 50+ |
-| LOC | ~7,500 |
-| Build Time | ~1.2s |
+| Tests | 775 ✅ |
+| Algorithms | 17 |
+| Lessons | 14 |
+| Worlds | 7 |
+| LOC | ~8,000 |
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions! See [CONTRIBUTING.md](../CONTRIBUTING.md) for:
 - Reporting bugs
