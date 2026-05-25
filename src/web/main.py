@@ -15,7 +15,7 @@ from web.policy_factory import build_policy
 from web.simulator import DiscreteSimulator
 from web.state import RunConfig
 from web.ui.charts import build_chart_data
-from web.ui.components.trace_table import build_trace_table
+from web.ui.models import build_trace_table
 from web.ui.preferences import PreferencesStore, UserPreferences
 from web.ui.run_controls import RunController
 from web.ui.view_models import RouteUIModel, build_route_ui_model
@@ -314,9 +314,9 @@ def _build_control_row(session: _SimSession) -> Any:
 
     return ft.Row(
         controls=[
-            ft.Button(text=step_label, on_click=lambda _: _on_step()),
-            ft.Button(text=play_label, on_click=lambda _: _on_play()),
-            ft.Button(text="  ↺ Reset  ", on_click=lambda _: _on_reset()),
+            ft.Button(ft.Text(step_label), on_click=lambda _: _on_step()),
+            ft.Button(ft.Text(play_label), on_click=lambda _: _on_play()),
+            ft.Button(ft.Text("  ↺ Reset  "), on_click=lambda _: _on_reset()),
         ],
         spacing=8,
     )

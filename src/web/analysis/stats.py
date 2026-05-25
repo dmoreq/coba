@@ -5,7 +5,7 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 
-from web.comparison.orchestrator import ComparisonRunResult
+from web.analysis.orchestrator import ComparisonRunResult
 
 
 @dataclass(frozen=True)
@@ -21,6 +21,7 @@ class PolicySummaryStats:
 
 
 def summarize_comparison_runs(results: list[ComparisonRunResult]) -> list[PolicySummaryStats]:
+    """Summarize comparison run results into per-policy aggregate stats."""
     grouped: dict[str, list[ComparisonRunResult]] = {}
     for result in results:
         grouped.setdefault(result.policy_id, []).append(result)

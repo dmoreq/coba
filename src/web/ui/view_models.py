@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from web.arena import ArenaMetrics, build_arena_metrics
+from web.analysis import ArenaMetrics, build_arena_metrics
 from web.curriculum import (
     LessonConfig,
     LessonProgressState,
@@ -19,10 +19,13 @@ from web.policy_capabilities import get_policy_capability
 from web.policies.contextual_utils import context_to_vector
 from web.router import get_route_spec
 from web.trace import TraceBuffer
-from web.ui.components import ScenePanelModel, TreatmentCardModel
-from web.ui.context_inspection import ContextInspectionModel
 from web.ui.layout import ThreePaneLayoutSpec, build_three_pane_layout
-from web.ui.lesson_models import LessonPanelModel
+from web.ui.models import (
+    ContextInspectionModel,
+    LessonPanelModel,
+    ScenePanelModel,
+    TreatmentCardModel,
+)
 from web.ui.param_controls import ParamControlSpec, default_policy_param_controls
 from web.ui.preferences import UserPreferences
 from web.worlds import create_world, get_world_config

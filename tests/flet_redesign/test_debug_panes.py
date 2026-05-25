@@ -1,14 +1,10 @@
-"""Tests for debug pane builders across all policy families."""
+"""Tests for debug pane builders across all policy families (context-free and continuous panes removed as dead code)."""
 
 from __future__ import annotations
 
 from web.debug import (
     AdvancedDebugPane,
-    ContinuousDebugPane,
-    ContextFreeDebugPane,
     ContextualDebugPane,
-    build_cf_debug_pane,
-    build_continuous_debug_pane,
     build_ensemble_debug_pane,
     build_gp_debug_pane,
     build_hybrid_debug_pane,
@@ -16,59 +12,6 @@ from web.debug import (
     build_logistic_debug_pane,
     build_tree_debug_pane,
 )
-
-
-def test_cf_debug_pane_random() -> None:
-    snap = {"policy": "random", "total_pulls": 100, "arms": {}}
-    pane = build_cf_debug_pane(snap)
-    assert isinstance(pane, ContextFreeDebugPane)
-    assert pane.title == "random Debug"
-    assert any("total_pulls" in k for k, _ in pane.details)
-
-
-def test_cf_debug_pane_epsilon_greedy() -> None:
-    snap = {
-        "policy": "epsilon_greedy",
-        "epsilon": 0.1,
-        "total_pulls": 50,
-        "arms": {"a": {"pulls": 25, "mean_reward": 0.6}},
-    }
-    pane = build_cf_debug_pane(snap)
-    assert isinstance(pane, ContextFreeDebugPane)
-    assert pane.title == "epsilon_greedy Debug"
-
-
-def test_cf_debug_pane_ucb1() -> None:
-    snap = {
-        "policy": "ucb1",
-        "alpha": 1.0,
-        "total_pulls": 50,
-        "arms": {"x": {"pulls": 10, "mean_reward": 0.4, "ucb_bonus": 0.5}},
-    }
-    pane = build_cf_debug_pane(snap)
-    assert isinstance(pane, ContextFreeDebugPane)
-    assert pane.title == "ucb1 Debug"
-
-
-def test_cf_debug_pane_thompson() -> None:
-    snap = {
-        "policy": "thompson",
-        "prior_alpha": 1.0,
-        "prior_beta": 1.0,
-        "arms": {"a": {"successes": 5, "failures": 3}},
-    }
-    pane = build_cf_debug_pane(snap)
-    assert isinstance(pane, ContextFreeDebugPane)
-
-
-def test_cf_debug_pane_softmax() -> None:
-    snap = {
-        "policy": "softmax",
-        "tau": 0.2,
-        "arms": {"a": {"pulls": 10, "mean_reward": 0.5, "probability": 0.7}},
-    }
-    pane = build_cf_debug_pane(snap)
-    assert isinstance(pane, ContextFreeDebugPane)
 
 
 def test_linucb_debug_pane_with_matrix_data() -> None:
@@ -130,16 +73,3 @@ def test_hybrid_debug_pane() -> None:
     }
     pane = build_hybrid_debug_pane(snap)
     assert isinstance(pane, AdvancedDebugPane)
-
-
-def test_continuous_debug_pane() -> None:
-    snap = {"best_action": 0.5, "best_reward": 0.7, "history_size": 30}
-    pane = build_continuous_debug_pane(snap)
-    assert isinstance(pane, ContinuousDebugPane)
-    assert len(pane.rows) == 3
-
-
-def test_cf_debug_pane_empty_snapshot() -> None:
-    pane = build_cf_debug_pane({})
-    assert isinstance(pane, ContextFreeDebugPane)
-    assert pane.title != ""

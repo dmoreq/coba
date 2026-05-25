@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from web.arena import compute_comparison_diagnostics
+from web.analysis import compute_comparison_diagnostics
 from web.debug import (
     build_ensemble_debug_pane,
     build_gp_debug_pane,

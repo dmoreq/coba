@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from web.arena import ArenaMetrics
+from web.analysis import ArenaMetrics
 
 
 @dataclass(frozen=True)

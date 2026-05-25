@@ -1,9 +1,15 @@
-"""UI component models for redesign surfaces."""
+"""UI component models — re-exported from web.ui.models for backward compatibility."""
 
-from web.ui.components.scene_panel import ScenePanelModel
-from web.ui.components.treatment_card import TreatmentCardModel
+from web.ui.models import (
+    ContextInspectionModel,
+    LessonPanelModel,
+    ScenePanelModel,
+    TreatmentCardModel,
+)
 
 __all__ = [
+    "ContextInspectionModel",
+    "LessonPanelModel",
     "ScenePanelModel",
     "TreatmentCardModel",
 ]

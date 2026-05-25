@@ -8,7 +8,6 @@ from typing import Any, cast
 
 import pytest
 
-from web.state_store import AppStateStore
 from web.worlds import create_world, get_world_config, list_world_configs
 
 
@@ -55,16 +54,13 @@ def test_world_sampling_is_deterministic_for_same_seed(world_id: str) -> None:
     assert rewards_a == rewards_b
 
 
-def test_world_switching_updates_state_and_builds_world() -> None:
-    store = AppStateStore(default_world_id="rural_clinic")
-    assert store.state.world_id == "rural_clinic"
-
-    next_state = store.switch_world("newsfeed")
-    assert next_state.world_id == "newsfeed"
-
-    world = store.build_world()
-    assert world.config.world_id == "newsfeed"
-    assert len(world.get_available_arms()) == 3
+def test_world_switching_creates_different_world() -> None:
+    world_a = create_world("rural_clinic")
+    world_b = create_world("newsfeed")
+    assert world_a.config.world_id == "rural_clinic"
+    assert world_b.config.world_id == "newsfeed"
+    assert len(world_a.get_available_arms()) == 3
+    assert len(world_b.get_available_arms()) == 3
 
 
 def test_unknown_world_lookup_raises_key_error() -> None:

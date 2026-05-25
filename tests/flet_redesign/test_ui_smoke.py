@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from web.router import AppRoute, normalize_route
-from web.shell import build_shell_stack
+
 from web.ui.preferences import UserPreferences
 from web.ui.view_models import build_route_ui_model
 
@@ -55,19 +55,6 @@ def test_sandbox_route_model() -> None:
     assert model.layout is not None
     assert model.scene_panel is not None
     assert model.scene_panel.world_title == "NewsFeed"
-
-
-def test_build_shell_stack_home_only() -> None:
-    stack = build_shell_stack("/")
-    assert len(stack) == 1
-    assert stack[0].route == "/"
-
-
-def test_build_shell_stack_lesson_includes_home() -> None:
-    stack = build_shell_stack("/lesson")
-    assert len(stack) == 2
-    assert stack[0].route == "/"
-    assert stack[1].route == "/lesson"
 
 
 def test_normalize_route_edge_cases() -> None:

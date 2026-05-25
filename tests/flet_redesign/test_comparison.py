@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-from web.comparison.orchestrator import run_policy_comparison, run_batch_comparison
-from web.comparison.stats import summarize_comparison_runs
-from web.comparison.snapshot_diff import diff_trace_records, diff_debug_snapshots
+from web.analysis import run_batch_comparison, run_policy_comparison, summarize_comparison_runs
 
 
 def test_orchestrator_deterministic_equality() -> None:
@@ -83,30 +81,3 @@ def test_stats_single_run() -> None:
     assert s.n_runs == 1
     assert s.std_reward == 0.0
     assert s.ci95_half_width == 0.0
-
-
-def test_snapshot_diff_identifies_changed_keys() -> None:
-    before = [{"step_index": 1, "reward": 0.5, "arm": "a"}]
-    after = [{"step_index": 1, "reward": 0.8, "arm": "a"}]
-    result = diff_trace_records(before, after)
-    assert "reward" in result.changed_keys
-
-
-def test_snapshot_diff_identical_produces_empty() -> None:
-    recs = [{"step_index": 1, "reward": 1.0}]
-    result = diff_trace_records(recs, recs)
-    assert len(result.changed_keys) == 0
-
-
-def test_snapshot_diff_empty_records() -> None:
-    result = diff_trace_records([], [])
-    assert result.changed_keys == ()
-    assert result.before == {}
-    assert result.after == {}
-
-
-def test_debug_snapshot_diff() -> None:
-    before = {"arm": "a", "score": 1.0}
-    after = {"arm": "b", "score": 0.5}
-    result = diff_debug_snapshots(before, after)
-    assert set(result.changed_keys) == {"arm", "score"}

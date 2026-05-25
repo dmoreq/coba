@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from web.arena import ArenaRunStore, build_arena_metrics
+from web.analysis import ArenaRunStore, build_arena_metrics
 
 
 def _records() -> list[dict[str, object]]:

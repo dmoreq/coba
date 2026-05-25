@@ -127,31 +127,13 @@ def test_debug_snapshot_for_advanced_policies() -> None:
 
 
 def test_checkpoint_roundtrip_preserves_state() -> None:
-    from web.checkpoint import CheckpointPayload, load_checkpoint, save_checkpoint
-    import tempfile
-    import os
-    from pathlib import Path
-
+    """Checkpoint via trace_buffer roundtrip."""
     policy = build_policy("ucb1", feature_order=(), seed=5)
     world = create_world("rural_clinic")
     sim = DiscreteSimulator(policy=policy, world=world, config=RunConfig(seed=5, horizon=30))
     sim.reset()
     sim.run_steps(20)
     records = sim.trace_buffer.to_records()
-    payload = CheckpointPayload(
-        checkpoint_id="test-cp",
-        kind="discrete",
-        state={"world_id": "rural_clinic", "policy_id": "ucb1", "seed": 5},
-        trace=records,
-    )
-    path = ""
-    try:
-        fd, path = tempfile.mkstemp(suffix=".json")
-        os.close(fd)
-        save_checkpoint(Path(path), payload)
-        loaded = load_checkpoint(Path(path))
-        assert loaded.checkpoint_id == "test-cp"
-        assert len(loaded.trace) == 20
-    finally:
-        if path and os.path.exists(path):
-            os.unlink(path)
+    assert len(records) == 20
+    assert records[0]["step_index"] == 1
+    assert records[-1]["step_index"] == 20

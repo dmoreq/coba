@@ -10,7 +10,6 @@ from web.continuous import (
     ContinuousSimulator,
     ContinuousWorld,
 )
-from web.debug import build_continuous_debug_pane
 from web.policy_factory import build_policy
 
 
@@ -41,10 +40,10 @@ def test_cats_like_policy_and_continuous_simulator() -> None:
     assert all(0.0 <= step.action <= 1.0 for step in steps)
 
 
-def test_continuous_debug_pane_and_policy_factory() -> None:
+def test_continuous_policy_factory() -> None:
     policy = build_policy("cats", seed=1, params={"action_min": 0.0, "action_max": 2.0})
     assert isinstance(policy, CATSLikePolicy)
     action = policy.select_action()
     policy.update(action, reward=0.5)
-    pane = build_continuous_debug_pane(policy.get_debug_snapshot())
-    assert pane.title == "Continuous Debug"
+    snapshot = policy.get_debug_snapshot()
+    assert "best_action" in snapshot
