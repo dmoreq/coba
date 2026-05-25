@@ -1,6 +1,6 @@
 # Tham Chiếu Policies (Thuật Toán Bandits)
 
-Tất cả 17 loại policy được hỗ trợ bởi COBA Web, được ánh xạ đến các bài học và thuật toán.
+Tất cả 17 loại policy được COBA hỗ trợ, được ánh xạ đến các nhóm thuật toán tương ứng.
 
 ---
 

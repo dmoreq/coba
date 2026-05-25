@@ -1,6 +1,6 @@
 # Policies Reference
 
-All 17 policy types supported by COBA Web, mapped to lessons and algorithms.
+All 17 policy types supported by COBA, mapped to their algorithm families.
 
 ---
 

@@ -1,50 +1,57 @@
-# COBA Web: System Architecture & Design Decisions
+# COBA Core Architecture
 
-**Tech Stack:** Python 3.10+, Flet 0.85.1, uv
+COBA is a domain-agnostic contextual bandit library. The core package operates on numpy arrays and plain Python values so it can be embedded in services, notebooks, simulations, or offline evaluation pipelines.
 
-## Architecture Layers
+## Package Layout
 
-```
-src/web/
-├── main.py                 # Entry point (ft.app call)
-├── app.py                  # AppShell: navigation, theme, routing, view rendering
-├── layouts/                # Dashboard layouts (SplitWorkspaceLayout)
-├── components/             # Reusable UI widgets (environment, agent, interaction, charts, shared)
-├── theme/                  # ColorTokens, ThemeManager (dark/light mode)
-├── statemgmt/              # EventBus (pub/sub), InteractionPhase enum
-├── ui/                     # View models (frozen dataclasses), charts, preferences, layout specs
-├── analysis/               # Metrics, orchestration, stats, diagnostics
-├── policies/               # 14 web-facing policy wrappers
-├── worlds/                 # 7 narrative simulation worlds + schema
-├── curriculum/             # 14 lesson configurations
-├── simulator.py            # DiscreteSimulator engine
-├── trace.py                # TraceBuffer
-├── state.py                # RunConfig, SimulationState, ArmState
-├── contracts.py             # BanditPolicy, World, Simulator protocols
-├── policy_factory.py       # Policy instantiation
-├── policy_capabilities.py  # Static metadata per policy
-├── sandbox.py              # SandboxEditor
-└── drift_monitor.py        # Drift detection wrapper
+```text
+src/coba/
+├── bandit.py              # ClusterBandit public API
+├── router.py              # Cluster-aware routing and per-arm model orchestration
+├── config.py              # BanditConfig
+├── schemas.py             # Decision and stats records
+├── policies/              # Algorithm implementations
+├── continuous/            # Continuous-action bandits and CATS policy
+├── evaluation.py          # Rejection sampling, DR, NCIS helpers
+├── offpolicy.py           # IPS and doubly robust offline updates
+├── drift.py               # Page-Hinkley drift detector
+├── normalizer.py          # Reward normalization
+└── persistence.py         # Save/load helpers
 ```
 
-## Data Flow
+## Main Data Flow
 
+```text
+caller context
+  → ClusterBandit.decide()
+  → ClusterRouter.predict()/score_all()
+  → per-arm policy model score()
+  → BanditDecision
+  → caller observes reward
+  → ClusterBandit.update()
+  → per-arm policy model update()
 ```
-User clicks Step
-  → AppShell._render_view()
-    → build_route_ui_model()  (pure dataclass construction)
-      → create_world(), build_policy(), build_arena_metrics()
-    → SplitWorkspaceLayout.build()  (Flet widget tree)
-      → environment, interaction, agent zone components
-  → page.update()
-```
 
-## Theming
+## Policy Model Boundary
 
-Color tokens are defined in `theme/tokens.py` (40 semantic tokens for light and dark). ThemeManager stores the active set on `page.data`. Every component reads tokens via `ThemeManager.get_tokens(page)`.
+All discrete arm models implement the `BaseArmModel` shape:
 
-## State Management
+- `score(context, total_pulls)` ranks an arm for selection.
+- `update(context, reward, weight)` incorporates feedback.
+- `update_batch(contexts, rewards, weights)` supports offline fitting.
+- `reset()` clears learned state.
+- `clone()` creates independent arm model instances.
 
-- EventBus: pub/sub for cross-component events (STEP_COMPLETED, ARM_SELECTED, etc.)
-- _SimSession: wraps DiscreteSimulator, RunController, LessonProgressState
-- UserPreferences: JSON file-backed persistence
+Context-free policies ignore the context vector. Contextual policies use linear, logistic, Gaussian-process, tree-ensemble, neural-linear, or sklearn-backed estimators.
+
+## Offline Evaluation
+
+`evaluation.py` and `offpolicy.py` provide rejection sampling, inverse propensity scoring, normalized clipped IPS, and doubly robust estimators for logged bandit data.
+
+## Continuous Actions
+
+`src/coba/continuous/` models continuous action spaces by partitioning the action interval into leaves and learning over those leaves with CATS-style local updates.
+
+## Persistence
+
+Use `save_bandit()` and `load_bandit()` for joblib-backed model snapshots.

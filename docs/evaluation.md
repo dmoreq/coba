@@ -4,8 +4,6 @@ Testing a new reinforcement learning algorithm or contextual bandit policy requi
 
 COBA provides three standard methodologies:
 
-> **Web Platform Note:** See [Lesson 14 (Offline Evaluation IPS/DR/NCIS)](../docs/policies.md#offline-policy-learning) for an interactive, step-by-step walkthrough of how these methods work on real data.
-
 ## 1. Rejection Sampling
 * **How it works**: Iterates through the historical logs and asks the new policy what it would do. If the new policy chooses the *exact same* arm as the historical log, we accept the sample and keep its reward. Otherwise, we reject and throw away the sample.
 * **Pros**: Simple, highly intuitive, completely unbiased **if** the historical data was collected by a purely uniform random policy.

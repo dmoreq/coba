@@ -18,7 +18,6 @@ repos:
     hooks:
       - id: ruff
         args: [--fix]
-        # Explicitly pass all Python files in src/ and tests/ (excludes .venv)
         files: ^(src|tests)/.*\.py$
       - id: ruff-format
         files: ^(src|tests)/.*\.py$
@@ -36,17 +35,14 @@ repos:
     hooks:
       - id: mypy
         pass_filenames: false
-        # Point mypy at the core library package.
         args:
           - src/coba
-          - src/web
           - --ignore-missing-imports
           - --config-file=pyproject.toml
           - --disable-error-code=no-untyped-def
           - --disable-error-code=no-untyped-call
           - --disable-error-code=annotation-unchecked
           - --disable-error-code=union-attr
-        # Pass additional stub packages so mypy can resolve type info
         additional_dependencies:
           - "pydantic>=2.0"
           - "loguru>=0.7"

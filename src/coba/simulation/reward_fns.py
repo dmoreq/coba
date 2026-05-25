@@ -1,8 +1,7 @@
 """Reward functions for contextual bandit simulation environments.
 
-These are pure mathematical functions with no dependency on any web
-framework. They can be used by the coba-web Dash application, standalone
-simulation scripts, or research notebooks.
+These are pure mathematical functions for standalone simulation scripts,
+research notebooks, or service integrations.
 
 All discrete reward functions return a Bernoulli sample (0 or 1).
 All continuous reward functions return a float in [0, 1].

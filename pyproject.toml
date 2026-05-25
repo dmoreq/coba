@@ -2,10 +2,6 @@
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
-
-[tool.setuptools.packages.find]
-where = ["src"]
-
 [project]
 name = "coba"
 version = "0.1.0"
@@ -28,79 +24,57 @@ dev = [
     "mypy>=1.10",
     "pre-commit>=3.0",
 ]
-flet = [
-    "flet>=0.24",
-]
 streamlit = [
     "streamlit>=1.30",
     "plotly>=5.18",
 ]
 
+[tool.setuptools.packages.find]
+where = ["src"]
+
 [tool.pytest.ini_options]
+asyncio_mode = "strict"
 # Disable pytest-asyncio auto-collection (coba has no async code).
 # Without this, pytest-asyncio raises AttributeError on Package objects.
-asyncio_mode = "strict"
 testpaths = ["tests"]
 addopts = "-p no:asyncio"
 pythonpath = ["src", "."]
 
-# ── Ruff ─────────────────────────────────────────────────────────────────────
 [tool.ruff]
 target-version = "py310"
 line-length = 100
-exclude = [
-    ".venv",
-    "__pycache__",
-    ".git",
-    ".pytest_cache",
-]
+exclude = [".venv", "__pycache__", ".git", ".pytest_cache"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]
 ignore = [
-    "E501",   # line length handled by Black
-    "I001",   # isort handled by Black's import sorting
-    "N999",   # allows numbered example files
+    "E501",  # line length handled by Black
+    "I001",  # isort handled by Black's import sorting
+    "N999",
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["coba", "web"]
+known-first-party = ["coba"]
 
-# ── Black ─────────────────────────────────────────────────────────────────────
 [tool.black]
 line-length = 100
 target-version = ["py310", "py311", "py312"]
 
-# ── Mypy ─────────────────────────────────────────────────────────────────────
 [tool.mypy]
 python_version = "3.10"
-# Check production source code under src/coba and src/web.
-files = ["src/coba", "src/web"]
-exclude = [
-    ".venv",
-    "__pycache__",
-    "tests",
-]
-# Practical strictness: ignore missing stubs for third-party libs
+files = ["src/coba"]
+exclude = [".venv", "__pycache__", "tests"]
 ignore_missing_imports = true
+# Practical strictness: ignore missing stubs for third-party libs.
 disallow_untyped_defs = true
 disallow_incomplete_defs = true
 check_untyped_defs = true
 warn_redundant_casts = true
-warn_unused_ignores = false  # third-party stubs vary; keep this off
-warn_return_any = false       # too noisy for Dash callback signatures
+warn_unused_ignores = false
+warn_return_any = false
 no_implicit_optional = false
 
-# ── Third-party overrides: relax strict checking for untyped packages ────────
 [[tool.mypy.overrides]]
-module = [
-    "scipy.*",
-    "sklearn.*",
-    "loguru.*",
-]
+module = ["scipy.*", "sklearn.*", "loguru.*"]
 ignore_missing_imports = true
 ignore_errors = true
-
-# ── uv workspace ─────────────────────────────────────────────────────────────
-[tool.uv]
-workspace = { members = ["web"] }

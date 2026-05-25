@@ -1,9 +1,8 @@
-# COBA — Contextual Bandits Educational Platform
+# COBA — Contextual Bandit Algorithms
 
 [![CI Pipeline](https://github.com/yourusername/coba/actions/workflows/ci.yml/badge.svg)](https://github.com/yourusername/coba/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-775%20passing-brightgreen)](.)
 
-An interactive educational platform for teaching **17 contextual bandit algorithms** through hands-on, browser-based simulations, built with [Flet](https://flet.dev).
+COBA is a Python library for experimenting with contextual bandit algorithms, offline evaluation, drift detection, and continuous-action policies.
 
 ## Quick Start
 
@@ -14,87 +13,68 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 # Install dependencies
 uv sync --frozen
 
-# Launch the web app
-uv run python -c "from web.main import run; run()"
+# Run tests
+uv run pytest tests/ -p no:asyncio --ignore=tests/test_shared_sim.py
 ```
 
-Open `http://localhost:8550` in your browser.
+## Example
+
+```python
+import numpy as np
+from coba import BanditConfig, ClusterBandit
+
+bandit = ClusterBandit(
+    arms=["email", "sms", "push"],
+    config=BanditConfig(policy="lin_ucb", n_clusters=2),
+)
+
+contexts = np.random.default_rng(0).normal(size=(100, 4))
+arms = ["email", "sms", "push"] * 34
+rewards = np.random.default_rng(1).random(102)[:100]
+
+bandit.fit_offline(contexts, arms[:100], rewards)
+decision = bandit.decide(np.array([0.2, -0.1, 0.4, 0.8]))
+print(decision.chosen_arm)
+```
 
 ## Features
 
-### 🎓 17 Algorithms
-Context-free: Random, Epsilon-Greedy, UCB1, Thompson Sampling, Softmax
-Contextual linear: LinUCB, LinUCB-SW, LinTS, Logistic UCB, GP-UCB
-Ensemble: Bootstrapped Ensemble, Tree UCB, Tree TS
-Hybrid: LinUCB Hybrid
-Continuous: CATS
-
-### 🎮 Interactive Simulation
-- Step-by-step mode with 4-phase interaction visualization
-- Auto-play with configurable speed
-- 7 real-world narrative scenarios (RidePilot, Rural Clinic, MovieMatch, etc.)
-- Guided lesson progression with staged objectives
-
-### 🎨 Full Theme Support
-- Dark/light mode toggle
-- Semantic color tokens (environment teal, agent amber)
-- Responsive 3-zone dashboard layout
+- Discrete contextual bandits with clustering-aware routing
+- LinUCB, LinTS, Thompson Sampling, UCB1, Softmax, logistic, GP-UCB, tree ensembles, and sklearn-backed policies
+- Offline policy evaluation with rejection sampling, IPS/NCIS, and doubly robust estimates
+- Reward normalization, drift detection, constrained arm pull rates, and top-k decisions
+- Continuous-action bandits with CATS-style action trees
 
 ## Project Structure
 
-```
+```text
 coba/
-├── src/
-│   ├── coba/              # Core bandit library (17 algorithms)
-│   │   ├── bandit.py       # ClusterBandit public API
-│   │   ├── policies/       # Algorithm implementations
-│   │   └── drift.py        # Drift detection
-│   │
-│   └── web/                # Flet web application
-│       ├── main.py          # Entry point
-│       ├── app.py           # AppShell: navigation, theme, routing
-│       ├── components/      # Reusable UI widgets
-│       ├── layouts/         # Dashboard layouts
-│       ├── theme/           # Color tokens, theme manager
-│       ├── statemgmt/       # Event bus, interaction phases
-│       ├── analysis/        # Metrics, comparison, diagnostics
-│       ├── policies/        # Web-facing policy wrappers
-│       ├── worlds/          # 7 narrative simulation worlds
-│       ├── curriculum/      # 14 lesson configurations
-│       └── ui/              # View models (dataclass layer)
-│
-├── tests/
-│   ├── flet_redesign/       # 198 web app tests
-│   │   ├── test_e2e.py      # Session lifecycle E2E tests
-│   │   ├── test_edge_cases.py  # 38 edge case tests
-│   │   └── ...
-│   ├── web/                 # 53 component/theme/state tests
-│   └── ...                  # 537 core library tests
-│
-└── docs/                    # Documentation
+├── src/coba/              # Core bandit library
+│   ├── bandit.py          # ClusterBandit public API
+│   ├── policies/          # Algorithm implementations
+│   ├── continuous/        # Continuous-action bandits
+│   ├── evaluation.py      # Offline evaluation helpers
+│   └── drift.py           # Drift detection
+├── tests/                 # Core library tests
+└── docs/                  # Library documentation
 ```
 
-## Testing
+## Development
 
 ```bash
-# Full test suite
-uv run pytest tests/ -p no:asyncio --ignore=tests/test_shared_sim.py
-
-# Web-only tests
-uv run pytest tests/flet_redesign/ tests/web/ -p no:asyncio
-
-# With coverage
-uv run pytest tests/flet_redesign/ tests/web/ --cov=src/web --cov-report=term-missing -p no:asyncio
+make lint
+make check-types
+make test
+make coverage
 ```
-
-**775 tests passing** (537 core + 238 web), all deterministic (seeded RNG, no async).
 
 ## Documentation
 
-- [Quick Start for Learners](./docs/QUICK_START_LEARNER.md)
 - [Architecture Guide](./docs/ARCHITECTURE.md)
-- [Adding New Lessons](./docs/ADDING_LESSONS.md)
 - [Algorithm Reference](./docs/algorithms/)
+- [Policy Reference](./docs/policies.md)
+- [Evaluation Methods](./docs/evaluation.md)
+- [Advanced Features](./docs/advanced_features.md)
 - [Contributing Guide](./CONTRIBUTING.md)
 
 ## License
