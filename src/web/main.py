@@ -9,6 +9,7 @@ from web.curriculum import (
     LessonProgressState,
     get_lesson_by_policy,
 )
+from web.session import get_prefs, get_session, get_shell, set_prefs, set_session, set_shell
 from web.policy_factory import build_policy
 from web.simulator import DiscreteSimulator
 from web.state import RunConfig
@@ -94,35 +95,32 @@ class _SimSession:
             )
 
 
-# ── Global state refs (set in main()) ──────────────────────────────
-_page: Any = None
-_session: _SimSession | None = None
-_pref_store: PreferencesStore | None = None
-_shell: AppShell | None = None
-
-
 def main(page: Any) -> None:
     """Application entry point."""
-    global _page, _session, _pref_store, _shell
     if ft is None:
         raise RuntimeError("Flet is not installed.")
 
-    _page = page
-    _pref_store = PreferencesStore()
-    prefs = _pref_store.load()
-    _session = _SimSession(prefs)
+    pref_store = PreferencesStore()
+    prefs = pref_store.load()
+    session = _SimSession(prefs)
 
-    _shell = AppShell(page, _session, _pref_store)
-    _shell.apply_theme("light")
+    page.data = {}
+    set_session(page, session)
+    set_prefs(page, pref_store)
+    set_shell(page, AppShell(page))
+
+    get_shell(page).apply_theme("light")
 
     page.title = "COBA — Contextual Bandit Lab"
 
     def on_disconnect(event: Any) -> None:
-        if _pref_store and _session:
-            _pref_store.save(_session.prefs)
+        s = get_session(page)
+        ps = get_prefs(page)
+        if ps and s:
+            ps.save(s.prefs)
 
     page.on_disconnect = on_disconnect
-    _shell._refresh_view()
+    get_shell(page)._refresh_view()
     page.update()
 
 

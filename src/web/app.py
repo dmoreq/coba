@@ -1,6 +1,7 @@
 """AppShell — root application shell for the COBA web app.
 
-Handles page structure, navigation, theme, and route dispatch.
+Handles page structure, navigation, theme, route dispatch, autoplay.
+Session state is stored on page.data for multi-user web isolation.
 """
 
 from __future__ import annotations
@@ -9,7 +10,9 @@ import asyncio
 from typing import Any
 
 from web.components.theme_toggle import build_theme_toggle
+from web.curriculum import evaluate_lesson_objective
 from web.layouts.split_workspace import SplitWorkspaceLayout
+from web.session import get_session
 from web.theme import FontScale, SpacingScale
 from web.theme.theme_manager import ThemeManager
 from web.ui.view_models import RouteUIModel, build_route_ui_model
@@ -40,14 +43,16 @@ ROUTE_ICONS_SELECTED = [
 class AppShell:
     """Root application shell that manages navigation, theme, and rendering."""
 
-    def __init__(self, page: Any, session: Any, pref_store: Any) -> None:
+    def __init__(self, page: Any) -> None:
         self.page = page
-        self.session = session
-        self.pref_store = pref_store
         self._autoplay_task: asyncio.Task[None] | None = None
-
-        # Wire navigation
         page.on_route_change = self._on_route_change
+
+    # ── Session helpers ──────────────────────────────────────────────
+
+    @property
+    def session(self) -> Any:
+        return get_session(self.page)
 
     # ── Navigation bar ───────────────────────────────────────────────
 
@@ -90,11 +95,12 @@ class AppShell:
 
         actions: list[Any] = [build_theme_toggle(self.page)]
 
-        if self.session.lesson_progress:
+        sess = self.session
+        if sess and sess.lesson_progress:
             actions.insert(
                 0,
                 ft.Text(
-                    f"Stage {self.session.lesson_progress.current_stage}/5",
+                    f"Stage {sess.lesson_progress.current_stage}/5",
                     italic=True,
                     size=FontScale.SMALL,
                 ),
@@ -123,6 +129,12 @@ class AppShell:
             content_panels.append(ft.Text(value=view.description, size=FontScale.SMALL))
             content_panels.append(self._build_layout(view))
 
+        # Lesson route: add theory card below workspace
+        if is_active and view.lesson_panel is not None:
+            theory_card = self._build_theory_card(view)
+            if theory_card:
+                content_panels.append(theory_card)
+
         return ft.View(
             route=view.route,
             controls=[
@@ -146,6 +158,131 @@ class AppShell:
             ],
         )
 
+    def _build_theory_card(self, view: RouteUIModel) -> Any:
+        """Build the lesson theory card below the workspace."""
+        if ft is None or view.lesson_panel is None:
+            return None
+        tokens = ThemeManager.get_tokens(self.page)
+
+        sess = self.session
+        obj_met = False
+        if sess and sess.lesson_config and sess.lesson_progress:
+            obj = sess.lesson_config.objective
+            sim = sess.simulator
+            obj_met = evaluate_lesson_objective(
+                objective=obj,
+                steps_executed=sim.state.current_step,
+                cumulative_reward=sim.state.cumulative_reward,
+                cumulative_regret=sim.state.cumulative_regret,
+            )
+
+        # Build stage stepper mini
+        stage_dots: list[Any] = []
+        for i in range(1, 6):
+            is_cur = i == view.lesson_panel.stage_index
+            is_done = i < view.lesson_panel.stage_index
+            stage_dots.append(
+                ft.Container(
+                    content=ft.Text(
+                        "✓" if is_done else str(i),
+                        size=9,
+                        weight=ft.FontWeight.BOLD,
+                        color=tokens.text_on_accent if (is_cur or is_done) else tokens.text_muted,
+                    ),
+                    width=20,
+                    height=20,
+                    border_radius=10,
+                    bgcolor=(
+                        tokens.environment_accent
+                        if is_done
+                        else (tokens.environment_accent if is_cur else tokens.bg_tertiary)
+                    ),
+                    alignment=ft.alignment.center,
+                )
+            )
+            if i < 5:
+                stage_dots.append(
+                    ft.Container(
+                        content=ft.Text(">", size=9, color=tokens.text_muted),
+                    )
+                )
+
+        next_button: list[Any] = []
+        if obj_met and not view.lesson_panel.stage_index >= 5:
+
+            def _advance(e: Any) -> None:
+                s = self.session
+                if s and s.lesson_progress:
+                    progress = s.lesson_progress.advance()
+                    if progress.current_stage > 5:
+                        progress = progress.mark_completed()
+                    s.lesson_progress = progress
+                    self._refresh_view()
+
+            next_button.append(
+                ft.FilledTonalButton(
+                    text="Next Stage →",
+                    on_click=_advance,
+                    icon=ft.Icons.ARROW_FORWARD,
+                )
+            )
+
+        return ft.Container(
+            content=ft.Column(
+                controls=[
+                    ft.Row(
+                        controls=[
+                            ft.Column(
+                                controls=[
+                                    ft.Text(
+                                        f"STAGE {view.lesson_panel.stage_index} · {view.lesson_panel.lesson_title.upper()}",
+                                        size=FontScale.SMALL,
+                                        weight=ft.FontWeight.W_500,
+                                        color=tokens.environment_accent,
+                                    ),
+                                    ft.Text(
+                                        view.lesson_panel.objective_text,
+                                        size=FontScale.SMALL,
+                                        color=tokens.text_secondary,
+                                    ),
+                                ],
+                                expand=True,
+                            ),
+                            ft.Row(controls=stage_dots, spacing=4, tight=True, visible=False),
+                        ],
+                        spacing=SpacingScale.SM,
+                    ),
+                    ft.Divider(height=1),
+                    ft.Container(
+                        content=ft.Markdown(
+                            view.lesson_panel.theory_markdown,
+                            selectable=True,
+                        ),
+                        bgcolor=tokens.bg_tertiary,
+                        border_radius=6,
+                        padding=SpacingScale.MD,
+                    ),
+                    ft.Row(
+                        controls=[
+                            ft.Text(
+                                view.lesson_panel.step_explanation,
+                                size=FontScale.SMALL,
+                                italic=True,
+                                color=tokens.text_muted,
+                            ),
+                            *next_button,
+                        ],
+                        spacing=SpacingScale.SM,
+                    ),
+                ],
+                spacing=SpacingScale.SM,
+                tight=True,
+            ),
+            border=ft.border.all(0.5, tokens.surface_border),
+            border_radius=10,
+            padding=SpacingScale.MD,
+        )
+
     def _build_layout(self, view: RouteUIModel) -> Any:
         """Build the split-workspace layout for active routes."""
         if ft is None:
@@ -163,19 +300,11 @@ class AppShell:
                 )
             )
             env_controls.append(
-                ft.Text(
-                    value=view.scene_panel.world_description,
-                    size=FontScale.SMALL,
-                )
+                ft.Text(value=view.scene_panel.world_description, size=FontScale.SMALL)
             )
             for key, value in view.scene_panel.context_items.items():
                 if key != "step":
-                    env_controls.append(
-                        ft.Text(
-                            value=f"{key}: {value}",
-                            size=FontScale.SMALL,
-                        )
-                    )
+                    env_controls.append(ft.Text(value=f"{key}: {value}", size=FontScale.SMALL))
 
         # Interaction zone
         if view.treatment_cards:
@@ -206,10 +335,7 @@ class AppShell:
                 )
             )
             agent_controls.append(
-                ft.Text(
-                    f"Stage: {view.lesson_panel.stage_index}/5",
-                    size=FontScale.SMALL,
-                )
+                ft.Text(f"Stage: {view.lesson_panel.stage_index}/5", size=FontScale.SMALL)
             )
 
         return SplitWorkspaceLayout.build(
@@ -229,19 +355,22 @@ class AppShell:
 
     def _refresh_view(self) -> None:
         route = self.page.route or "/"
+        sess = self.session
+        if not sess:
+            return
         try:
             view = build_route_ui_model(
                 route,
-                prefs=self.session.prefs,
-                trace_records=tuple(self.session.simulator.trace_buffer.to_records()),
-                sim_context=self.session.simulator.world.sample_context(
-                    self.session.simulator.state.current_step + 1
+                prefs=sess.prefs,
+                trace_records=tuple(sess.simulator.trace_buffer.to_records()),
+                sim_context=sess.simulator.world.sample_context(
+                    sess.simulator.state.current_step + 1
                 ),
-                lesson_progress=self.session.lesson_progress,
-                lesson_config=self.session.lesson_config,
-                sim_step_index=self.session.simulator.state.current_step,
-                sim_cumulative_reward=self.session.simulator.state.cumulative_reward,
-                sim_cumulative_regret=self.session.simulator.state.cumulative_regret,
+                lesson_progress=sess.lesson_progress,
+                lesson_config=sess.lesson_config,
+                sim_step_index=sess.simulator.state.current_step,
+                sim_cumulative_reward=sess.simulator.state.cumulative_reward,
+                sim_cumulative_regret=sess.simulator.state.cumulative_regret,
             )
             self.page.views.clear()
             self.page.views.append(self._render_view(view))
@@ -253,10 +382,64 @@ class AppShell:
 
     # ── Autoplay ─────────────────────────────────────────────────────
 
-    def _cancel_autoplay(self) -> None:
+    def _start_autoplay(self) -> None:
+        """Start the autoplay loop as an async task."""
+        if self._autoplay_task is not None:
+            return  # already running
+
+        async def _autoplay_loop() -> None:
+            while True:
+                sess = self.session
+                if not sess or sess._cancel_autoplay:
+                    break
+                sess.simulator.step()
+                sess.controller.step()
+                self._advance_lesson_if_ready()
+                self._refresh_view()
+                speed = sess.prefs.speed
+                try:
+                    multiplier = float(speed.replace("x", ""))
+                except (ValueError, AttributeError):
+                    multiplier = 1.0
+                delay = max(0.02, 1.0 / multiplier * 0.5)
+                await asyncio.sleep(delay)
+
+        self._autoplay_task = asyncio.create_task(_autoplay_loop())
+
+    def _stop_autoplay(self) -> None:
+        """Stop the autoplay loop."""
+        sess = self.session
+        if sess:
+            sess._cancel_autoplay = True
         if self._autoplay_task:
             self._autoplay_task.cancel()
             self._autoplay_task = None
+
+    def _cancel_autoplay(self) -> None:
+        self._stop_autoplay()
+
+    def _advance_lesson_if_ready(self) -> bool:
+        """Check whether lesson objectives are met and advance stage if so."""
+        sess = self.session
+        if not sess or not sess.lesson_config or not sess.lesson_progress:
+            return False
+        if sess.lesson_progress.completed:
+            return False
+
+        obj = sess.lesson_config.objective
+        sim = sess.simulator
+        if evaluate_lesson_objective(
+            objective=obj,
+            steps_executed=sim.state.current_step,
+            cumulative_reward=sim.state.cumulative_reward,
+            cumulative_regret=sim.state.cumulative_regret,
+        ):
+            progress = sess.lesson_progress.advance()
+            if progress.current_stage > 5:
+                progress = progress.mark_completed()
+            sess.lesson_progress = progress
+            return True
+        return False
 
     # ── Theme ────────────────────────────────────────────────────────
 

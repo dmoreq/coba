@@ -16,7 +16,7 @@ class SpacingScale:
 class FontScale:
     """Consistent font size scale used across all components."""
 
-    CAPTION: int = 10
+    CAPTION: int = 11
     SMALL: int = 12
     BODY: int = 14
     TITLE: int = 18
