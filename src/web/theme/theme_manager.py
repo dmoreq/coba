@@ -1,6 +1,9 @@
 """Theme manager — applies color tokens to Flet page and handles dark/light toggling.
 
 Components access tokens via ThemeManager.get_tokens(page).
+
+Stores current tokens on page.data (arbitrary user data field available on
+every Flet control). Flet 0.85.1 does not expose page.session.set/get.
 """
 
 from __future__ import annotations
@@ -14,6 +17,8 @@ try:
 except ModuleNotFoundError:  # pragma: no cover
     ft = None  # type: ignore[assignment]
 
+_TOKENS_ATTR = "__coba_color_tokens"
+
 
 class ThemeManager:
     """Central theme manager for the COBA web app.
@@ -21,11 +26,9 @@ class ThemeManager:
     Call apply_theme at startup and toggle when the user toggles dark/light mode.
     """
 
-    TOKENS_KEY = "__coba_color_tokens"
-
     @staticmethod
     def apply_theme(page: Any, mode: str = "light") -> None:
-        """Apply color tokens to the page and store them in session."""
+        """Apply color tokens to the page and store them on page.data."""
         tokens = LIGHT_TOKENS if mode == "light" else DARK_TOKENS
         page.theme_mode = ft.ThemeMode.LIGHT if mode == "light" else ft.ThemeMode.DARK
 
@@ -38,15 +41,17 @@ class ThemeManager:
             font_family="system-ui, -apple-system, sans-serif",
         )
 
-        page.session.set(ThemeManager.TOKENS_KEY, tokens)
+        # Store tokens on page.data (generic user-data attribute)
+        page.data = {_TOKENS_ATTR: tokens}
 
     @staticmethod
     def get_tokens(page: Any) -> ColorTokens:
-        """Retrieve current color tokens from page session."""
-        tokens = page.session.get(ThemeManager.TOKENS_KEY)
-        if tokens is None:
-            return LIGHT_TOKENS
-        return tokens
+        """Retrieve current color tokens from page.data."""
+        if isinstance(getattr(page, "data", None), dict):
+            tokens = page.data.get(_TOKENS_ATTR)
+            if tokens is not None:
+                return tokens
+        return LIGHT_TOKENS
 
     @staticmethod
     def toggle(page: Any) -> ColorTokens:

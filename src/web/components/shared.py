@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from web.theme import ColorTokens, FontScale, SpacingScale
+from web.theme import FontScale, SpacingScale
+from web.theme.theme_manager import ThemeManager
 
 try:
     import flet as ft
@@ -30,7 +31,7 @@ def build_metric_badge(page: Any, label: str, value: str) -> Any:
     """Build a compact metric badge (value + label)."""
     if ft is None:
         return None
-    tokens: ColorTokens = page.session.get("__coba_color_tokens")  # type: ignore[assignment]
+    tokens = ThemeManager.get_tokens(page)
     return ft.Column(
         controls=[
             ft.Text(value=value, size=FontScale.BODY, weight=ft.FontWeight.BOLD),
@@ -46,7 +47,7 @@ def build_empty_state(page: Any, message: str = "Nothing to show yet.") -> Any:
     """Build a centered empty state placeholder."""
     if ft is None:
         return None
-    tokens: ColorTokens = page.session.get("__coba_color_tokens")  # type: ignore[assignment]
+    tokens = ThemeManager.get_tokens(page)
     return ft.Container(
         content=ft.Column(
             controls=[

@@ -103,11 +103,6 @@ class AppShell:
         return ft.AppBar(
             title=ft.Text(f"COBA · {view.title}", size=FontScale.TITLE),
             actions=actions,
-            bgcolor=(
-                self.page.theme.color_scheme.primary
-                if hasattr(self.page.theme, "color_scheme")
-                else None
-            ),
         )
 
     # ── View rendering ───────────────────────────────────────────────
