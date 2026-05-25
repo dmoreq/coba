@@ -159,22 +159,22 @@ class TestClusterBanditDriftIntegration:
         bandit = ClusterBandit(
             arms=ARMS, n_features=3, policy=PolicyType.LIN_UCB, n_clusters=2, seed=0
         )
-        assert bandit._drift_detectors is None
+        assert bandit._drift._detectors is None
 
     def test_bandit_with_drift_detection_has_detectors(self):
         bandit = make_bandit_with_drift()
-        assert bandit._drift_detectors is not None
-        assert set(bandit._drift_detectors.keys()) == set(ARMS)
+        assert bandit._drift._detectors is not None
+        assert set(bandit._drift._detectors.keys()) == set(ARMS)
 
     def test_add_arm_registers_detector(self):
         bandit = make_bandit_with_drift()
         bandit.add_arm("D")
-        assert "D" in bandit._drift_detectors  # type: ignore[index]
+        assert "D" in bandit._drift._detectors  # type: ignore[index]
 
     def test_remove_arm_unregisters_detector(self):
         bandit = make_bandit_with_drift()
         bandit.remove_arm("C")
-        assert "C" not in bandit._drift_detectors  # type: ignore[index]
+        assert "C" not in bandit._drift._detectors  # type: ignore[index]
 
     def test_drift_triggers_arm_reset(self):
         # Use very low lambda_ so drift fires quickly
@@ -207,4 +207,4 @@ class TestClusterBanditDriftIntegration:
             ctx = rng.standard_normal(3)
             bandit.update(context=ctx, arm="A", reward=0.5)
 
-        assert not bandit._drift_detectors["A"].is_drift_detected  # type: ignore[index]
+        assert not bandit._drift["A"].is_drift_detected  # type: ignore[index]

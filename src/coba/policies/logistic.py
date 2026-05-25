@@ -72,6 +72,12 @@ class OnlineLogisticRegression:
         denom = max(1.0 + v * float(x @ h_inv_x), 1e-10)
         self.H_inv -= v * np.outer(h_inv_x, h_inv_x) / denom
 
+        # Enforce symmetry — floating-point drift in the SM downdate accumulates
+        # tiny asymmetries that eventually break Cholesky on the scoring hot path.
+        # Symmetrizing here (one call per observation) is O(d²) vs doing it in
+        # score() which can be called 1000x more often.
+        self.H_inv = (self.H_inv + self.H_inv.T) / 2.0
+
         # Gradient of the log-likelihood for this sample
         g = weight * (y - pred) * x
 
@@ -159,7 +165,6 @@ class LogisticTSArmModel(_LogisticBackedArmModel):
     def score(self, x: np.ndarray) -> float:
         """Sample coefficients from posterior and return predicted probability."""
         cov = self.v_sq * self.model.H_inv
-        cov = (cov + cov.T) / 2.0
         min_diag = 1e-10
         cov[np.diag_indices_from(cov)] = np.maximum(np.diag(cov), min_diag)
         chol_l = np.linalg.cholesky(cov)

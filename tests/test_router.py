@@ -183,5 +183,5 @@ class TestClusterRouter:
 
     def test_n_clusters_must_be_at_least_1(self):
         """n_clusters=0 must raise ValueError."""
-        with pytest.raises(ValueError, match="n_clusters must be at least 1"):
+        with pytest.raises(ValueError, match="n_clusters must be >= 1"):
             make_router(self.arms, n_clusters=0)

@@ -52,6 +52,7 @@ class SlidingWindowLinUCBArmModel(BaseArmModel):
         window_size: Maximum number of observations retained. Default 200.
         alpha: Exploration parameter (UCB width multiplier).
         l2_lambda: L2 regularization strength.
+        gamma: Exponential discount factor within the window (1.0 = no discount).
         rng: NumPy random generator.
     """
 
@@ -62,6 +63,7 @@ class SlidingWindowLinUCBArmModel(BaseArmModel):
         window_size: int = 200,
         alpha: float = 1.0,
         l2_lambda: float = 1.0,
+        gamma: float = 1.0,
         rng: np.random.Generator | None = None,
     ) -> None:
         super().__init__(arm, rng or np.random.default_rng())
@@ -69,9 +71,9 @@ class SlidingWindowLinUCBArmModel(BaseArmModel):
         self.window_size = window_size
         self.alpha = alpha
         self.l2_lambda = l2_lambda
+        self.gamma = gamma
 
-        # gamma=1.0: no discount within the window (we handle staleness via eviction)
-        self._ridge = RidgeRegression(n_features=n_features, l2_lambda=l2_lambda, gamma=1.0)
+        self._ridge = RidgeRegression(n_features=n_features, l2_lambda=l2_lambda, gamma=gamma)
         self._buffer: deque[tuple[np.ndarray, float, float]] = deque(maxlen=window_size)
 
     def score(self, x: np.ndarray) -> float:

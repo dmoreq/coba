@@ -128,3 +128,44 @@ class BanditConfig:
     rf_min_samples_leaf: int = 1
     rf_max_obs: int = 1000
     rf_min_uncertainty: float = 1e-6
+
+    def __post_init__(self) -> None:
+        """Validate constraints that, if violated, produce cryptic downstream errors."""
+        if self.n_clusters < 1:
+            raise ValueError(f"n_clusters must be >= 1, got {self.n_clusters}")
+        if self.alpha < 0:
+            raise ValueError(f"alpha must be >= 0, got {self.alpha}")
+        if self.v_sq <= 0:
+            raise ValueError(f"v_sq must be > 0, got {self.v_sq}")
+        if self.l2_lambda <= 0:
+            raise ValueError(f"l2_lambda must be > 0, got {self.l2_lambda}")
+        if not (0.0 < self.gamma <= 1.0):
+            raise ValueError(f"gamma must be in (0, 1], got {self.gamma}")
+        if not (0.0 <= self.epsilon <= 1.0):
+            raise ValueError(f"epsilon must be in [0, 1], got {self.epsilon}")
+        if self.n_bootstraps < 2:
+            raise ValueError(f"n_bootstraps must be >= 2, got {self.n_bootstraps}")
+        if self.softmax_tau <= 0:
+            raise ValueError(f"softmax_tau must be > 0, got {self.softmax_tau}")
+        if self.neural_embedding_dim < 1:
+            raise ValueError(f"neural_embedding_dim must be >= 1, got {self.neural_embedding_dim}")
+        if self.gp_beta < 0:
+            raise ValueError(f"gp_beta must be >= 0, got {self.gp_beta}")
+        if self.gp_length_scale <= 0:
+            raise ValueError(f"gp_length_scale must be > 0, got {self.gp_length_scale}")
+        if self.gp_noise_var <= 0:
+            raise ValueError(f"gp_noise_var must be > 0, got {self.gp_noise_var}")
+        if self.gp_max_obs < 1:
+            raise ValueError(f"gp_max_obs must be >= 1, got {self.gp_max_obs}")
+        if self.drift_delta < 0:
+            raise ValueError(f"drift_delta must be >= 0, got {self.drift_delta}")
+        if self.drift_lambda <= 0:
+            raise ValueError(f"drift_lambda must be > 0, got {self.drift_lambda}")
+        if self.rf_n_estimators < 2:
+            raise ValueError(f"rf_n_estimators must be >= 2, got {self.rf_n_estimators}")
+        if self.rf_min_uncertainty < 0:
+            raise ValueError(f"rf_min_uncertainty must be >= 0, got {self.rf_min_uncertainty}")
+        if self.cats_depth < 1:
+            raise ValueError(f"cats_depth must be >= 1, got {self.cats_depth}")
+        if self.linucb_sw_window < 1:
+            raise ValueError(f"linucb_sw_window must be >= 1, got {self.linucb_sw_window}")

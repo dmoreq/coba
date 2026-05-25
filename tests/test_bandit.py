@@ -348,7 +348,7 @@ class TestConstrainedBandit:
 
     def test_constrained_bandit_creates_without_error(self):
         bandit = self._make_constrained({1.0: 0.1, 1.1: 0.1})
-        assert bandit._min_pull_rates is not None
+        assert bandit._constraints._rates is not None
 
     def test_invalid_rate_raises(self):
         with pytest.raises(ValueError, match="min_pull_rates"):
@@ -394,10 +394,10 @@ class TestConstrainedBandit:
     def test_remove_arm_cleans_up_constraint(self):
         bandit = self._make_constrained({1.0: 0.1})
         bandit.remove_arm(1.0)
-        assert 1.0 not in (bandit._min_pull_rates or {})
+        assert 1.0 not in (bandit._constraints._rates or {})
 
     def test_unconstrained_bandit_normal_operation(self):
         bandit = make_bandit(fitted=True)
-        assert bandit._min_pull_rates is None
+        assert bandit._constraints._rates is None
         decision = bandit.decide(make_context())
         assert decision.chosen_arm in ARMS

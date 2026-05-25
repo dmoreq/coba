@@ -179,27 +179,57 @@ class ContinuousBandit:
         actions: np.ndarray,
         rewards: np.ndarray,
         propensities: np.ndarray | None = None,
+        use_dr: bool = False,
+        reward_estimates: np.ndarray | None = None,
     ) -> ContinuousBandit:
-        """Bootstrap the bandit from historical logs.
+        """Bootstrap the bandit from historical logs with optional DR correction.
+
+        IPS correction is always applied via the internal CATS policy (clipped
+        at [1e-4, 10.0]). When use_dr=True, reward_estimates must be a
+        (n_samples,) array of direct-method reward predictions for each log entry.
 
         Args:
             contexts: Feature matrix, shape (n_samples, n_features).
             actions: Historical actions, shape (n_samples,).
             rewards: Historical rewards, shape (n_samples,).
             propensities: Propensity of the logging policy. None → uniform.
+            use_dr: Apply Doubly-Robust correction on top of IPS.
+            reward_estimates: Direct method reward estimates (required when use_dr=True).
 
         Returns:
             self (for method chaining).
         """
+        if use_dr and reward_estimates is None:
+            raise ValueError("reward_estimates must be provided when use_dr=True")
+
         if propensities is None:
             propensities = np.ones(len(rewards), dtype=np.float64)
             logger.info("No propensities provided — assuming uniform logging policy")
 
+        contexts_arr = np.asarray(contexts, dtype=np.float64)
+        rewards_arr = np.asarray(rewards, dtype=np.float64)
+        propensities_arr = np.asarray(propensities, dtype=np.float64)
+
+        if use_dr and reward_estimates is not None:
+            reward_estimates_arr = np.asarray(reward_estimates, dtype=np.float64)
+            p_clipped = np.clip(propensities_arr, 1e-4, 1.0)
+            # DR corrected reward = rhat + (r - rhat) / propensity
+            corrected_rewards = (
+                reward_estimates_arr + (rewards_arr - reward_estimates_arr) / p_clipped
+            )
+            corrected_rewards = np.clip(corrected_rewards, -10.0, 10.0)
+            # DR rewards already include the propensity adjustment — pass unit
+            # propensities so CATS doesn't double-correct with 1/p weights.
+            cat_propensities: np.ndarray | None = np.ones(len(rewards))
+        else:
+            corrected_rewards = rewards_arr
+            cat_propensities = propensities_arr
+
         self._policy.fit_batch(
-            np.asarray(contexts, dtype=np.float64),
+            contexts_arr,
             np.asarray(actions, dtype=np.float64),
-            np.asarray(rewards, dtype=np.float64),
-            propensities=np.asarray(propensities, dtype=np.float64),
+            corrected_rewards,
+            propensities=cat_propensities,
         )
         return self
 

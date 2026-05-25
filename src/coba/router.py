@@ -39,6 +39,183 @@ from coba.policies.ridge import RidgeRegression
 from coba.types import Arm, PolicyType
 
 
+# ── Policy factory registry ──────────────────────────────────────────────────
+# Each builder receives (arm, cfg, n_features, rng) and returns a BaseArmModel.
+# Two policies need extra context (NEURAL_LINEAR needs a backbone,
+# LIN_UCB_HYBRID needs a shared ridge) — those are handled before the dispatch
+# table is consulted.
+
+_PolicyBuilder = Callable[[Arm, BanditConfig, int, np.random.Generator], BaseArmModel]
+
+
+def _build_linucb(
+    arm: Arm, cfg: BanditConfig, n_features: int, rng: np.random.Generator
+) -> BaseArmModel:
+    from coba.policies.linucb import LinUCBArmModel
+
+    return LinUCBArmModel(
+        arm, n_features, alpha=cfg.alpha, l2_lambda=cfg.l2_lambda, gamma=cfg.gamma, rng=rng
+    )
+
+
+def _build_lints(
+    arm: Arm, cfg: BanditConfig, n_features: int, rng: np.random.Generator
+) -> BaseArmModel:
+    from coba.policies.lin_ts import LinTSArmModel
+
+    return LinTSArmModel(
+        arm, n_features, v_sq=cfg.v_sq, l2_lambda=cfg.l2_lambda, gamma=cfg.gamma, rng=rng
+    )
+
+
+def _build_thompson(arm: Arm, cfg: BanditConfig, _n: int, rng: np.random.Generator) -> BaseArmModel:
+    from coba.policies.thompson import ThompsonArmModel
+
+    return ThompsonArmModel(arm, rng=rng)
+
+
+def _build_ucb1(arm: Arm, cfg: BanditConfig, _n: int, rng: np.random.Generator) -> BaseArmModel:
+    from coba.policies.ucb1 import UCB1ArmModel
+
+    return UCB1ArmModel(arm, alpha=cfg.alpha, rng=rng)
+
+
+def _build_epsgreedy(
+    arm: Arm, cfg: BanditConfig, _n: int, rng: np.random.Generator
+) -> BaseArmModel:
+    from coba.policies.sklearn_models import EpsilonGreedyArmModel
+
+    return EpsilonGreedyArmModel(
+        arm, rng=rng, base_estimator=cfg.base_estimator, epsilon=cfg.epsilon
+    )
+
+
+def _build_bootstrapped_ts(
+    arm: Arm, cfg: BanditConfig, _n: int, rng: np.random.Generator
+) -> BaseArmModel:
+    from coba.policies.sklearn_models import BootstrappedTSArmModel
+
+    return BootstrappedTSArmModel(
+        arm, rng=rng, base_estimator=cfg.base_estimator, n_bootstraps=cfg.n_bootstraps
+    )
+
+
+def _build_bootstrapped_ucb(
+    arm: Arm, cfg: BanditConfig, _n: int, rng: np.random.Generator
+) -> BaseArmModel:
+    from coba.policies.sklearn_models import BootstrappedUCBArmModel
+
+    return BootstrappedUCBArmModel(
+        arm, rng=rng, base_estimator=cfg.base_estimator, n_bootstraps=cfg.n_bootstraps
+    )
+
+
+def _build_logistic_ucb(
+    arm: Arm, cfg: BanditConfig, n_features: int, rng: np.random.Generator
+) -> BaseArmModel:
+    from coba.policies.logistic import LogisticUCBArmModel
+
+    return LogisticUCBArmModel(
+        arm, n_features, alpha=cfg.alpha, l2_lambda=cfg.l2_lambda, gamma=cfg.gamma, rng=rng
+    )
+
+
+def _build_logistic_ts(
+    arm: Arm, cfg: BanditConfig, n_features: int, rng: np.random.Generator
+) -> BaseArmModel:
+    from coba.policies.logistic import LogisticTSArmModel
+
+    return LogisticTSArmModel(
+        arm, n_features, v_sq=cfg.v_sq, l2_lambda=cfg.l2_lambda, gamma=cfg.gamma, rng=rng
+    )
+
+
+def _build_gpucb(arm: Arm, cfg: BanditConfig, _n: int, rng: np.random.Generator) -> BaseArmModel:
+    from coba.policies.gp_ucb import GPUCBArmModel
+
+    return GPUCBArmModel(
+        arm,
+        beta=cfg.gp_beta,
+        length_scale=cfg.gp_length_scale,
+        noise_var=cfg.gp_noise_var,
+        max_obs=cfg.gp_max_obs,
+        rng=rng,
+    )
+
+
+def _build_softmax(
+    arm: Arm, cfg: BanditConfig, n_features: int, rng: np.random.Generator
+) -> BaseArmModel:
+    from coba.policies.softmax import SoftmaxArmModel
+
+    return SoftmaxArmModel(
+        arm, n_features, tau=cfg.softmax_tau, l2_lambda=cfg.l2_lambda, gamma=cfg.gamma, rng=rng
+    )
+
+
+def _build_linucb_sw(
+    arm: Arm, cfg: BanditConfig, n_features: int, rng: np.random.Generator
+) -> BaseArmModel:
+    from coba.policies.linucb_sw import SlidingWindowLinUCBArmModel
+
+    return SlidingWindowLinUCBArmModel(
+        arm,
+        n_features,
+        window_size=cfg.linucb_sw_window,
+        alpha=cfg.alpha,
+        l2_lambda=cfg.l2_lambda,
+        gamma=cfg.gamma,
+        rng=rng,
+    )
+
+
+def _build_rf_ucb(arm: Arm, cfg: BanditConfig, _n: int, rng: np.random.Generator) -> BaseArmModel:
+    from coba.policies.tree_ensemble import RandomForestUCBArmModel
+
+    return RandomForestUCBArmModel(
+        arm,
+        rng=rng,
+        alpha=cfg.alpha,
+        n_estimators=cfg.rf_n_estimators,
+        max_depth=cfg.rf_max_depth,
+        min_samples_leaf=cfg.rf_min_samples_leaf,
+        max_obs=cfg.rf_max_obs,
+        min_uncertainty=cfg.rf_min_uncertainty,
+    )
+
+
+def _build_rf_ts(arm: Arm, cfg: BanditConfig, _n: int, rng: np.random.Generator) -> BaseArmModel:
+    from coba.policies.tree_ensemble import RandomForestTSArmModel
+
+    return RandomForestTSArmModel(
+        arm,
+        rng=rng,
+        n_estimators=cfg.rf_n_estimators,
+        max_depth=cfg.rf_max_depth,
+        min_samples_leaf=cfg.rf_min_samples_leaf,
+        max_obs=cfg.rf_max_obs,
+        min_uncertainty=cfg.rf_min_uncertainty,
+    )
+
+
+_POLICY_REGISTRY: dict[PolicyType, _PolicyBuilder] = {
+    PolicyType.LIN_UCB: _build_linucb,
+    PolicyType.LIN_TS: _build_lints,
+    PolicyType.THOMPSON: _build_thompson,
+    PolicyType.UCB1: _build_ucb1,
+    PolicyType.EPSILON_GREEDY: _build_epsgreedy,
+    PolicyType.BOOTSTRAPPED_TS: _build_bootstrapped_ts,
+    PolicyType.BOOTSTRAPPED_UCB: _build_bootstrapped_ucb,
+    PolicyType.LOGISTIC_UCB: _build_logistic_ucb,
+    PolicyType.LOGISTIC_TS: _build_logistic_ts,
+    PolicyType.GP_UCB: _build_gpucb,
+    PolicyType.SOFTMAX: _build_softmax,
+    PolicyType.LIN_UCB_SW: _build_linucb_sw,
+    PolicyType.RANDOM_FOREST_UCB: _build_rf_ucb,
+    PolicyType.RANDOM_FOREST_TS: _build_rf_ts,
+}
+
+
 def _build_model_for_arm(
     arm: Arm,
     cfg: BanditConfig,
@@ -47,34 +224,19 @@ def _build_model_for_arm(
     shared_ridge: "Any | None" = None,
     neural_backbone: "Any | None" = None,
 ) -> BaseArmModel:
-    """Registry-based factory: return one BaseArmModel for a single arm.
+    """Registry-based factory: look up the policy builder and delegate.
 
-    Adding a new policy only requires registering an entry in ``_POLICY_REGISTRY``
-    at module load time — no ``match`` statement surgery needed.
+    NEURAL_LINEAR and LIN_UCB_HYBRID are handled first because they need extra
+    dependencies (backbone / shared ridge).  Every other policy is dispatched
+    through ``_POLICY_REGISTRY``.
     """
-    # Lazy imports keep module-level load time low and avoid circular imports.
-    from coba.policies.gp_ucb import GPUCBArmModel
-    from coba.policies.lin_ucb_hybrid import LinUCBHybridArmModel
-    from coba.policies.linucb import LinUCBArmModel
-    from coba.policies.linucb_sw import SlidingWindowLinUCBArmModel
-    from coba.policies.lin_ts import LinTSArmModel
-    from coba.policies.logistic import LogisticTSArmModel, LogisticUCBArmModel
-    from coba.policies.neural_linear import NeuralLinearArmModel
-    from coba.policies.sklearn_models import (
-        BootstrappedTSArmModel,
-        BootstrappedUCBArmModel,
-        EpsilonGreedyArmModel,
-    )
-    from coba.policies.softmax import SoftmaxArmModel
-    from coba.policies.thompson import ThompsonArmModel
-    from coba.policies.tree_ensemble import RandomForestTSArmModel, RandomForestUCBArmModel
-    from coba.policies.ucb1 import UCB1ArmModel
-
     p = cfg.policy
 
     if p == PolicyType.NEURAL_LINEAR:
         if neural_backbone is None:
             raise ValueError("neural_backbone must be provided for NEURAL_LINEAR policy")
+        from coba.policies.neural_linear import NeuralLinearArmModel
+
         return NeuralLinearArmModel(
             arm,
             backbone=neural_backbone,
@@ -83,9 +245,12 @@ def _build_model_for_arm(
             gamma=cfg.gamma,
             rng=rng,
         )
+
     if p == PolicyType.LIN_UCB_HYBRID:
         if shared_ridge is None:
             raise ValueError("shared_ridge must be provided for LIN_UCB_HYBRID policy")
+        from coba.policies.lin_ucb_hybrid import LinUCBHybridArmModel
+
         return LinUCBHybridArmModel(
             arm,
             n_shared=cfg.n_shared_features,
@@ -96,116 +261,11 @@ def _build_model_for_arm(
             rng=rng,
             gamma=cfg.gamma,
         )
-    if p == PolicyType.LIN_UCB:
-        return LinUCBArmModel(
-            arm,
-            n_features,
-            alpha=cfg.alpha,
-            l2_lambda=cfg.l2_lambda,
-            rng=rng,
-            gamma=cfg.gamma,
-        )
-    if p == PolicyType.LIN_TS:
-        return LinTSArmModel(
-            arm,
-            n_features,
-            v_sq=cfg.v_sq,
-            l2_lambda=cfg.l2_lambda,
-            rng=rng,
-            gamma=cfg.gamma,
-        )
-    if p == PolicyType.THOMPSON:
-        return ThompsonArmModel(arm, rng=rng)
-    if p == PolicyType.UCB1:
-        return UCB1ArmModel(arm, alpha=cfg.alpha, rng=rng)
-    if p == PolicyType.EPSILON_GREEDY:
-        return EpsilonGreedyArmModel(
-            arm,
-            rng=rng,
-            base_estimator=cfg.base_estimator,
-            epsilon=cfg.epsilon,
-        )
-    if p == PolicyType.BOOTSTRAPPED_TS:
-        return BootstrappedTSArmModel(
-            arm,
-            rng=rng,
-            base_estimator=cfg.base_estimator,
-            n_bootstraps=cfg.n_bootstraps,
-        )
-    if p == PolicyType.BOOTSTRAPPED_UCB:
-        return BootstrappedUCBArmModel(
-            arm,
-            rng=rng,
-            base_estimator=cfg.base_estimator,
-            n_bootstraps=cfg.n_bootstraps,
-        )
-    if p == PolicyType.LOGISTIC_UCB:
-        return LogisticUCBArmModel(
-            arm,
-            n_features,
-            alpha=cfg.alpha,
-            l2_lambda=cfg.l2_lambda,
-            rng=rng,
-            gamma=cfg.gamma,
-        )
-    if p == PolicyType.LOGISTIC_TS:
-        return LogisticTSArmModel(
-            arm,
-            n_features,
-            v_sq=cfg.v_sq,
-            l2_lambda=cfg.l2_lambda,
-            rng=rng,
-            gamma=cfg.gamma,
-        )
-    if p == PolicyType.GP_UCB:
-        return GPUCBArmModel(
-            arm,
-            beta=cfg.gp_beta,
-            length_scale=cfg.gp_length_scale,
-            noise_var=cfg.gp_noise_var,
-            max_obs=cfg.gp_max_obs,
-            rng=rng,
-        )
-    if p == PolicyType.SOFTMAX:
-        return SoftmaxArmModel(
-            arm,
-            n_features,
-            tau=cfg.softmax_tau,
-            l2_lambda=cfg.l2_lambda,
-            gamma=cfg.gamma,
-            rng=rng,
-        )
-    if p == PolicyType.LIN_UCB_SW:
-        return SlidingWindowLinUCBArmModel(
-            arm,
-            n_features,
-            window_size=cfg.linucb_sw_window,
-            alpha=cfg.alpha,
-            l2_lambda=cfg.l2_lambda,
-            rng=rng,
-        )
-    if p == PolicyType.RANDOM_FOREST_UCB:
-        return RandomForestUCBArmModel(
-            arm,
-            rng=rng,
-            alpha=cfg.alpha,
-            n_estimators=cfg.rf_n_estimators,
-            max_depth=cfg.rf_max_depth,
-            min_samples_leaf=cfg.rf_min_samples_leaf,
-            max_obs=cfg.rf_max_obs,
-            min_uncertainty=cfg.rf_min_uncertainty,
-        )
-    if p == PolicyType.RANDOM_FOREST_TS:
-        return RandomForestTSArmModel(
-            arm,
-            rng=rng,
-            n_estimators=cfg.rf_n_estimators,
-            max_depth=cfg.rf_max_depth,
-            min_samples_leaf=cfg.rf_min_samples_leaf,
-            max_obs=cfg.rf_max_obs,
-            min_uncertainty=cfg.rf_min_uncertainty,
-        )
-    raise ValueError(f"Unsupported policy: {p}")
+
+    builder = _POLICY_REGISTRY.get(p)
+    if builder is None:
+        raise ValueError(f"Unsupported policy: {p}")
+    return builder(arm, cfg, n_features, rng)
 
 
 def _build_arm_models(
@@ -254,8 +314,6 @@ class ClusterRouter:
     ) -> None:
         cfg = config or BanditConfig()
 
-        if cfg.n_clusters < 1:
-            raise ValueError("n_clusters must be at least 1.")
         if not arms:
             raise ValueError("arms list cannot be empty.")
 

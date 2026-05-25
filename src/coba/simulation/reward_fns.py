@@ -21,25 +21,32 @@ def _sigmoid(x: float) -> float:
     return 1.0 / (1.0 + np.exp(-np.clip(x, -30, 30)))
 
 
-def categorical_reward(rates: dict[str, float], fallback: float = 0.3) -> RewardFn:
+def categorical_reward(
+    rates: dict[str, float], fallback: float = 0.3, rng: np.random.Generator | None = None
+) -> "RewardFn":
     """Stochastic binary reward drawn from Bernoulli(rate).
 
     Args:
         rates: Dict mapping arm names to success probabilities (0–1).
         fallback: Default rate for unknown arms.
+        rng: Optional deterministic random generator. When None, uses
+             np.random (global, non-reproducible).
 
     Returns:
         Function (arm, context) → 0 or 1. Context is ignored.
     """
+    _rng = rng or np.random.default_rng()
 
     def fn(arm: str, context: np.ndarray) -> float:
         p = np.clip(rates.get(arm, fallback), 0.0, 1.0)
-        return float(np.random.binomial(1, p))
+        return float(_rng.binomial(1, p))
 
     return fn
 
 
-def linear_reward(weights: dict[str, list[float]], fallback: float = 0.4) -> RewardFn:
+def linear_reward(
+    weights: dict[str, list[float]], fallback: float = 0.4, rng: np.random.Generator | None = None
+) -> RewardFn:
     """Sigmoid of a linear combination of context features.
 
     Returns a stochastic binary reward: Bernoulli(sigmoid(w · context)).
@@ -47,19 +54,22 @@ def linear_reward(weights: dict[str, list[float]], fallback: float = 0.4) -> Rew
     Args:
         weights: Dict mapping arm names to feature weight vectors.
         fallback: Default success rate for unknown arms or mismatched dims.
+        rng: Optional deterministic random generator. When None, uses
+             np.random (global, non-reproducible).
 
     Returns:
         Function (arm, context) → 0 or 1.
     """
     w_np = {arm: np.array(w, dtype=np.float64) for arm, w in weights.items()}
+    _rng = rng or np.random.default_rng()
 
     def fn(arm: str, context: np.ndarray) -> float:
         w = w_np.get(arm)
         if w is None or len(w) != len(context):
-            return float(np.random.binomial(1, fallback))
+            return float(_rng.binomial(1, fallback))
         logit = float(np.dot(w, context))
         prob = _sigmoid(logit)
-        return float(np.random.binomial(1, prob))
+        return float(_rng.binomial(1, prob))
 
     return fn
 
