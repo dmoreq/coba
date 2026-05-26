@@ -45,7 +45,7 @@ from coba.evaluation import (
 )
 from coba.offpolicy import DoublyRobustUpdater, IPSConfig, IPSEstimator
 from coba.router import ClusterRouter
-from coba.schemas import BanditDecision, BanditStats
+from coba.schemas import BanditDecision, BanditStats, ScoreBreakdown
 from coba.types import Arm, PolicyType
 
 
@@ -360,10 +360,15 @@ class ClusterBandit:
             n=len(self.arms),
         )
         self._constraints.record_decision()
+        all_scores = {str(a): 0.0 for a in self.arms}
         return BanditDecision(
             chosen_arm=arm,
             score=0.0,
-            all_scores={str(a): 0.0 for a in self.arms},
+            all_scores=all_scores,
+            score_breakdown={
+                str(a): ScoreBreakdown(score=0.0, mean_estimate=0.0, confidence_width=0.0)
+                for a in self.arms
+            },
         )
 
     def _select_arm(
@@ -400,6 +405,44 @@ class ClusterBandit:
             all_scores=all_scores_str,
         )
 
+    def _build_score_breakdown(
+        self, context: np.ndarray, all_scores: dict[Any, float]
+    ) -> dict[str, ScoreBreakdown]:
+        """Build per-arm score breakdown for the routed cluster."""
+        model_state = self._router.arm_model_state(context)
+        arms_state = model_state["arms"]
+        breakdown: dict[str, ScoreBreakdown] = {}
+        for arm, score in all_scores.items():
+            state = arms_state.get(str(arm), {})
+            breakdown[str(arm)] = ScoreBreakdown(
+                score=float(score),
+                mean_estimate=state.get("mean_estimate"),
+                confidence_width=state.get("confidence_width"),
+                is_fitted=bool(state.get("is_fitted", False)),
+                n_obs=state.get("n_obs"),
+            )
+        return breakdown
+
+    def _decorate_decision(self, context: np.ndarray, decision: BanditDecision) -> BanditDecision:
+        """Populate observability fields on a selected decision."""
+        if decision.chosen_arm is None:
+            return decision
+
+        mean_est, ucb_width = self._router.score_decomposed_for_arm(context, decision.chosen_arm)
+        updates: dict = {
+            "mean_estimate": mean_est,
+            "confidence_width": ucb_width,
+            "score_breakdown": self._build_score_breakdown(context, decision.all_scores),
+        }
+
+        if self._config.policy == PolicyType.EPSILON_GREEDY:
+            cluster_idx, _scaled_ctx = self._router._route(context)
+            model = self._router._cluster_bandits[cluster_idx].get(decision.chosen_arm)
+            if model is not None and hasattr(model, "last_was_random"):
+                updates["was_random"] = model.last_was_random
+
+        return decision.model_copy(update=updates)
+
     def decide(
         self,
         context: np.ndarray,
@@ -428,22 +471,7 @@ class ClusterBandit:
         all_scores = self._router.score_all(x)
         candidate_scores = self._constraints.filter_candidates(all_scores, self._arm_stats)
         decision = self._select_arm(candidate_scores, all_scores, min_confidence_gap)
-
-        if decision.chosen_arm is None:
-            return decision
-
-        # ── Populate score decomposition for the chosen arm ───────────────────
-        mean_est, ucb_width = self._router.score_decomposed_for_arm(x, decision.chosen_arm)
-        updates: dict = {"mean_estimate": mean_est, "confidence_width": ucb_width}
-
-        # ── Populate was_random for epsilon-greedy ────────────────────────────
-        if self._config.policy == PolicyType.EPSILON_GREEDY:
-            cluster_idx, scaled_ctx = self._router._route(x)
-            model = self._router._cluster_bandits[cluster_idx].get(decision.chosen_arm)
-            if model is not None and hasattr(model, "last_was_random"):
-                updates["was_random"] = model.last_was_random
-
-        return decision.model_copy(update=updates)
+        return self._decorate_decision(x, decision)
 
     def decide_top_k(self, context: np.ndarray, k: int) -> list[tuple[Arm, float]]:
         """Return the top-k arms ranked by score for the given context.
@@ -502,23 +530,15 @@ class ClusterBandit:
                 f"contexts feature mismatch: expected {self.n_features}, got {contexts_arr.shape[1]}"
             )
         if not self._router.is_fitted:
-            # Cold start: return first arm for all rows
-            for _ in range(len(contexts_arr)):
-                self._constraints.record_decision()
-            return [
-                BanditDecision(
-                    chosen_arm=self.arms[0],
-                    score=0.0,
-                    all_scores={str(a): 0.0 for a in self.arms},
-                )
-                for _ in range(len(contexts_arr))
-            ]
+            # Cold start: mirror decide() and round-robin all rows.
+            return [self._cold_start_decision() for _ in range(len(contexts_arr))]
 
         decisions: list[BanditDecision] = []
         for x in contexts_arr:
             all_scores = self._router.score_all(x)
             candidate_scores = self._constraints.filter_candidates(all_scores, self._arm_stats)
-            decisions.append(self._select_arm(candidate_scores, all_scores, min_confidence_gap))
+            decision = self._select_arm(candidate_scores, all_scores, min_confidence_gap)
+            decisions.append(self._decorate_decision(x, decision))
         return decisions
 
     def _update_arm_stats(self, arm: Arm, reward: float) -> None:
@@ -700,6 +720,22 @@ class ClusterBandit:
     def get_stats(self) -> list[BanditStats]:
         """Return per-arm statistics for monitoring dashboards."""
         return list(self._arm_stats.values())
+
+    def get_model_state(self, context: np.ndarray) -> dict:
+        """Return routed-cluster per-arm model internals for debugging dashboards.
+
+        This intentionally exposes a stable, JSON-friendly subset of internal
+        state so downstream tools can inspect coba directly instead of keeping
+        divergent shadow copies.
+        """
+        x = self._validate_context_vector(context)
+        state = self._router.arm_model_state(x)
+        return {
+            "policy": self.policy.value,
+            "is_fitted": self.is_fitted,
+            "cluster": state["cluster"],
+            "arms": state["arms"],
+        }
 
     def evaluate_rejection_sampling(
         self, contexts: np.ndarray, decisions: np.ndarray, rewards: np.ndarray

@@ -80,25 +80,29 @@ def _build_ucb1(arm: Arm, cfg: BanditConfig, _n: int, rng: np.random.Generator) 
     return UCB1ArmModel(arm, alpha=cfg.alpha, rng=rng)
 
 
+def _default_sklearn_estimator(cfg: BanditConfig) -> Any:
+    """Return a partial_fit-compatible default estimator for sklearn policies."""
+    from sklearn.linear_model import SGDRegressor
+
+    # SGDRegressor implements partial_fit + predict, making it a valid
+    # sklearn-compatible estimator for EpsilonGreedy / bootstrapped models.
+    # alpha=l2_lambda mirrors ridge-style L2 regularisation.
+    return SGDRegressor(
+        loss="squared_error",
+        penalty="l2",
+        alpha=cfg.l2_lambda,
+        learning_rate="invscaling",
+        eta0=0.01,
+        random_state=int(cfg.seed) if cfg.seed is not None else None,
+    )
+
+
 def _build_epsgreedy(
     arm: Arm, cfg: BanditConfig, n_features: int, rng: np.random.Generator
 ) -> BaseArmModel:
     from coba.policies.sklearn_models import EpsilonGreedyArmModel
-    from sklearn.linear_model import SGDRegressor
 
-    base = cfg.base_estimator
-    if base is None:
-        # SGDRegressor implements partial_fit + predict, making it a valid
-        # sklearn-compatible estimator for EpsilonGreedyArmModel.
-        # alpha=l2_lambda mirrors the ridge-style L2 regularisation.
-        base = SGDRegressor(
-            loss="squared_error",
-            penalty="l2",
-            alpha=cfg.l2_lambda,
-            learning_rate="invscaling",
-            eta0=0.01,
-            random_state=int(cfg.seed) if cfg.seed is not None else None,
-        )
+    base = cfg.base_estimator or _default_sklearn_estimator(cfg)
     return EpsilonGreedyArmModel(arm, rng=rng, base_estimator=base, epsilon=cfg.epsilon)
 
 
@@ -107,9 +111,7 @@ def _build_bootstrapped_ts(
 ) -> BaseArmModel:
     from coba.policies.sklearn_models import BootstrappedTSArmModel
 
-    base = cfg.base_estimator
-    if base is None:
-        base = RidgeRegression(n_features=n_features, l2_lambda=cfg.l2_lambda)
+    base = cfg.base_estimator or _default_sklearn_estimator(cfg)
     return BootstrappedTSArmModel(arm, rng=rng, base_estimator=base, n_bootstraps=cfg.n_bootstraps)
 
 
@@ -118,9 +120,7 @@ def _build_bootstrapped_ucb(
 ) -> BaseArmModel:
     from coba.policies.sklearn_models import BootstrappedUCBArmModel
 
-    base = cfg.base_estimator
-    if base is None:
-        base = RidgeRegression(n_features=n_features, l2_lambda=cfg.l2_lambda)
+    base = cfg.base_estimator or _default_sklearn_estimator(cfg)
     return BootstrappedUCBArmModel(arm, rng=rng, base_estimator=base, n_bootstraps=cfg.n_bootstraps)
 
 
@@ -599,22 +599,9 @@ class ClusterRouter:
             scores[arm] = self._score_fn(model, scaled_ctx)
         return scores
 
-    def score_decomposed_for_arm(self, context: np.ndarray, arm: Arm) -> tuple[float, float]:
-        """Return (mean_estimate, confidence_width) for one arm in its routed cluster.
-
-        Used by ``ClusterBandit.decide()`` to populate ``BanditDecision.mean_estimate``
-        and ``BanditDecision.confidence_width`` without an extra full ``score_all`` pass.
-
-        Args:
-            context: Raw feature vector already validated by the caller.
-            arm: The arm whose model should be queried.
-        Returns:
-            Tuple of (mean_estimate, confidence_width).  Both are 0.0 when the
-            model is not yet fitted or does not implement ``score_decomposed``.
-        """
-        cluster_idx, scaled_ctx = self._route(context)
-        model = self._cluster_bandits[cluster_idx].get(arm)
-        if model is None or not model.is_fitted:
+    def _model_components(self, model: BaseArmModel, scaled_ctx: np.ndarray) -> tuple[float, float]:
+        """Return score components for one already-routed model."""
+        if not model.is_fitted:
             return 0.0, 0.0
         if hasattr(model, "score_decomposed"):
             if self.policy == PolicyType.UCB1:
@@ -622,8 +609,36 @@ class ClusterRouter:
             else:
                 mean, bonus = model.score_decomposed(scaled_ctx)
             return float(mean), float(bonus)
-        # Fallback: return scalar score as mean, 0.0 as bonus
-        return float(self._score_fn(model, scaled_ctx)), 0.0
+        if hasattr(model, "mean_reward"):
+            return float(model.mean_reward), 0.0
+        return 0.0, 0.0
+
+    def score_decomposed_for_arm(self, context: np.ndarray, arm: Arm) -> tuple[float, float]:
+        """Return (mean_estimate, confidence_width) for one arm in its routed cluster."""
+        cluster_idx, scaled_ctx = self._route(context)
+        model = self._cluster_bandits[cluster_idx].get(arm)
+        if model is None:
+            return 0.0, 0.0
+        return self._model_components(model, scaled_ctx)
+
+    def arm_model_state(self, context: np.ndarray) -> dict:
+        """Return routed cluster and per-arm model state for observability."""
+        cluster_idx, scaled_ctx = self._route(context)
+        arm_models = self._cluster_bandits[cluster_idx]
+        arms: dict[str, dict] = {}
+        for arm, model in arm_models.items():
+            mean, bonus = self._model_components(model, scaled_ctx)
+            arms[str(arm)] = {
+                "arm": arm,
+                "is_fitted": bool(model.is_fitted),
+                "n_obs": getattr(model, "n_obs", None),
+                "mean_estimate": mean,
+                "confidence_width": bonus,
+            }
+            if hasattr(model, "beta"):
+                beta = model.beta
+                arms[str(arm)]["beta"] = beta.tolist() if hasattr(beta, "tolist") else beta
+        return {"cluster": cluster_idx, "arms": arms}
 
     def update(
         self,

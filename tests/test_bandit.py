@@ -31,8 +31,31 @@ class TestClusterBanditDecide:
         ctx = make_context()
         decision = bandit.decide(ctx)
         assert isinstance(decision, BanditDecision)
-        # Cold start: returns first arm
+        # Cold start starts at first arm, then round-robins on subsequent calls.
         assert decision.chosen_arm == ARMS[0]
+
+    def test_decide_batch_before_fit_round_robins_arms(self):
+        bandit = make_bandit(fitted=False)
+        contexts = np.array([make_context() for _ in range(len(ARMS))])
+        decisions = bandit.decide_batch(contexts)
+        assert [d.chosen_arm for d in decisions] == ARMS
+
+    def test_decision_includes_score_breakdown_for_all_arms(self):
+        bandit = make_bandit(fitted=True, policy=PolicyType.UCB1)
+        decision = bandit.decide(make_context())
+        assert set(decision.score_breakdown.keys()) == {str(a) for a in ARMS}
+        chosen = str(decision.chosen_arm)
+        assert decision.score_breakdown[chosen].score == pytest.approx(decision.score)
+        assert decision.score_breakdown[chosen].mean_estimate is not None
+        assert decision.score_breakdown[chosen].confidence_width is not None
+
+    def test_get_model_state_exposes_routed_arm_state(self):
+        bandit = make_bandit(fitted=True, policy=PolicyType.LIN_UCB)
+        state = bandit.get_model_state(make_context())
+        assert state["policy"] == PolicyType.LIN_UCB.value
+        assert state["cluster"] >= 0
+        assert set(state["arms"].keys()) == {str(a) for a in ARMS}
+        assert all("n_obs" in arm_state for arm_state in state["arms"].values())
 
     def test_decide_after_fit_returns_valid_arm(self):
         bandit = make_bandit(fitted=True)

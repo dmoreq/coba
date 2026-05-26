@@ -114,6 +114,40 @@ def test_cluster_bandit_with_epsilon_greedy(base_estimator):
     bandit.update(np.array([1.0, 2.0]), 1.0, 0.7)
 
 
+def test_cluster_bandit_bootstrapped_ts_default_estimator_online_update():
+    """ClusterBandit BOOTSTRAPPED_TS should work without caller-supplied estimator."""
+    bandit = ClusterBandit(
+        arms=[1.0, 1.1],
+        n_features=2,
+        policy=PolicyType.BOOTSTRAPPED_TS,
+        n_clusters=1,
+        n_bootstraps=5,
+        seed=42,
+        scale_contexts=False,
+    )
+    ctx = np.array([1.0, 2.0])
+    decision = bandit.decide(ctx)
+    bandit.update(ctx, decision.chosen_arm, 0.7)
+    assert bandit.get_stats()[0].n_pulls + bandit.get_stats()[1].n_pulls == 1
+
+
+def test_cluster_bandit_bootstrapped_ucb_default_estimator_online_update():
+    """ClusterBandit BOOTSTRAPPED_UCB should work without caller-supplied estimator."""
+    bandit = ClusterBandit(
+        arms=[1.0, 1.1],
+        n_features=2,
+        policy=PolicyType.BOOTSTRAPPED_UCB,
+        n_clusters=1,
+        n_bootstraps=5,
+        seed=42,
+        scale_contexts=False,
+    )
+    ctx = np.array([1.0, 2.0])
+    decision = bandit.decide(ctx)
+    bandit.update(ctx, decision.chosen_arm, 0.7)
+    assert bandit.get_stats()[0].n_pulls + bandit.get_stats()[1].n_pulls == 1
+
+
 def test_cluster_bandit_with_bootstrapped_ts(base_estimator):
     bandit = ClusterBandit(
         arms=[1.0, 1.1],

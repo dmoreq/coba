@@ -9,12 +9,13 @@ A generic, high-performance contextual bandit library combining:
 from coba.bandit import ClusterBandit
 from coba.drift import PageHinkleyDetector
 from coba.normalizer import RewardNormalizer
-from coba.schemas import BanditDecision
+from coba.schemas import BanditDecision, ScoreBreakdown
 from coba.types import Arm, PolicyType
 
 __all__ = [
     "ClusterBandit",
     "BanditDecision",
+    "ScoreBreakdown",
     "PageHinkleyDetector",
     "RewardNormalizer",
     "Arm",

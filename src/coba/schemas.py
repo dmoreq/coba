@@ -11,6 +11,26 @@ from pydantic import BaseModel, Field
 from coba.types import Arm
 
 
+class ScoreBreakdown(BaseModel):
+    """Per-arm decomposition of a decision score."""
+
+    score: float = Field(..., description="Final arm score used for ranking.")
+    mean_estimate: float | None = Field(
+        default=None,
+        description="Expected reward / exploitation component when available.",
+    )
+    confidence_width: float | None = Field(
+        default=None,
+        description="Exploration bonus / uncertainty component when available.",
+    )
+    is_fitted: bool = Field(default=False, description="Whether the routed arm model is fitted.")
+    n_obs: int | None = Field(
+        default=None, description="Observations seen by the routed arm model."
+    )
+
+    model_config = {"frozen": True}
+
+
 class BanditDecision(BaseModel):
     """Output of the bandit's decide() call."""
 
@@ -39,6 +59,11 @@ class BanditDecision(BaseModel):
     confidence_width: float | None = Field(
         default=None,
         description="Exploration bonus component of the score (UCB width, alpha * sqrt(x A_inv x)).",
+    )
+
+    score_breakdown: dict[str, ScoreBreakdown] = Field(
+        default_factory=dict,
+        description="Per-arm score decomposition keyed by stringified arm identifier.",
     )
 
     was_random: bool = Field(

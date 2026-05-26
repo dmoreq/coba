@@ -29,8 +29,8 @@ class TestClusterBanditDecideEdgeCases:
         contexts = np.random.default_rng(0).standard_normal((5, 3))
         decisions = bandit.decide_batch(contexts)
         assert len(decisions) == 5
+        assert [d.chosen_arm for d in decisions] == [*ARMS, ARMS[0]]
         for d in decisions:
-            assert d.chosen_arm == ARMS[0]
             assert not d.abstained
 
     def test_decide_batch_with_abstention(self) -> None:
