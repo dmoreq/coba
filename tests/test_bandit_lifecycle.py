@@ -44,12 +44,16 @@ class TestStreamingLifecycle:
         bandit = ClusterBandit(arms=ARMS, n_features=3, n_clusters=10, seed=0)
         rng = np.random.default_rng(0)
 
-        # Cold start — before enough updates to bootstrap, first arm is returned
+        # Cold start — round-robin through all arms before auto-bootstrap fires
+        cold_start_arms: list = []
         for i in range(3):
             ctx = rng.standard_normal(3)
             decision = bandit.decide(ctx)
-            assert decision.chosen_arm == ARMS[0]
+            assert decision.chosen_arm in ARMS
+            cold_start_arms.append(decision.chosen_arm)
             bandit.update(context=ctx, arm=decision.chosen_arm, reward=float(rng.uniform(0, 1)))
+        # Round-robin means first 3 decisions hit arms[0], arms[1], arms[2]
+        assert cold_start_arms == list(ARMS[:3])
 
         # Continue updating past the auto-bootstrap threshold
         for i in range(20):

@@ -41,6 +41,14 @@ class BanditDecision(BaseModel):
         description="Exploration bonus component of the score (UCB width, alpha * sqrt(x A_inv x)).",
     )
 
+    was_random: bool = Field(
+        default=False,
+        description=(
+            "True when the arm was selected by random exploration "
+            "(epsilon-greedy policy) rather than by exploitation."
+        ),
+    )
+
     model_config = {"frozen": True}
 
 

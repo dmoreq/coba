@@ -274,6 +274,11 @@ class ClusterBandit:
         self._arm_stats: dict[Arm, BanditStats] = {arm: BanditStats(arm=arm) for arm in self.arms}
 
         # Extracted concerns
+        # Round-robin counter for cold-start arm selection.
+        # Ensures all arms are explored before the cluster model is fitted,
+        # which is critical for LinUCB (bounded scores → arm A would win forever).
+        self._cold_start_counter: int = 0
+
         self._drift = _DriftManager(
             enable=cfg.enable_drift_detection,
             arms=self.arms,
@@ -339,11 +344,24 @@ class ClusterBandit:
     # ------------------------------------------------------------------
 
     def _cold_start_decision(self) -> BanditDecision:
-        """Return first arm with zero scores when the router is not yet fitted."""
-        logger.debug("Bandit not fitted yet — returning base arm for cold start")
+        """Round-robin through arms when the router is not yet fitted.
+
+        Hard-coding arms[0] would starve LinUCB: its bounded score means arm A
+        outscores unfitted B, C … permanently.  UCB1 avoids this via inf for
+        zero-pull arms, but LinUCB does not.  Round-robin guarantees every arm
+        receives at least one sample before the real policy takes over.
+        """
+        arm = self.arms[self._cold_start_counter % len(self.arms)]
+        self._cold_start_counter += 1
+        logger.debug(
+            "Bandit not fitted yet — cold-start round-robin → {arm} ({idx}/{n})",
+            arm=arm,
+            idx=self._cold_start_counter,
+            n=len(self.arms),
+        )
         self._constraints.record_decision()
         return BanditDecision(
-            chosen_arm=self.arms[0],
+            chosen_arm=arm,
             score=0.0,
             all_scores={str(a): 0.0 for a in self.arms},
         )
@@ -409,7 +427,23 @@ class ClusterBandit:
             return self._cold_start_decision()
         all_scores = self._router.score_all(x)
         candidate_scores = self._constraints.filter_candidates(all_scores, self._arm_stats)
-        return self._select_arm(candidate_scores, all_scores, min_confidence_gap)
+        decision = self._select_arm(candidate_scores, all_scores, min_confidence_gap)
+
+        if decision.chosen_arm is None:
+            return decision
+
+        # ── Populate score decomposition for the chosen arm ───────────────────
+        mean_est, ucb_width = self._router.score_decomposed_for_arm(x, decision.chosen_arm)
+        updates: dict = {"mean_estimate": mean_est, "confidence_width": ucb_width}
+
+        # ── Populate was_random for epsilon-greedy ────────────────────────────
+        if self._config.policy == PolicyType.EPSILON_GREEDY:
+            cluster_idx, scaled_ctx = self._router._route(x)
+            model = self._router._cluster_bandits[cluster_idx].get(decision.chosen_arm)
+            if model is not None and hasattr(model, "last_was_random"):
+                updates["was_random"] = model.last_was_random
+
+        return decision.model_copy(update=updates)
 
     def decide_top_k(self, context: np.ndarray, k: int) -> list[tuple[Arm, float]]:
         """Return the top-k arms ranked by score for the given context.

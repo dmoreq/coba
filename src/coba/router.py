@@ -588,6 +588,32 @@ class ClusterRouter:
             scores[arm] = self._score_fn(model, scaled_ctx)
         return scores
 
+    def score_decomposed_for_arm(self, context: np.ndarray, arm: Arm) -> tuple[float, float]:
+        """Return (mean_estimate, confidence_width) for one arm in its routed cluster.
+
+        Used by ``ClusterBandit.decide()`` to populate ``BanditDecision.mean_estimate``
+        and ``BanditDecision.confidence_width`` without an extra full ``score_all`` pass.
+
+        Args:
+            context: Raw feature vector already validated by the caller.
+            arm: The arm whose model should be queried.
+        Returns:
+            Tuple of (mean_estimate, confidence_width).  Both are 0.0 when the
+            model is not yet fitted or does not implement ``score_decomposed``.
+        """
+        cluster_idx, scaled_ctx = self._route(context)
+        model = self._cluster_bandits[cluster_idx].get(arm)
+        if model is None or not model.is_fitted:
+            return 0.0, 0.0
+        if hasattr(model, "score_decomposed"):
+            if self.policy == PolicyType.UCB1:
+                mean, bonus = model.score_decomposed(scaled_ctx, total_pulls=self._total_pulls)  # type: ignore[call-arg]
+            else:
+                mean, bonus = model.score_decomposed(scaled_ctx)
+            return float(mean), float(bonus)
+        # Fallback: return scalar score as mean, 0.0 as bonus
+        return float(self._score_fn(model, scaled_ctx)), 0.0
+
     def update(
         self,
         context: np.ndarray,

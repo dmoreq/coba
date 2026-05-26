@@ -54,18 +54,30 @@ class EpsilonGreedyArmModel(BaseArmModel):
 
         self.model = copy.deepcopy(base_estimator)
         self.is_fitted = False
+        # Set to True when the most recent score() call selected by random
+        # exploration rather than exploitation.  Read by ClusterBandit.decide()
+        # to populate BanditDecision.was_random.
+        self.last_was_random: bool = False
 
     def score(self, x: np.ndarray) -> float:
-        """Returns the predicted reward, or a large value for exploration."""
+        """Returns the predicted reward, or a large value for exploration.
+
+        Sets ``self.last_was_random = True`` when the epsilon-greedy random
+        branch is taken so that ``ClusterBandit.decide()`` can propagate the
+        flag to ``BanditDecision.was_random``.
+        """
         if not self.is_fitted:
+            self.last_was_random = False  # cold-start, not epsilon exploration
             return _COLD_START_SCORE
 
         if self.rng.random() < self.epsilon:
             # Exploration: return a score above any observed prediction to force selection.
             # Using inf so the arm wins regardless of the estimator's output scale.
+            self.last_was_random = True
             return _COLD_START_SCORE
 
         # Exploitation: predict using the underlying model
+        self.last_was_random = False
         pred = self.model.predict(x.reshape(1, -1))[0]
         return float(pred)
 
