@@ -299,7 +299,7 @@ class ClusterBandit:
             raise ValueError(f"context must be a 1D feature vector, got shape={x.shape!r}")
         if x.shape[0] != self.n_features:
             raise ValueError(
-                f"context feature length mismatch: expected {self.n_features}, " f"got {x.shape[0]}"
+                f"context feature length mismatch: expected {self.n_features}, got {x.shape[0]}"
             )
         if not np.all(np.isfinite(x)):
             raise ValueError("context contains non-finite values")
@@ -320,7 +320,7 @@ class ClusterBandit:
             raise ValueError(f"contexts must be 2D, got shape={ctx.shape!r}")
         if ctx.shape[1] != self.n_features:
             raise ValueError(
-                f"contexts feature mismatch: expected {self.n_features}, " f"got {ctx.shape[1]}"
+                f"contexts feature mismatch: expected {self.n_features}, got {ctx.shape[1]}"
             )
         if not (len(ctx) == len(arm_arr) == len(rew)):
             raise ValueError("contexts, arms, and rewards must have the same length")

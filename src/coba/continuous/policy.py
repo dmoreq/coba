@@ -93,7 +93,7 @@ class CATSPolicy:
         x = np.asarray(context, dtype=np.float64)
         if x.ndim != 1 or x.shape[0] != self._n_features:
             raise ValueError(
-                f"context shape mismatch: expected ({self._n_features},), " f"got {x.shape}"
+                f"context shape mismatch: expected ({self._n_features},), got {x.shape}"
             )
         if not np.all(np.isfinite(x)):
             raise ValueError("context contains non-finite values")

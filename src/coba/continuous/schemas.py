@@ -38,8 +38,7 @@ class ContinuousDecision:
         """Validate decision fields."""
         if not (self.leaf_lo <= self.chosen_action <= self.leaf_hi):
             raise ValueError(
-                f"chosen_action {self.chosen_action} must be in "
-                f"[{self.leaf_lo}, {self.leaf_hi}]"
+                f"chosen_action {self.chosen_action} must be in [{self.leaf_lo}, {self.leaf_hi}]"
             )
         if self.propensity <= 0:
             raise ValueError(f"propensity must be > 0, got {self.propensity}")

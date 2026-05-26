@@ -104,7 +104,7 @@ class ContinuousBandit:
         x = np.asarray(context, dtype=np.float64)
         if x.ndim != 1 or x.shape[0] != self.n_features:
             raise ValueError(
-                f"context shape mismatch: expected ({self.n_features},), " f"got {x.shape}"
+                f"context shape mismatch: expected ({self.n_features},), got {x.shape}"
             )
         return self._policy.decide(x)
 
@@ -143,7 +143,7 @@ class ContinuousBandit:
         x = np.asarray(context, dtype=np.float64)
         if x.ndim != 1 or x.shape[0] != self.n_features:
             raise ValueError(
-                f"context shape mismatch: expected ({self.n_features},), " f"got {x.shape}"
+                f"context shape mismatch: expected ({self.n_features},), got {x.shape}"
             )
         self._policy.update(x, float(action), float(reward), float(propensity))
 
