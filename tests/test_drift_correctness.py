@@ -75,9 +75,9 @@ class TestPageHinkleyStatisticalProperties:
                 detections_high += 1
                 det_high.reset()
 
-        assert (
-            detections_low >= detections_high
-        ), f"delta=0.0: {detections_low}, delta=0.05: {detections_high}"
+        assert detections_low >= detections_high, (
+            f"delta=0.0: {detections_low}, delta=0.05: {detections_high}"
+        )
 
     def test_two_sided_both_directions_detectable(self) -> None:
         """First shift up, then shift down — both must be detected."""

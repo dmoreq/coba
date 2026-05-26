@@ -110,9 +110,9 @@ class TestDRCorrectness:
         config = IPSConfig(clip_min=1e-4, clip_max=10.0, use_dr=True)
         dr_rewards = IPSEstimator.compute_dr_rewards(base_rewards, propensities, rhat, config)
 
-        assert np.std(dr_rewards) < np.std(
-            ips_weighted_rewards
-        ), f"DR std={np.std(dr_rewards):.4f}, IPS std={np.std(ips_weighted_rewards):.4f}"
+        assert np.std(dr_rewards) < np.std(ips_weighted_rewards), (
+            f"DR std={np.std(dr_rewards):.4f}, IPS std={np.std(ips_weighted_rewards):.4f}"
+        )
 
     def test_ips_config_defaults(self) -> None:
         """Default IPSConfig has sensible values."""

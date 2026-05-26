@@ -205,9 +205,9 @@ class TestClusterRouterValidation:
                 n_features=3,
                 rng=np.random.default_rng(0),
             )
-            assert isinstance(
-                model, expected_class
-            ), f"Expected {expected_class.__name__} for {policy_type}, got {type(model).__name__}"
+            assert isinstance(model, expected_class), (
+                f"Expected {expected_class.__name__} for {policy_type}, got {type(model).__name__}"
+            )
 
     def test_unsupported_policy_raises(self) -> None:
         with pytest.raises(ValueError, match="Unsupported policy"):

@@ -68,9 +68,9 @@ class TestSlidingWindowLinUCB:
         # At minimum, the gap should differ
         sw_gap = sw_score_neg - sw_score_pos
         full_gap = full_score_neg - full_score_pos
-        assert (
-            sw_gap > full_gap
-        ), f"SW gap={sw_gap:.4f}, Full gap={full_gap:.4f} — SW didn't adapt faster"
+        assert sw_gap > full_gap, (
+            f"SW gap={sw_gap:.4f}, Full gap={full_gap:.4f} — SW didn't adapt faster"
+        )
 
     def test_window_size_of_one(self) -> None:
         """window_size=1: only the latest observation matters. Edge case."""
