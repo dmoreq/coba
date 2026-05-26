@@ -81,33 +81,36 @@ def _build_ucb1(arm: Arm, cfg: BanditConfig, _n: int, rng: np.random.Generator) 
 
 
 def _build_epsgreedy(
-    arm: Arm, cfg: BanditConfig, _n: int, rng: np.random.Generator
+    arm: Arm, cfg: BanditConfig, n_features: int, rng: np.random.Generator
 ) -> BaseArmModel:
     from coba.policies.sklearn_models import EpsilonGreedyArmModel
 
-    return EpsilonGreedyArmModel(
-        arm, rng=rng, base_estimator=cfg.base_estimator, epsilon=cfg.epsilon
-    )
+    base = cfg.base_estimator
+    if base is None:
+        base = RidgeRegression(n_features=n_features, l2_lambda=cfg.l2_lambda)
+    return EpsilonGreedyArmModel(arm, rng=rng, base_estimator=base, epsilon=cfg.epsilon)
 
 
 def _build_bootstrapped_ts(
-    arm: Arm, cfg: BanditConfig, _n: int, rng: np.random.Generator
+    arm: Arm, cfg: BanditConfig, n_features: int, rng: np.random.Generator
 ) -> BaseArmModel:
     from coba.policies.sklearn_models import BootstrappedTSArmModel
 
-    return BootstrappedTSArmModel(
-        arm, rng=rng, base_estimator=cfg.base_estimator, n_bootstraps=cfg.n_bootstraps
-    )
+    base = cfg.base_estimator
+    if base is None:
+        base = RidgeRegression(n_features=n_features, l2_lambda=cfg.l2_lambda)
+    return BootstrappedTSArmModel(arm, rng=rng, base_estimator=base, n_bootstraps=cfg.n_bootstraps)
 
 
 def _build_bootstrapped_ucb(
-    arm: Arm, cfg: BanditConfig, _n: int, rng: np.random.Generator
+    arm: Arm, cfg: BanditConfig, n_features: int, rng: np.random.Generator
 ) -> BaseArmModel:
     from coba.policies.sklearn_models import BootstrappedUCBArmModel
 
-    return BootstrappedUCBArmModel(
-        arm, rng=rng, base_estimator=cfg.base_estimator, n_bootstraps=cfg.n_bootstraps
-    )
+    base = cfg.base_estimator
+    if base is None:
+        base = RidgeRegression(n_features=n_features, l2_lambda=cfg.l2_lambda)
+    return BootstrappedUCBArmModel(arm, rng=rng, base_estimator=base, n_bootstraps=cfg.n_bootstraps)
 
 
 def _build_logistic_ucb(
