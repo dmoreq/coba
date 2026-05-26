@@ -30,6 +30,7 @@ Typical flow:
   )
 """
 
+from collections.abc import Sequence
 from typing import Any
 
 import numpy as np
@@ -55,7 +56,7 @@ from coba.types import Arm, PolicyType
 class _DriftManager:
     """Owns per-arm PageHinkley drift detectors and handles reset logic."""
 
-    def __init__(self, enable: bool, arms: list[Arm], delta: float, lambda_: float) -> None:
+    def __init__(self, enable: bool, arms: Sequence[Arm], delta: float, lambda_: float) -> None:
         self._detectors: dict[Arm, PageHinkleyDetector] | None = None
         self.detected_last_step: bool = False
         if enable:
@@ -95,7 +96,7 @@ class _DriftManager:
 class _ConstraintManager:
     """Owns minimum pull-rate constraints and total decision counter."""
 
-    def __init__(self, min_pull_rates: dict[Arm, float] | None, arms: list[Arm]) -> None:
+    def __init__(self, min_pull_rates: dict[Arm, float] | None, arms: Sequence[Arm]) -> None:
         if min_pull_rates is not None:
             unknown = set(min_pull_rates) - set(arms)
             if unknown:
@@ -179,7 +180,7 @@ class ClusterBandit:
 
     def __init__(
         self,
-        arms: list[Arm],
+        arms: Sequence[Arm],
         n_features: int,
         config: BanditConfig | None = None,
         # ---- backwards-compatible kwargs (override config when provided) ----
@@ -549,7 +550,7 @@ class ClusterBandit:
     def update(
         self,
         context: np.ndarray,
-        arm: Arm,
+        arm: Arm | None,
         reward: float,
         propensity: float = 1.0,
     ) -> None:
@@ -565,6 +566,8 @@ class ClusterBandit:
                         Default 1.0 disables IPS correction.
         """
         x = self._validate_context_vector(context)
+        if arm is None:
+            raise ValueError("arm cannot be None")
         if not np.isfinite(reward):
             raise ValueError("reward must be finite")
         if not np.isfinite(propensity) or propensity <= 0:

@@ -7,6 +7,7 @@ contextualbandits and the arm_to_model dict in mabwiser.
 """
 
 import abc
+from typing import Any
 
 import numpy as np
 
@@ -23,10 +24,25 @@ class BaseArmModel(abc.ABC):
       - Updating itself given new (context, reward) observations via `update()`.
     """
 
+    # Shared dynamic attributes exposed by concrete subclasses for observability.
+    arm: Arm
+    rng: np.random.Generator
+    is_fitted: bool
+    alpha: float
+    beta: Any
+    leaf: Any
+    last_was_random: bool
+    mean_reward: float
+    n_obs: int
+    score_decomposed: Any
+    _X: Any
+    _gamma: float
+    _ridge: Any
+
     def __init__(self, arm: Arm, rng: np.random.Generator) -> None:
         self.arm = arm
         self.rng = rng
-        self.is_fitted: bool = False
+        self.is_fitted = False
 
     @abc.abstractmethod
     def score(self, x: np.ndarray) -> float:

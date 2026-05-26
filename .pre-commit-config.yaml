@@ -71,7 +71,8 @@ repos:
             backend/uv\.lock|
             frontend/pnpm-lock\.yaml|
             frontend/\.pi|
-            frontend/tsconfig\.tsbuildinfo
+            frontend/tsconfig\.tsbuildinfo|
+            docs/vi
           )
 
   # Commit message validation (optional)

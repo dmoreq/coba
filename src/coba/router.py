@@ -25,8 +25,8 @@ Usage:
   router.update(context_vector, chosen_arm, reward, weight)
 """
 
-from collections.abc import Callable
-from typing import Any
+from collections.abc import Callable, Sequence
+from typing import Any, cast
 
 import numpy as np
 from loguru import logger
@@ -283,7 +283,7 @@ def _build_model_for_arm(
 
 
 def _build_arm_models(
-    arms: list[Arm],
+    arms: Sequence[Arm],
     cfg: BanditConfig,
     n_features: int,
     rng: np.random.Generator,
@@ -322,7 +322,7 @@ class ClusterRouter:
 
     def __init__(
         self,
-        arms: list[Arm],
+        arms: Sequence[Arm],
         n_features: int,
         config: BanditConfig | None = None,
     ) -> None:
@@ -342,10 +342,10 @@ class ClusterRouter:
         # Cluster model: KMeans assigns each context to a cluster
         if cfg.use_minibatch:
             self._kmeans: KMeans | MiniBatchKMeans = MiniBatchKMeans(
-                n_clusters=cfg.n_clusters, random_state=cfg.seed, n_init=3
+                n_clusters=cfg.n_clusters, random_state=cfg.seed, n_init="auto"
             )
         else:
-            self._kmeans = KMeans(n_clusters=cfg.n_clusters, random_state=cfg.seed, n_init=10)
+            self._kmeans = KMeans(n_clusters=cfg.n_clusters, random_state=cfg.seed, n_init="auto")
 
         # StandardScaler for context normalization
         self._scaler: StandardScaler | None = StandardScaler() if cfg.scale_contexts else None
@@ -436,9 +436,9 @@ class ClusterRouter:
         Returns:
             Tuple of (scaled_contexts, decisions, rewards, weights).
         """
-        ctx = np.asarray(contexts, dtype=np.float64)
-        dec = np.asarray(decisions)
-        rew = np.asarray(rewards, dtype=np.float64)
+        ctx: np.ndarray = np.asarray(contexts, dtype=np.float64)
+        dec: np.ndarray = np.asarray(decisions, dtype=object)
+        rew: np.ndarray = np.asarray(rewards, dtype=np.float64)
         wts = (
             np.ones(len(rew), dtype=np.float64)
             if weights is None
@@ -448,7 +448,7 @@ class ClusterRouter:
         if self._scaler is not None:
             if fit_scaler:
                 self._scaler.fit(ctx)
-            scaled = self._scaler.transform(ctx)
+            scaled: np.ndarray = cast(np.ndarray, self._scaler.transform(ctx))
         else:
             scaled = ctx
         return scaled, dec, rew, wts
@@ -478,7 +478,7 @@ class ClusterRouter:
 
         # Fit KMeans and assign each sample to its cluster
         self._kmeans.fit(scaled)
-        cluster_labels: np.ndarray = self._kmeans.labels_
+        cluster_labels: np.ndarray = np.asarray(cast(Any, self._kmeans.labels_), dtype=np.int64)
 
         # Reset all cluster arm models before full refit
         for cluster_bandit in self._cluster_bandits:
@@ -541,7 +541,7 @@ class ClusterRouter:
         )
 
         # Predict cluster assignment using existing centroids (no refit)
-        cluster_labels: np.ndarray = self._kmeans.predict(scaled)
+        cluster_labels: np.ndarray = np.asarray(self._kmeans.predict(scaled), dtype=np.int64)
 
         for c in range(self.n_clusters):
             mask = cluster_labels == c
@@ -643,7 +643,7 @@ class ClusterRouter:
     def update(
         self,
         context: np.ndarray,
-        arm: Arm,
+        arm: Arm | None,
         reward: float,
         weight: float = 1.0,
     ) -> None:
@@ -660,6 +660,8 @@ class ClusterRouter:
         cluster_idx, scaled_ctx = self._route(context)
         arm_models = self._cluster_bandits[cluster_idx]
 
+        if arm is None:
+            raise ValueError("arm cannot be None")
         if arm not in arm_models:
             raise ValueError(f"Arm '{arm}' not found in bandit. Call add_arm() first.")
 
@@ -782,18 +784,18 @@ class ClusterRouter:
         Returns:
             Tuple of (cluster_index, scaled_context).
         """
-        ctx = np.asarray(context, dtype=np.float64).reshape(1, -1)
+        ctx: np.ndarray = np.asarray(context, dtype=np.float64).reshape(1, -1)
 
         if self._scaler is not None:
             if not hasattr(self._scaler, "mean_"):
                 # Scaler not yet fitted — return cluster 0 and raw context
                 return 0, ctx.ravel()
-            ctx = self._scaler.transform(ctx)
+            ctx = cast(np.ndarray, self._scaler.transform(ctx))
 
         if not self.is_fitted:
             return 0, ctx.ravel()
 
-        cluster_idx = int(self._kmeans.predict(ctx)[0])
+        cluster_idx = int(np.asarray(self._kmeans.predict(ctx), dtype=np.int64)[0])
         return cluster_idx, ctx.ravel()
 
     def _fit_cluster(
