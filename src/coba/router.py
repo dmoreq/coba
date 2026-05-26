@@ -84,10 +84,21 @@ def _build_epsgreedy(
     arm: Arm, cfg: BanditConfig, n_features: int, rng: np.random.Generator
 ) -> BaseArmModel:
     from coba.policies.sklearn_models import EpsilonGreedyArmModel
+    from sklearn.linear_model import SGDRegressor
 
     base = cfg.base_estimator
     if base is None:
-        base = RidgeRegression(n_features=n_features, l2_lambda=cfg.l2_lambda)
+        # SGDRegressor implements partial_fit + predict, making it a valid
+        # sklearn-compatible estimator for EpsilonGreedyArmModel.
+        # alpha=l2_lambda mirrors the ridge-style L2 regularisation.
+        base = SGDRegressor(
+            loss="squared_error",
+            penalty="l2",
+            alpha=cfg.l2_lambda,
+            learning_rate="invscaling",
+            eta0=0.01,
+            random_state=int(cfg.seed) if cfg.seed is not None else None,
+        )
     return EpsilonGreedyArmModel(arm, rng=rng, base_estimator=base, epsilon=cfg.epsilon)
 
 
