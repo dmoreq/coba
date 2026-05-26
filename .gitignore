@@ -1,4 +1,5 @@
 .pi/
+dist/
 
 # Generated artifacts
 *.egg-info/

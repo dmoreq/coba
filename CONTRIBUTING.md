@@ -3,7 +3,7 @@
 ## Setup
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/coba.git
+git clone https://github.com/dmoreq/coba.git
 cd coba
 uv sync --frozen
 ```
@@ -38,10 +38,11 @@ docs: update architecture guide
 ## Pull Request Process
 
 1. Rebase on main: `git rebase origin/main`
-2. Run tests: `uv run pytest tests/ -p no:asyncio --ignore=tests/test_shared_sim.py`
-3. Lint: `uv run ruff check src/coba tests`
-4. Format: `uv run ruff format src/coba tests`
-5. Update docs if changing public APIs or behavior
+2. Run tests: `make test`
+3. Lint: `make lint`
+4. Format: `make format`
+5. Type check: `make check-types`
+6. Update docs if changing public APIs or behavior
 
 ## Code Style
 
@@ -49,11 +50,3 @@ docs: update architecture guide
 - Deterministic tests with seeded RNGs
 - Small public APIs backed by focused tests
 - Domain-agnostic core code that operates on numpy arrays and Python data structures
-
-## Project Structure
-
-```text
-src/coba/    # Core bandit library
-tests/       # Core library tests
-docs/        # Documentation
-```

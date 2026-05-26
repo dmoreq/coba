@@ -1,23 +1,23 @@
 # COBA — Contextual Bandit Algorithms
 
-[![CI Pipeline](https://github.com/yourusername/coba/actions/workflows/ci.yml/badge.svg)](https://github.com/yourusername/coba/actions/workflows/ci.yml)
+[![CI Pipeline](https://github.com/dmoreq/coba/actions/workflows/ci.yml/badge.svg)](https://github.com/dmoreq/coba/actions/workflows/ci.yml)
 
 COBA is a Python library for experimenting with contextual bandit algorithms, offline evaluation, drift detection, and continuous-action policies.
 
-## Quick Start
+## Install
 
 ```bash
-# Install uv if needed
-curl -LsSf https://astral.sh/uv/install.sh | sh
+# From PyPI (once published)
+pip install coba
 
-# Install dependencies
-uv sync --frozen
+# Directly from GitHub
+pip install git+https://github.com/dmoreq/coba.git
 
-# Run tests
-uv run pytest tests/ -p no:asyncio --ignore=tests/test_shared_sim.py
+# Or with uv
+uv add git+https://github.com/dmoreq/coba.git
 ```
 
-## Example
+## Quick Start
 
 ```python
 import numpy as np
@@ -39,39 +39,25 @@ print(decision.chosen_arm)
 
 ## Features
 
-- Discrete contextual bandits with clustering-aware routing
-- LinUCB, LinTS, Thompson Sampling, UCB1, Softmax, logistic, GP-UCB, tree ensembles, and sklearn-backed policies
-- Offline policy evaluation with rejection sampling, IPS/NCIS, and doubly robust estimates
-- Reward normalization, drift detection, constrained arm pull rates, and top-k decisions
-- Continuous-action bandits with CATS-style action trees
-
-## Project Structure
-
-```text
-coba/
-├── src/coba/              # Core bandit library
-│   ├── bandit.py          # ClusterBandit public API
-│   ├── policies/          # Algorithm implementations
-│   ├── continuous/        # Continuous-action bandits
-│   ├── evaluation.py      # Offline evaluation helpers
-│   └── drift.py           # Drift detection
-├── tests/                 # Core library tests
-└── docs/                  # Library documentation
-```
+- 17 bandit policies — LinUCB, LinTS, Thompson Sampling, UCB1, Softmax, logistic, GP-UCB, tree ensembles, neural linear, and more
+- Cluster routing — KMeans context partitioning with per-cluster arm models
+- Offline policy evaluation — rejection sampling, IPS/NCIS, doubly robust estimates
+- Continuous actions — CATS-style action trees for real-valued action spaces
+- Reward normalization, drift detection, constrained pull rates, top-k decisions, abstention
+- Model persistence with `save_bandit` / `load_bandit`
 
 ## Development
 
 ```bash
+uv sync --frozen
 make lint
 make check-types
 make test
-make coverage
 ```
 
 ## Documentation
 
 - [Architecture Guide](./docs/ARCHITECTURE.md)
-- [Algorithm Reference](./docs/algorithms/)
 - [Policy Reference](./docs/policies.md)
 - [Evaluation Methods](./docs/evaluation.md)
 - [Advanced Features](./docs/advanced_features.md)
